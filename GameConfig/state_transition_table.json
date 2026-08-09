@@ -1,0 +1,18 @@
+{
+  "entries": [
+    { "source": "Idling",          "allowed_targets": ["Walking", "Dashing", "JumpUp", "Falling"] },
+    { "source": "Walking",         "allowed_targets": ["Running", "LightStopping", "Dashing", "JumpUp", "Falling"] },
+    { "source": "Running",         "allowed_targets": ["Walking", "Idling", "MediumStopping", "Dashing", "JumpUp", "Falling"] },
+    { "source": "Sprinting",       "allowed_targets": ["Running", "HardStopping", "Dashing", "JumpUp", "Falling"] },
+    { "source": "LightStopping",   "allowed_targets": ["Idling", "Walking", "Dashing", "JumpUp", "Falling"] },
+    { "source": "MediumStopping",  "allowed_targets": ["Idling", "Walking", "Dashing", "JumpUp", "Falling"] },
+    { "source": "HardStopping",    "allowed_targets": ["Idling", "Walking", "Dashing", "JumpUp", "Falling"] },
+    { "source": "LightLanding",    "allowed_targets": ["Idling", "Walking", "Dashing", "JumpUp", "Falling"] },
+    { "source": "HardLanding",     "allowed_targets": ["Idling", "Dashing", "Falling"] },
+    { "source": "Rolling",         "allowed_targets": ["MediumStopping", "Walking", "Running", "Sprinting", "Dashing", "JumpUp", "Falling"] },
+    { "source": "Dashing",         "allowed_targets": ["Idling", "HardStopping", "Sprinting", "Dashing", "Falling"] },
+    { "source": "JumpUp",          "allowed_targets": ["Falling", "LightLanding", "Walking", "Running", "Sprinting", "JumpDown"] },
+    { "source": "Falling",         "allowed_targets": ["LightLanding", "HardLanding", "Rolling", "Walking", "Running", "Sprinting"] },
+    { "source": "JumpDown",        "allowed_targets": ["Idling", "Walking", "Running", "Sprinting", "Falling"] }
+  ]
+}

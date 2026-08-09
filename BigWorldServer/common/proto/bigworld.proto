@@ -1,0 +1,400 @@
+syntax = "proto3";
+
+package bigworld;
+
+option go_package = "bigworld/common/pb";
+option csharp_namespace = "GameplayDemo.Network.Protocol";
+
+// ServerType enumerates the different server roles. Values mirror the
+// hand-written common.ServerType constants so they stay wire-compatible.
+enum ServerType {
+  SERVER_INVALID = 0;
+  SERVER_CENTRAL  = 1;
+  SERVER_WORLD    = 2;
+  SERVER_GATEWAY  = 3;
+  SERVER_LOGIN    = 4;
+  SERVER_DBPROXY  = 5; // 持久化代理，独占 MySQL 连接
+}
+
+// --- Infrastructure (server <-> central) ---
+
+message RegisterReq {
+  ServerType server_type = 1;
+  string server_id       = 2;
+  string listen_addr     = 3;
+}
+
+message RegisterRsp {
+  bool   success  = 1;
+  string message  = 2;
+}
+
+message HeartbeatReq {
+  string server_id = 1;
+}
+
+message HeartbeatRsp {
+  bool success = 1;
+}
+
+message ServerListReq {
+  ServerType type = 1; // 0 means all types
+}
+
+message ServerEntry {
+  ServerType server_type = 1;
+  string server_id       = 2;
+  string listen_addr     = 3;
+}
+
+message ServerListRsp {
+  repeated ServerEntry servers = 1;
+}
+
+// --- Login flow ---
+
+message LoginReq {
+  string account  = 1;
+  string password = 2;
+}
+
+message LoginRsp {
+  bool   success      = 1;
+  string message      = 2;
+  string token        = 3;
+  string gateway_addr = 4;
+  string world_addr   = 5;
+  string world_id     = 6;
+  uint64 player_id    = 7;
+  double x            = 8;
+  double z            = 9;
+  double width        = 10;
+  double height       = 11;
+}
+
+message GatewayAssignReq {
+  uint64 req_id    = 1;
+  string server_id = 2;
+  string account   = 3;
+}
+
+message GatewayAssignRsp {
+  uint64 req_id       = 1;
+  bool   success      = 2;
+  string gateway_addr = 3;
+  string gateway_id   = 4;
+  string message      = 5;
+}
+
+message TokenVerifyReq {
+  uint64 req_id    = 1;
+  string token     = 2;
+  string account   = 3;
+  string gateway_id = 4;
+}
+
+message TokenVerifyRsp {
+  uint64 req_id     = 1;
+  bool   success    = 2;
+  string account    = 3;
+  uint64 player_id  = 4;
+  string world_addr = 5;
+  string world_id   = 6;
+  double x          = 7;
+  double z          = 8;
+  double width      = 9;
+  double height     = 10;
+  string message    = 11;
+}
+
+message LoginPrepareReq {
+  uint64 req_id  = 1;
+  string account = 2;
+}
+
+message LoginPrepareRsp {
+  uint64 req_id     = 1;
+  bool   success    = 2;
+  string world_id   = 3;
+  string world_addr = 4;
+  string message    = 5;
+}
+
+message LoginFinishReq {
+  uint64 player_id  = 1;
+  bool   success    = 2;
+  string account    = 3;
+  string world_id   = 4;
+  string gateway_id = 5;
+  string message    = 6;
+}
+
+message LoginFinishRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string account   = 3;
+  string message   = 4;
+}
+
+message ForceKickNotify {
+  uint64 player_id = 1;
+  string account   = 2;
+  string world_id  = 3;
+}
+
+message EnterSceneNotify {
+  string world_id  = 1;
+  uint64 player_id = 2;
+  double x         = 3;
+  double z         = 4;
+  double width     = 5;
+  double height    = 6;
+}
+
+// --- Session / logout ---
+
+message LogoutReq {
+  uint64 player_id = 1;
+}
+
+message LogoutRsp {
+  bool   success = 1;
+  string message = 2;
+}
+
+message LogoutBeginReq {
+  uint64 player_id = 1;
+}
+
+message LogoutBeginRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string message   = 3;
+}
+
+message LogoutCleanupReq {
+  uint64 player_id  = 1;
+  string gateway_id = 2;
+}
+
+message LogoutCleanupRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string message   = 3;
+}
+
+// --- Game (gateway <-> world) ---
+
+message CreateEntityReq {
+  string account = 1;
+}
+
+message CreateEntityRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string account   = 3;
+  double x         = 4;
+  double z         = 5;
+  double width     = 6;
+  double height    = 7;
+  string message   = 8;
+}
+
+message DestroyEntityReq {
+  uint64 player_id = 1;
+}
+
+message DestroyEntityRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string message   = 3;
+}
+
+// 玩家移动状态：决定服务器校验规则。与 Unity 状态机一一对应。
+enum MoveState {
+  MOVE_IDLE       = 0;
+  MOVE_WALK       = 1;
+  MOVE_RUN        = 2;
+  MOVE_SPRINT     = 3;
+  MOVE_STOP_LIGHT = 4;
+  MOVE_STOP_MED   = 5;
+  MOVE_STOP_HARD  = 6;
+  MOVE_LAND_LIGHT = 7;
+  MOVE_LAND_HARD  = 8;
+  MOVE_ROLL       = 9;
+  MOVE_DASH       = 10;
+  MOVE_JUMP_UP    = 11;
+  MOVE_FALL       = 12;
+  MOVE_JUMP_DOWN  = 13;
+}
+
+// 每状态一条开始协议 + 方向变更：客户端进入某个移动状态时发一次开始协议，
+// 世界服每 tick 用同一份导出位移曲线在本地推进位置；移动中转向再补一条方向变更。
+message MoveDir {
+  float x = 1; // 归一化世界空间水平方向
+  float z = 2;
+}
+
+message WalkStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3; // 客户端估算的服务端时间，作为状态起点
+}
+
+message RunStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message SprintStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message JumpStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message DashStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message RollStartReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message StopStartReq {
+  uint64 player_id = 1;
+  MoveState stop_kind = 2; // MOVE_STOP_LIGHT / MOVE_STOP_MED / MOVE_STOP_HARD
+  int64  server_time_ms = 3;
+}
+
+message MoveStopReq {
+  uint64 player_id = 1;
+  int64  server_time_ms = 2;
+}
+
+message MoveDirChangeReq {
+  uint64 player_id = 1;
+  MoveDir dir = 2;
+  int64  server_time_ms = 3;
+}
+
+message MoveRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  double x         = 3;
+  double z         = 4;
+  double y         = 5;
+  string message   = 6;
+  int64  ack_time_ms = 7; // 服务端最新接受的时间戳；客户端据此弹出/丢弃已发送记录
+}
+
+message SkillReq {
+  uint64 player_id = 1;
+  string skill_id  = 2;
+}
+
+message SkillRsp {
+  bool   success   = 1;
+  uint64 player_id = 2;
+  string message   = 3;
+}
+
+// --- Client heartbeat (client <-> gateway) ---
+// The client stamps client_time_ms when sending; the gateway echoes it back
+// together with server_time_ms so the reply is self-contained: the client
+// derives offset = server_time_ms + rtt/2 - receive_time with
+// rtt = receive_time - echoed client_time_ms.
+
+message ClientHeartbeatReq {
+  int64 client_time_ms = 1;
+}
+
+message ClientHeartbeatRsp {
+  int64 server_time_ms = 1;
+  int64 client_time_ms = 2; // echo of the request's send time
+}
+
+// --- Persistence (dbproxy <-> world/login) ---
+// dbproxy 是唯一访问 MySQL 的进程；world 与 login 通过下面的消息
+// 经由 central 发现后直连 dbproxy 进行读写。
+
+// 账号校验（login -> dbproxy）。
+message ValidateAccountReq {
+  uint64 req_id   = 1;
+  string account  = 2;
+  string password = 3;
+}
+
+message ValidateAccountRsp {
+  uint64 req_id  = 1;
+  bool   valid   = 2;
+  string message = 3;
+}
+
+// 玩家载入（world -> dbproxy）。
+// found=false 表示新号：dbproxy 已分配稳定 player_id，world 应随机出生点。
+// found=true 表示老号：返回上次存档坐标，world 据此续接。
+message LoadPlayerReq {
+  string account = 1;
+}
+
+message LoadPlayerRsp {
+  bool   found     = 1;
+  uint64 player_id = 2;
+  string account   = 3;
+  double x         = 4;
+  double z         = 5;
+  string message   = 6;
+}
+
+// 玩家保存（world -> dbproxy）。players 为批量，destroy 存单条、autosave 存全量。
+message PlayerData {
+  uint64 player_id = 1;
+  string account   = 2;
+  double x         = 3;
+  double z         = 4;
+}
+
+message SavePlayerReq {
+  uint64 req_id = 1;               // 0 = fire-and-forget (destroy/autosave); >0 = wait-for-rsp (shutdown flush)
+  repeated PlayerData players = 2;
+}
+
+message SavePlayerRsp {
+  uint64 req_id  = 1;              // echoes the request, so world can correlate its shutdown flush
+  bool   success = 2;
+  string message = 3;
+}
+
+// --- Shutdown (graceful server stop) ---
+
+message ShutdownReq {
+  string reason = 1;
+}
+
+message ShutdownRsp {
+  bool   success = 1;
+  string message = 2;
+}
+
+message ShutdownNotify {
+  string reason = 1;
+}
+
+message ShutdownAck {
+  string server_id = 1;
+}
+
+message ServerShutdownNotify {
+  string message = 1;
+}

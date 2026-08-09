@@ -1,0 +1,46 @@
+{
+    "ecdsa_private_key": "-----BEGIN EC PRIVATE KEY-----\nREPLACE_WITH_YOUR_PRIVATE_KEY\n-----END EC PRIVATE KEY-----\n",
+    "ecdsa_public_key": "-----BEGIN PUBLIC KEY-----\nREPLACE_WITH_YOUR_PUBLIC_KEY\n-----END PUBLIC KEY-----\n",
+    "mysql": {
+        "dsn": "root:REPLACE_WITH_DB_PASSWORD@tcp(127.0.0.1:3306)/bigworld?parseTime=true&charset=utf8mb4&allowNativePasswords=true"
+    },
+    "servers": {
+        "central": {
+            "id": 1,
+            "name": "central-1",
+            "listen_addr": "127.0.0.1:9000",
+            "central_addr": ""
+        },
+        "login": {
+            "id": 2,
+            "name": "login-1",
+            "listen_addr": "127.0.0.1:9200",
+            "central_addr": "127.0.0.1:9000"
+        },
+        "gateway": {
+            "id": 3,
+            "name": "gateway-1",
+            "listen_addr": "127.0.0.1:8000",
+            "central_addr": "127.0.0.1:9000"
+        },
+        "world": {
+            "id": 4,
+            "name": "world-1",
+            "listen_addr": "127.0.0.1:9100",
+            "central_addr": "127.0.0.1:9000",
+            "voxel_file": "../GameConfig/MainCity_voxels.bytes",
+            "displacement_curves_file": "../GameConfig/displacement_curves.json",
+            "player_config_file": "../GameConfig/player_config.json",
+            "state_transition_table_file": "../GameConfig/state_transition_table.json",
+            "spawn_x": 0,
+            "spawn_z": 0,
+            "movement_tick_ms": 20
+        },
+        "dbproxy": {
+            "id": 5,
+            "name": "dbproxy-1",
+            "listen_addr": "127.0.0.1:9300",
+            "central_addr": "127.0.0.1:9000"
+        }
+    }
+}

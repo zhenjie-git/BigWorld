@@ -1,0 +1,119 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 98f16f6ceb7a1054892c3565868d6248, type: 3}
+  m_Name: Player
+  m_EditorClassIdentifier: 
+  <GroundedData>k__BackingField:
+    <BaseSpeed>k__BackingField: 5
+    <GroundToFallRayDistance>k__BackingField: 1
+    <SlopSpeedAngles>k__BackingField:
+      serializedVersion: 2
+      m_Curve:
+      - serializedVersion: 3
+        time: 0
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      - serializedVersion: 3
+        time: 1
+        value: 1
+        inSlope: 0
+        outSlope: 0
+        tangentMode: 34
+        weightedMode: 0
+        inWeight: 0
+        outWeight: 0
+      m_PreInfinity: 2
+      m_PostInfinity: 2
+      m_RotationOrder: 4
+    <BaseRotationData>k__BackingField:
+      <TargetRotationReachTime>k__BackingField: {x: 0, y: 0.2, z: 0}
+    <WalkData>k__BackingField:
+      <SpeedModifier>k__BackingField: 0.225
+      <DisplacementCurveX>k__BackingField: {fileID: 11400000, guid: 42268cb4cba24b744a3c63ba1211fc88, type: 2}
+      <DisplacementCurveZ>k__BackingField: {fileID: 11400000, guid: 4cd09feeb5bad2f49bf428520ca9feef, type: 2}
+    <RunData>k__BackingField:
+      <SpeedModifier>k__BackingField: 1
+      <DisplacementCurveX>k__BackingField: {fileID: 11400000, guid: 74c0c4398d3b412489cdc9f3e7a2d331, type: 2}
+      <DisplacementCurveZ>k__BackingField: {fileID: 11400000, guid: 3775d69fb398d43498cbd8eb4329c7d9, type: 2}
+    <DashData>k__BackingField:
+      <SpeedModifier>k__BackingField: 2
+      <RotationData>k__BackingField:
+        <TargetRotationReachTime>k__BackingField: {x: 0, y: 0, z: 0}
+      <TimeToBeConsideredConsecutive>k__BackingField: 1
+      <ConsecutiveDashedLimitAmount>k__BackingField: 2
+      <DashLimitReachedCooldown>k__BackingField: 1.75
+      <DisplacementCurveX>k__BackingField: {fileID: 11400000, guid: a3fb4f29ca3410048a333165a9385621, type: 2}
+      <DisplacementCurveZ>k__BackingField: {fileID: 11400000, guid: 39d17dbdb0bc3df40ae8757d53017229, type: 2}
+    <SprintData>k__BackingField:
+      <SpeedModifier>k__BackingField: 1.7
+      <SprintToRunTime>k__BackingField: 1
+      <RunToWalkTime>k__BackingField: 2
+    <StopData>k__BackingField:
+      <LightDecelerationForce>k__BackingField: 5
+      <MediumDecelerationForce>k__BackingField: 6.5
+      <HardDecelerationForce>k__BackingField: 5
+      <LightDisplacementCurveX>k__BackingField: {fileID: 11400000, guid: f5458f4776a72224195f89943acceb3f, type: 2}
+      <LightDisplacementCurveZ>k__BackingField: {fileID: 11400000, guid: c4af6d7778670f94397e08850404dfe8, type: 2}
+      <MediumDisplacementCurveX>k__BackingField: {fileID: 11400000, guid: f540c413f9f1cdd4b90225306af0780b, type: 2}
+      <MediumDisplacementCurveZ>k__BackingField: {fileID: 11400000, guid: fad9f0d7ddc114e44b96f36caf2086d2, type: 2}
+      <HardDisplacementCurveX>k__BackingField: {fileID: 0}
+      <HardDisplacementCurveZ>k__BackingField: {fileID: 0}
+    <RolllData>k__BackingField:
+      <SpeedModifier>k__BackingField: 1
+  <AirborneData>k__BackingField:
+    <JumpData>k__BackingField:
+      <RotationData>k__BackingField:
+        <TargetRotationReachTime>k__BackingField: {x: 0, y: 0, z: 0}
+      <JumpUpCurveX>k__BackingField: {fileID: 11400000, guid: dc25c3a30e5e5514194810a7007b5079, type: 2}
+      <JumpUpCurveY>k__BackingField: {fileID: 11400000, guid: b1c1f12ece1dbee4885cb5e930077aaa, type: 2}
+      <JumpUpCurveZ>k__BackingField: {fileID: 11400000, guid: 4dc56441a1b472c42be453f6d60e6917, type: 2}
+      <JumpDownCurveX>k__BackingField: {fileID: 11400000, guid: b07114170b4bcea44ad0d0987a08cbcf, type: 2}
+      <JumpDownCurveY>k__BackingField: {fileID: 11400000, guid: 3d87ce6c2e13cdd4494206344d68653c, type: 2}
+      <JumpDownCurveZ>k__BackingField: {fileID: 11400000, guid: 337365d59241dc1458f09aceb5a1ec01, type: 2}
+    <FallData>k__BackingField:
+      <FallSpeedLimit>k__BackingField: 15
+      <MinimumDistanceToBeConsideredHardFall>k__BackingField: 3
+      <Gravity>k__BackingField: 10
+  <DefaultColliderData>k__BackingField:
+    <Height>k__BackingField: 1.8
+    <CenterY>k__BackingField: 0.9
+    <Radius>k__BackingField: 0.2
+  <SlopeData>k__BackingField:
+    <StepHeightPercentage>k__BackingField: 0.25
+    <FloatRayDistance>k__BackingField: 2
+    <StepReachForce>k__BackingField: 25
+  <LayerData>k__BackingField:
+    <GroundLayer>k__BackingField:
+      serializedVersion: 2
+      m_Bits: 64
+  <VoxelMaxStepHeight>k__BackingField: 0.5
+  <AnimationData>k__BackingField:
+    transitionDuration: 0.1
+    idleAnimationName: Idle
+    walkAnimationName: Walk
+    runAnimationName: Run
+    sprintAnimationName: Sprint
+    dashAnimationName: Dash
+    lightStopAnimationName: LightStop
+    mediumStopAnimationName: MediumStop
+    hardStopAnimationName: HardStop
+    lightLandAnimationName: LightLand
+    hardLandAnimationName: HardLand
+    rollAnimationName: Roll
+    jumpUpAnimationName: JumpUp
+    jumpDownAnimationName: JumpDown
+    fallAnimationName: Fall

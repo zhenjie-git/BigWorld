@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 33f78c95451e755409920248b965243e, type: 3}
+  m_Name: StateTransitionTable
+  m_EditorClassIdentifier: 
+  Entries:
+  - SourceState: 0
+    AllowedTargets: 010000000a0000000b0000000c000000
+  - SourceState: 1
+    AllowedTargets: 02000000040000000a0000000b0000000c000000
+  - SourceState: 2
+    AllowedTargets: 0100000000000000050000000a0000000b0000000c000000
+  - SourceState: 3
+    AllowedTargets: 02000000060000000a0000000b0000000c000000
+  - SourceState: 4
+    AllowedTargets: 00000000010000000a0000000b0000000c000000
+  - SourceState: 5
+    AllowedTargets: 00000000010000000a0000000b0000000c000000
+  - SourceState: 6
+    AllowedTargets: 00000000010000000a0000000b0000000c000000
+  - SourceState: 7
+    AllowedTargets: 00000000010000000a0000000b0000000c000000
+  - SourceState: 8
+    AllowedTargets: 000000000a0000000c000000
+  - SourceState: 9
+    AllowedTargets: 050000000100000002000000030000000a0000000b0000000c000000
+  - SourceState: 10
+    AllowedTargets: 0000000006000000030000000a0000000c000000
+  - SourceState: 11
+    AllowedTargets: 0c000000070000000100000002000000030000000d000000
+  - SourceState: 12
+    AllowedTargets: 070000000800000009000000010000000200000003000000
+  - SourceState: 13
+    AllowedTargets: 000000000100000002000000030000000c000000

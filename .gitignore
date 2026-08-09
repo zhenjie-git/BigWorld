@@ -1,0 +1,29 @@
+# ============================================================
+# BigWorld 根 .gitignore
+# 客户端 Unity 生成物由 BigWorldClient/.gitignore 覆盖（递归生效）
+# ============================================================
+
+# ---- 敏感配置：绝不提交 ----
+# 含 ECDSA 私钥 + MySQL 明文密码。需要时用 config.example.json 起模板。
+BigWorldServer/common/config.json
+
+# ---- 本地工具配置（含个人凭据/计划）----
+.claude/
+
+# ---- IDE / 系统 ----
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# ---- Go 编译产物 ----
+*.exe
+*.out
+*.test
+
+# ---- 服务器日志 ----
+*.log
+logs/
+
+# ---- vendored 开发工具（protoc 等，.pb.go 已生成，无需入库）----
+BigWorldServer/.tools/
