@@ -183,7 +183,6 @@ namespace BigWorldClient
         {
             byte[] data = ToBytes();
             File.WriteAllBytes(filePath, data);
-            Debug.Log($"[VoxelGridData] 已保存二进制文件: {filePath} ({data.Length} bytes)");
         }
 
         /// <summary>从二进制文件加载</summary>
@@ -199,7 +198,6 @@ namespace BigWorldClient
             TextAsset asset = Resources.Load<TextAsset>(resourcePath);
             if (asset == null)
             {
-                Debug.LogError($"[VoxelGridData] 找不到资源: Resources/{resourcePath}");
                 return null;
             }
             return FromBytes(asset.bytes);
@@ -260,9 +258,7 @@ namespace BigWorldClient
                     throw new InvalidDataException($"无效的体素文件格式 (Magic: 0x{magic:X8}, 期望: 0x{BINARY_MAGIC:X8})");
 
                 int version = br.ReadInt32();
-                if (version != BINARY_VERSION)
-                    Debug.LogWarning($"[VoxelGridData] 文件版本 {version} 与当前版本 {BINARY_VERSION} 不匹配，尝试加载...");
-
+                
                 var gridData = new VoxelGridData
                 {
                     gridDimX = br.ReadInt32(),
@@ -288,9 +284,7 @@ namespace BigWorldClient
                     runningIndex += gridData.voxelCounts[i];
                 }
 
-                if (runningIndex != totalVoxels)
-                    Debug.LogWarning($"[VoxelGridData] 体素数量不一致: header={totalVoxels}, 实际={runningIndex}");
-
+                
                 // --- voxels ---
                 gridData.voxels = new VoxelData[totalVoxels];
                 for (int i = 0; i < totalVoxels; i++)
@@ -300,9 +294,6 @@ namespace BigWorldClient
                     ushort connectivity = (version >= 2) ? br.ReadUInt16() : VoxelConnectivity.ALL_BLOCKED;
                     gridData.voxels[i] = new VoxelData(minY, maxY, connectivity);
                 }
-
-                Debug.Log($"[VoxelGridData] 从二进制加载: {gridData.gridDimX}×{gridData.gridDimZ}, " +
-                          $"{totalVoxels} 个体素, {gridData.OccupiedColumnCount} 个非空列");
                 return gridData;
             }
         }

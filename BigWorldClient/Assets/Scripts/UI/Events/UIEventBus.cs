@@ -56,7 +56,7 @@ namespace BigWorldClient.UI.Events
                     if (handler != null)
                     {
                         try { handler(eventData); }
-                        catch (Exception ex) { Debug.LogError("[UIEventBus] Handler error: " + ex.Message); }
+                        catch (Exception) { }
                     }
                 }
                 else { needsCleanup = true; }

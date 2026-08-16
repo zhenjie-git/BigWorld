@@ -3,20 +3,22 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"os"
 
 	pb "bigworld/common/pb"
 )
 
-// playerConfigJSON mirrors the fields of GameConfig/player_config.json that the
-// world simulation needs. Only the fields required for derivation are declared;
-// unknown extra fields in the shared file are ignored.
+// playerConfigJSON mirrors the fields of GameConfig/Player/player_config.json
+// that the world simulation needs. The nine scalar values it reads are authored
+// in GameConfig/Player/player_config.xlsx; the rest of the JSON is Unity-owned.
+// Only the fields required for derivation are declared; unknown extra fields in
+// the shared file are ignored.
 type playerConfigJSON struct {
 	Grounded struct {
 		BaseSpeed float64 `json:"base_speed"`
 		Sprint    struct {
-			SpeedModifier float64 `json:"speed_modifier"`
+			SpeedModifier   float64 `json:"speed_modifier"`
+			SprintToRunTime float64 `json:"sprint_to_run_time"`
 		} `json:"sprint"`
 		Roll struct {
 			SpeedModifier float64 `json:"speed_modifier"`
@@ -36,10 +38,11 @@ type playerConfigJSON struct {
 }
 
 // gameConfig holds the movement parameters the world sim uses, derived from the
-// shared player_config.json (derivation table in GameConfig/README.md).
+// shared GameConfig/Player/player_config.json (derivation table in README).
 type gameConfig struct {
 	maxStep           float64
 	sprintSpeedMps    float64
+	sprintToRunTime   float64
 	rollSpeedMps      float64
 	fallGravityMps2   float64
 	fallSpeedLimitMps float64
@@ -47,9 +50,9 @@ type gameConfig struct {
 	playerCenterY     float64
 }
 
-// loadPlayerConfig reads GameConfig/player_config.json and derives the movement
-// parameters the world process simulates with.
-func loadPlayerConfig(path string) (*gameConfig, error) {
+// LoadPlayerConfig reads GameConfig/Player/player_config.json and derives the
+// movement parameters the world process simulates with.
+func LoadPlayerConfig(path string) (*gameConfig, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -62,6 +65,7 @@ func loadPlayerConfig(path string) (*gameConfig, error) {
 	return &gameConfig{
 		maxStep:           pc.VoxelMaxStepHeight,
 		sprintSpeedMps:    base * pc.Grounded.Sprint.SpeedModifier,
+		sprintToRunTime:   pc.Grounded.Sprint.SprintToRunTime,
 		rollSpeedMps:      base * pc.Grounded.Roll.SpeedModifier,
 		fallGravityMps2:   pc.Airborne.Fall.Gravity,
 		fallSpeedLimitMps: pc.Airborne.Fall.FallSpeedLimit,
@@ -70,9 +74,12 @@ func loadPlayerConfig(path string) (*gameConfig, error) {
 	}, nil
 }
 
-// stateNameToMoveState maps the client's PlayerMovementStateType enum names
-// (single source of truth in state_transition_table.json) to server MoveState.
-func stateNameToMoveState(name string) (pb.MoveState, bool) {
+// StateNameToMoveState maps the shared state names to server MoveState.
+// The single source of truth is
+// GameConfig/StateTransitionTable/state_transition_table.xlsx
+// (validated by the Unity exporter against MoveTransitionTable.StateMappings).
+// Keep this switch in sync with the client mapping in MoveStateMachine.cs.
+func StateNameToMoveState(name string) (pb.MoveState, bool) {
 	switch name {
 	case "Idling":
 		return pb.MoveState_MOVE_IDLE, true
@@ -90,8 +97,6 @@ func stateNameToMoveState(name string) (pb.MoveState, bool) {
 		return pb.MoveState_MOVE_STOP_HARD, true
 	case "LightLanding":
 		return pb.MoveState_MOVE_LAND_LIGHT, true
-	case "HardLanding":
-		return pb.MoveState_MOVE_LAND_HARD, true
 	case "Rolling":
 		return pb.MoveState_MOVE_ROLL, true
 	case "Dashing":
@@ -113,9 +118,11 @@ type stateTransitionTableJSON struct {
 	} `json:"entries"`
 }
 
-// loadStateTransitionTable reads GameConfig/state_transition_table.json and
-// builds the canTransition lookup from the shared client enum names.
-func loadStateTransitionTable(path string) (map[pb.MoveState]map[pb.MoveState]bool, error) {
+// LoadStateTransitionTable reads GameConfig/StateTransitionTable/state_transition_table.json
+// (the file generated from the xlsx next to it) and builds the
+// CanTransition lookup. Unknown state names are a hard error so a drifted
+// client/server mapping can never be silently ignored.
+func LoadStateTransitionTable(path string) (map[pb.MoveState]map[pb.MoveState]bool, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -125,26 +132,20 @@ func loadStateTransitionTable(path string) (map[pb.MoveState]map[pb.MoveState]bo
 		return nil, err
 	}
 	table := make(map[pb.MoveState]map[pb.MoveState]bool)
-	unknown := 0
 	for _, e := range t.Entries {
-		from, ok := stateNameToMoveState(e.Source)
+		from, ok := StateNameToMoveState(e.Source)
 		if !ok {
-			unknown++
-			continue
+			return nil, fmt.Errorf("state transition table: unknown source state %q", e.Source)
 		}
 		targets := make(map[pb.MoveState]bool)
 		for _, name := range e.AllowedTargets {
-			to, ok := stateNameToMoveState(name)
+			to, ok := StateNameToMoveState(name)
 			if !ok {
-				unknown++
-				continue
+				return nil, fmt.Errorf("state transition table: unknown target state %q for source %q", name, e.Source)
 			}
 			targets[to] = true
 		}
 		table[from] = targets
-	}
-	if unknown > 0 {
-		log.Printf("[world] state transition table: %d unknown state name(s) ignored", unknown)
 	}
 	if len(table) == 0 {
 		return nil, fmt.Errorf("state transition table has no usable entries")

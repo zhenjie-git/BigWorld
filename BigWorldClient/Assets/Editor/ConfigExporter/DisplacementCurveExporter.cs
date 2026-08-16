@@ -27,13 +27,13 @@ namespace BigWorldClient
             ("MOVE_IDLE",       null,                          null,  0.02),
             ("MOVE_WALK",       new[]{"Walk/Walk_x.asset", "Walk/Walk_z.asset"}, "Walk", 0),
             ("MOVE_RUN",        new[]{"Run/Run_x.asset", "Run/Run_z.asset"}, "Run", 0),
-            ("MOVE_SPRINT",     null,                          null,  0.2),
+            ("MOVE_SPRINT",     new[]{"Sprint/Sprint_x.asset", "Sprint/Sprint_z.asset"}, "Sprint", 0),
             ("MOVE_STOP_LIGHT", new[]{"LightStop/LightStop_x.asset", "LightStop/LightStop_z.asset"}, "LightStop", 0),
             ("MOVE_STOP_MED",   new[]{"MediumStop/MediumStop_x.asset", "MediumStop/MediumStop_z.asset"}, "MediumStop", 0),
-            ("MOVE_STOP_HARD",  null,                          null,  0.05),
-            ("MOVE_LAND_LIGHT", null,                          null,  0.05),
+            ("MOVE_STOP_HARD",  new[]{"HardStop/HardStop_x.asset", "HardStop/HardStop_z.asset"}, "HardStop", 0),
+            ("MOVE_LAND_LIGHT", new[]{"LightLanding/LightLanding_x.asset", "LightLanding/LightLanding_z.asset"}, "LightLanding", 0),
             ("MOVE_LAND_HARD",  null,                          null,  0.05),
-            ("MOVE_ROLL",       null,                          null,  0.15),
+            ("MOVE_ROLL",       new[]{"Rolling/Rolling_x.asset", "Rolling/Rolling_z.asset"}, "Rolling", 0),
             ("MOVE_DASH",       new[]{"Dash/Dash_x.asset", "Dash/Dash_z.asset"}, "Dash", 0),
             ("MOVE_JUMP_UP",    new[]{"JumpUp/JumpUp_x.asset", "JumpUp/JumpUp_y.asset", "JumpUp/JumpUp_z.asset"}, "JumpUp", 0),
             ("MOVE_FALL",       null,                          null,  0.1),
@@ -52,11 +52,9 @@ namespace BigWorldClient
                 string json = BuildJson();
                 string outPath = Path.Combine(GameConfigDir, OutFileName);
                 File.WriteAllText(outPath, json);
-                Debug.Log($"[DisplacementCurveExporter] 已导出位移曲线到 {outPath}");
             }
-            catch (System.Exception e)
+            catch (System.Exception)
             {
-                Debug.LogError($"[DisplacementCurveExporter] 导出失败: {e.Message}");
             }
         }
 

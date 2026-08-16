@@ -76,7 +76,7 @@ namespace BigWorldClient.UI
                 password = password
             };
             onLoginAttempt?.Invoke(loginData);
-            Debug.Log($"[LoginUI] Login attempt for user: {username}");
+            {}
         }
 
         public void ShowError(string message)

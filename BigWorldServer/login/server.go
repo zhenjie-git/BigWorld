@@ -38,8 +38,8 @@ type loginServer struct {
 	mu sync.Mutex
 
 	reqCounter       uint64
-	pendings         map[uint64]*gatewayPending   // gateway-assign stage
-	validatePendings map[uint64]*validatePending   // account-validation stage
+	pendings         map[uint64]*gatewayPending  // gateway-assign stage
+	validatePendings map[uint64]*validatePending // account-validation stage
 
 	// dbproxy connection (discovered via central) and its inbound router.
 	dbConn   *common.ConnWrapper
@@ -49,7 +49,7 @@ type loginServer struct {
 	centralRouter *common.MessageRouter
 }
 
-func newLoginServer(id string) *loginServer {
+func NewLoginServer(id string) *loginServer {
 	ls := &loginServer{
 		ServerBase:       common.NewServerBase(common.ServerLogin, id),
 		pendings:         make(map[uint64]*gatewayPending),
@@ -59,37 +59,37 @@ func newLoginServer(id string) *loginServer {
 		centralRouter:    common.NewMessageRouter(),
 	}
 
-	common.Register(ls.clientRouter, common.Cli2Lg_LoginReq, ls.handleAccountLogin)
+	common.Register(ls.clientRouter, common.Cli2Lg_LoginReq, ls.HandleAccountLogin)
 
 	// Central -> Login
-	common.Register(ls.centralRouter, common.Ct2Lg_GatewayAssignRsp, ls.handleGatewayAssignRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_RegisterRsp, ls.handleRegisterRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_ServerListRsp, ls.handleCentralServerListRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_NewDbProxyNotify, ls.handleCentralNewDbProxy)
-	common.Register(ls.centralRouter, common.Ct2Srv_ShutdownNotify, ls.handleCentralShutdownNotify)
-	common.Register(ls.centralRouter, common.Ct2Srv_HeartbeatRsp, ls.noopHeartbeat)
+	common.Register(ls.centralRouter, common.Ct2Lg_GatewayAssignRsp, ls.HandleGatewayAssignRsp)
+	common.Register(ls.centralRouter, common.Ct2Srv_RegisterRsp, ls.HandleRegisterRsp)
+	common.Register(ls.centralRouter, common.Ct2Srv_ServerListRsp, ls.HandleCentralServerListRsp)
+	common.Register(ls.centralRouter, common.Ct2Srv_NewDbProxyNotify, ls.HandleCentralNewDbProxy)
+	common.Register(ls.centralRouter, common.Ct2Srv_ShutdownNotify, ls.HandleCentralShutdownNotify)
+	common.Register(ls.centralRouter, common.Ct2Srv_HeartbeatRsp, ls.NoopHeartbeat)
 
 	// dbproxy -> Login
-	common.Register(ls.dbRouter, common.Db2Lg_ValidateAccountRsp, ls.handleValidateAccountRsp)
+	common.Register(ls.dbRouter, common.Db2Lg_ValidateAccountRsp, ls.HandleValidateAccountRsp)
 
-	ls.OnMessage = ls.handleMessage
-	ls.OnCentralMessage = ls.handleCentralMessage
+	ls.OnMessage = ls.HandleMessage
+	ls.OnCentralMessage = ls.HandleCentralMessage
 	return ls
 }
 
-func (ls *loginServer) noopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
+func (ls *loginServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (ls *loginServer) handleMessage(conn *common.ConnWrapper, msg common.Message) {
+func (ls *loginServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
 	ls.clientRouter.Dispatch(conn, msg)
 }
 
-func (ls *loginServer) handleCentralMessage(msg common.Message) {
+func (ls *loginServer) HandleCentralMessage(msg common.Message) {
 	ls.centralRouter.Dispatch(nil, msg)
 }
 
 // handleAccountLogin asks dbproxy to validate the credentials. Account data
 // now lives in MySQL (via dbproxy), replacing the old hardcoded table.
-func (ls *loginServer) handleAccountLogin(conn *common.ConnWrapper, req *common.LoginReq) {
+func (ls *loginServer) HandleAccountLogin(conn *common.ConnWrapper, req *common.LoginReq) {
 	log.Printf("[login] login attempt: account=%s", req.Account)
 
 	ls.mu.Lock()
@@ -106,13 +106,13 @@ func (ls *loginServer) handleAccountLogin(conn *common.ConnWrapper, req *common.
 	reqID := ls.reqCounter
 	pending := &validatePending{conn: conn, req: req, reqID: reqID}
 	pending.timer = time.AfterFunc(validateTimeout, func() {
-		ls.handleValidateTimeout(reqID)
+		ls.HandleValidateTimeout(reqID)
 	})
 	ls.validatePendings[reqID] = pending
 	ls.mu.Unlock()
 
 	vReq := common.ValidateAccountReq{ReqId: reqID, Account: req.Account, Password: req.Password}
-	if err := ls.forwardMsgToDb(common.Lg2Db_ValidateAccountReq, &vReq); err != nil {
+	if err := ls.ForwardMsgToDb(common.Lg2Db_ValidateAccountReq, &vReq); err != nil {
 		ls.mu.Lock()
 		delete(ls.validatePendings, reqID)
 		ls.mu.Unlock()
@@ -124,7 +124,7 @@ func (ls *loginServer) handleAccountLogin(conn *common.ConnWrapper, req *common.
 	log.Printf("[login] validating account=%s via dbproxy (reqID=%d)", req.Account, reqID)
 }
 
-func (ls *loginServer) handleValidateAccountRsp(_ *common.ConnWrapper, rsp *common.ValidateAccountRsp) {
+func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *common.ValidateAccountRsp) {
 	ls.mu.Lock()
 	pending, ok := ls.validatePendings[rsp.ReqId]
 	if ok {
@@ -153,7 +153,7 @@ func (ls *loginServer) handleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 	gwReqID := ls.reqCounter
 	gwPending := &gatewayPending{conn: pending.conn, req: pending.req, reqID: gwReqID}
 	gwPending.timer = time.AfterFunc(gatewayAssignTimeout, func() {
-		ls.handleGatewayAssignTimeout(gwReqID)
+		ls.HandleGatewayAssignTimeout(gwReqID)
 	})
 	ls.pendings[gwReqID] = gwPending
 	ls.mu.Unlock()
@@ -163,7 +163,7 @@ func (ls *loginServer) handleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 	log.Printf("[login] account=%s validated, requested gateway assignment (reqID=%d)", pending.req.Account, gwReqID)
 }
 
-func (ls *loginServer) handleValidateTimeout(reqID uint64) {
+func (ls *loginServer) HandleValidateTimeout(reqID uint64) {
 	ls.mu.Lock()
 	pending, ok := ls.validatePendings[reqID]
 	if ok {
@@ -178,7 +178,7 @@ func (ls *loginServer) handleValidateTimeout(reqID uint64) {
 	common.SendMsg(pending.conn, common.Lg2Cli_LoginRsp, &rsp)
 }
 
-func (ls *loginServer) handleGatewayAssignRsp(_ *common.ConnWrapper, rsp *common.GatewayAssignRsp) {
+func (ls *loginServer) HandleGatewayAssignRsp(_ *common.ConnWrapper, rsp *common.GatewayAssignRsp) {
 	ls.mu.Lock()
 	pending, ok := ls.pendings[rsp.ReqId]
 	if ok {
@@ -213,7 +213,7 @@ func (ls *loginServer) handleGatewayAssignRsp(_ *common.ConnWrapper, rsp *common
 	log.Printf("[login] login success: account=%s gateway=%s", pending.req.Account, rsp.GatewayAddr)
 }
 
-func (ls *loginServer) handleGatewayAssignTimeout(reqID uint64) {
+func (ls *loginServer) HandleGatewayAssignTimeout(reqID uint64) {
 	ls.mu.Lock()
 	pending, ok := ls.pendings[reqID]
 	if ok {
@@ -230,7 +230,7 @@ func (ls *loginServer) handleGatewayAssignTimeout(reqID uint64) {
 	// pending.conn.CloseAfterSend()
 }
 
-func (ls *loginServer) handleRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+func (ls *loginServer) HandleRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
 	if rsp.Success {
 		log.Printf("[login %s] registered: %s", ls.ServerId, rsp.Message)
 		// Pull the dbproxy list in case it registered before us.
@@ -240,26 +240,26 @@ func (ls *loginServer) handleRegisterRsp(_ *common.ConnWrapper, rsp *common.Regi
 
 // --- dbproxy connection ---
 
-func (ls *loginServer) handleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
+func (ls *loginServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
 	for _, e := range rsp.Servers {
-		ls.connectToDb(e.ServerId, e.ListenAddr)
+		ls.ConnectToDb(e.ServerId, e.ListenAddr)
 	}
 }
 
-func (ls *loginServer) handleCentralNewDbProxy(_ *common.ConnWrapper, entry *common.ServerEntry) {
-	ls.connectToDb(entry.ServerId, entry.ListenAddr)
+func (ls *loginServer) HandleCentralNewDbProxy(_ *common.ConnWrapper, entry *common.ServerEntry) {
+	ls.ConnectToDb(entry.ServerId, entry.ListenAddr)
 }
 
-// handleCentralShutdownNotify stops accepting new logins, acks central, and
+// HandleCentralShutdownNotify stops accepting new logins, acks central, and
 // exits. Login has nothing to flush - accounts are validated against dbproxy in
 // real time - so it is torn down early in the shutdown sequence.
-func (ls *loginServer) handleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
+func (ls *loginServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
 	log.Printf("[login %s] shutdown requested: %s", ls.ServerId, notify.Reason)
 	ls.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ls.ServerId})
 	go ls.Stop()
 }
 
-func (ls *loginServer) forwardMsgToDb(msgType common.MessageType, m proto.Message) error {
+func (ls *loginServer) ForwardMsgToDb(msgType common.MessageType, m proto.Message) error {
 	data, err := common.MarshalHelper(m)
 	if err != nil {
 		return err
@@ -273,7 +273,7 @@ func (ls *loginServer) forwardMsgToDb(msgType common.MessageType, m proto.Messag
 	return conn.Send(common.Message{Type: msgType, Data: data})
 }
 
-func (ls *loginServer) connectToDb(dbID, dbAddr string) {
+func (ls *loginServer) ConnectToDb(dbID, dbAddr string) {
 	ls.mu.Lock()
 	if ls.dbConn != nil {
 		ls.mu.Unlock()
@@ -291,13 +291,13 @@ func (ls *loginServer) connectToDb(dbID, dbAddr string) {
 	ls.dbConn = cw
 	ls.mu.Unlock()
 	log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerId, dbID, dbAddr)
-	go ls.dbReadLoop(cw)
+	go ls.DbReadLoop(cw)
 }
 
-func (ls *loginServer) dbReadLoop(cw *common.ConnWrapper) {
+func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[login %s] dbReadLoop panic recovered: %v", ls.ServerId, r)
+			log.Printf("[login %s] DbReadLoop panic recovered: %v", ls.ServerId, r)
 		}
 	}()
 	for {

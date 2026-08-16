@@ -30,8 +30,8 @@
             "central_addr": "127.0.0.1:9000",
             "voxel_file": "../GameConfig/MainCity_voxels.bytes",
             "displacement_curves_file": "../GameConfig/displacement_curves.json",
-            "player_config_file": "../GameConfig/player_config.json",
-            "state_transition_table_file": "../GameConfig/state_transition_table.json",
+            "player_config_file": "../GameConfig/Player/player_config.json",
+            "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.json",
             "spawn_x": 0,
             "spawn_z": 0,
             "movement_tick_ms": 20

@@ -41,11 +41,7 @@ namespace BigWorldClient
         /// </summary>
         public void LoadAsync()
         {
-            if (runner == null)
-            {
-                Debug.LogError($"[GameScene:{SceneId}] No coroutine runner — cannot load.");
-                return;
-            }
+            if (runner == null) return;
             runner.StartCoroutine(LoadRoutine());
         }
 
@@ -54,10 +50,6 @@ namespace BigWorldClient
             // ── 1. Load voxel data from Resources binary ──
             string resourcePath = $"VoxelData/{TemplateId}_voxels";
             VoxelGridData = VoxelGridData.LoadFromResources(resourcePath);
-            if (VoxelGridData != null)
-                Debug.Log($"[GameScene:{SceneId}] Voxel data loaded: {VoxelGridData.TotalVoxelCount} voxels from Resources/{resourcePath}");
-            else
-                Debug.LogWarning($"[GameScene:{SceneId}] Voxel data not found at Resources/{resourcePath} — walking disabled.");
 
             // ── 2. Async load Unity scene with loading UI ──
             var ui = UIManager.Instance;
@@ -72,7 +64,6 @@ namespace BigWorldClient
             var op = SceneManager.LoadSceneAsync(TemplateId, LoadSceneMode.Single);
             if (op == null)
             {
-                Debug.LogError($"[GameScene:{SceneId}] Scene not found in build settings: {TemplateId}");
                 if (hasLoading) ui.HidePanel("loading");
                 yield break;
             }
@@ -93,7 +84,6 @@ namespace BigWorldClient
 
             if (hasLoading) ui.HidePanel("loading");
             UIEventBus.Publish(new SceneLoadCompleteEvent { SceneName = TemplateId });
-            Debug.Log($"[GameScene:{SceneId}] Scene loaded: {TemplateId}");
         }
     }
 }

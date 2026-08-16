@@ -4,7 +4,7 @@ namespace BigWorldClient
 {
     /// <summary>
     /// Generic player skill driven by a <see cref="SkillConfig"/> ScriptableObject.
-    /// Handles consecutive-use tracking, cooldown, and state transition automatically —
+    /// Handles consecutive-use tracking, cooldown, and state transition automatically 鈥?
     /// no need to subclass for each new skill.
     ///
     /// If a skill truly needs custom logic beyond what the config provides, override
@@ -63,17 +63,24 @@ namespace BigWorldClient
                 _lastLimitReachedTime = Time.time;
             }
 
-            // Transition to the configured target state
-            var targetState = Player.StateMachine.GetStateByType(Config.TargetState);
-            if (targetState != null)
+            // Transition to the configured target state through the tick predictor.
+            var predictor = Player.Controller.Predictor;
+            if (predictor == null || !predictor.Ready) return;
+
+            Vector3 dir = Player.Controller.GetWorldMoveDirection();
+            switch (Config.TargetState)
             {
-                Player.StateMachine.ChangeState(targetState);
-            }
-            else
-            {
-                Debug.LogError(
-                    $"Skill '{Name}': target state '{Config.TargetState}' could not be resolved " +
-                    "by the state machine.");
+                case BigWorldClient.Network.Protocol.MoveState.MoveDash:
+                    predictor.EnqueueStart(BigWorldClient.Network.Protocol.MoveState.MoveDash, dir.x, dir.z);
+                    break;
+                case BigWorldClient.Network.Protocol.MoveState.MoveJumpUp:
+                    predictor.EnqueueStart(BigWorldClient.Network.Protocol.MoveState.MoveJumpUp, dir.x, dir.z);
+                    break;
+                case BigWorldClient.Network.Protocol.MoveState.MoveRoll:
+                    predictor.EnqueueStart(BigWorldClient.Network.Protocol.MoveState.MoveRoll, dir.x, dir.z);
+                    break;
+                default:
+                    break;
             }
         }
     }

@@ -10,7 +10,7 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	cfg := common.MustLoadServerConfig("common/config.json", "gateway")
-	gs := newGatewayServer(cfg.Name)
+	gs := NewGatewayServer(cfg.Name)
 	if err := gs.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

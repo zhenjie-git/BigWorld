@@ -420,6 +420,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerConfig: {fileID: 11400000, guid: 13617ac39b7d91b41a96abf076efcd9a, type: 2}
+  loginServerHost: 127.0.0.1
+  loginServerPort: 9200
+  entrySceneName: Login
   mainCitySceneName: MainCity
   loginPanelId: login
   playerPrefabPath: Models/Robot

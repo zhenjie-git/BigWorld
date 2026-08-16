@@ -15,7 +15,7 @@ func main() {
 		log.Fatalf("failed to init token signer: %v", err)
 	}
 
-	ls := newLoginServer(cfg.Name)
+	ls := NewLoginServer(cfg.Name)
 	if err := ls.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

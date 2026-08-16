@@ -94,40 +94,44 @@ namespace BigWorldClient.Network.Protocol {
             "cRIRCglwbGF5ZXJfaWQYASABKAQSFgoOc2VydmVyX3RpbWVfbXMYAiABKAMi",
             "XQoQTW92ZURpckNoYW5nZVJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGly",
             "GAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgD",
-            "IAEoAyJ0CgdNb3ZlUnNwEg8KB3N1Y2Nlc3MYASABKAgSEQoJcGxheWVyX2lk",
-            "GAIgASgEEgkKAXgYAyABKAESCQoBehgEIAEoARIJCgF5GAUgASgBEg8KB21l",
-            "c3NhZ2UYBiABKAkSEwoLYWNrX3RpbWVfbXMYByABKAMiLwoIU2tpbGxSZXES",
-            "EQoJcGxheWVyX2lkGAEgASgEEhAKCHNraWxsX2lkGAIgASgJIj8KCFNraWxs",
-            "UnNwEg8KB3N1Y2Nlc3MYASABKAgSEQoJcGxheWVyX2lkGAIgASgEEg8KB21l",
-            "c3NhZ2UYAyABKAkiLAoSQ2xpZW50SGVhcnRiZWF0UmVxEhYKDmNsaWVudF90",
-            "aW1lX21zGAEgASgDIkQKEkNsaWVudEhlYXJ0YmVhdFJzcBIWCg5zZXJ2ZXJf",
-            "dGltZV9tcxgBIAEoAxIWCg5jbGllbnRfdGltZV9tcxgCIAEoAyJHChJWYWxp",
-            "ZGF0ZUFjY291bnRSZXESDgoGcmVxX2lkGAEgASgEEg8KB2FjY291bnQYAiAB",
-            "KAkSEAoIcGFzc3dvcmQYAyABKAkiRAoSVmFsaWRhdGVBY2NvdW50UnNwEg4K",
-            "BnJlcV9pZBgBIAEoBBINCgV2YWxpZBgCIAEoCBIPCgdtZXNzYWdlGAMgASgJ",
-            "IiAKDUxvYWRQbGF5ZXJSZXESDwoHYWNjb3VudBgBIAEoCSJpCg1Mb2FkUGxh",
-            "eWVyUnNwEg0KBWZvdW5kGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdh",
-            "Y2NvdW50GAMgASgJEgkKAXgYBCABKAESCQoBehgFIAEoARIPCgdtZXNzYWdl",
-            "GAYgASgJIkYKClBsYXllckRhdGESEQoJcGxheWVyX2lkGAEgASgEEg8KB2Fj",
-            "Y291bnQYAiABKAkSCQoBeBgDIAEoARIJCgF6GAQgASgBIkYKDVNhdmVQbGF5",
-            "ZXJSZXESDgoGcmVxX2lkGAEgASgEEiUKB3BsYXllcnMYAiADKAsyFC5iaWd3",
-            "b3JsZC5QbGF5ZXJEYXRhIkEKDVNhdmVQbGF5ZXJSc3ASDgoGcmVxX2lkGAEg",
-            "ASgEEg8KB3N1Y2Nlc3MYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIdCgtTaHV0",
-            "ZG93blJlcRIOCgZyZWFzb24YASABKAkiLwoLU2h1dGRvd25Sc3ASDwoHc3Vj",
-            "Y2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiAKDlNodXRkb3duTm90aWZ5",
-            "Eg4KBnJlYXNvbhgBIAEoCSIgCgtTaHV0ZG93bkFjaxIRCglzZXJ2ZXJfaWQY",
-            "ASABKAkiJwoUU2VydmVyU2h1dGRvd25Ob3RpZnkSDwoHbWVzc2FnZRgBIAEo",
-            "CSqAAQoKU2VydmVyVHlwZRISCg5TRVJWRVJfSU5WQUxJRBAAEhIKDlNFUlZF",
-            "Ul9DRU5UUkFMEAESEAoMU0VSVkVSX1dPUkxEEAISEgoOU0VSVkVSX0dBVEVX",
-            "QVkQAxIQCgxTRVJWRVJfTE9HSU4QBBISCg5TRVJWRVJfREJQUk9YWRAFKoAC",
-            "CglNb3ZlU3RhdGUSDQoJTU9WRV9JRExFEAASDQoJTU9WRV9XQUxLEAESDAoI",
-            "TU9WRV9SVU4QAhIPCgtNT1ZFX1NQUklOVBADEhMKD01PVkVfU1RPUF9MSUdI",
-            "VBAEEhEKDU1PVkVfU1RPUF9NRUQQBRISCg5NT1ZFX1NUT1BfSEFSRBAGEhMK",
-            "D01PVkVfTEFORF9MSUdIVBAHEhIKDk1PVkVfTEFORF9IQVJEEAgSDQoJTU9W",
-            "RV9ST0xMEAkSDQoJTU9WRV9EQVNIEAoSEAoMTU9WRV9KVU1QX1VQEAsSDQoJ",
-            "TU9WRV9GQUxMEAwSEgoOTU9WRV9KVU1QX0RPV04QDUI0WhJiaWd3b3JsZC9j",
-            "b21tb24vcGKqAh1HYW1lcGxheURlbW8uTmV0d29yay5Qcm90b2NvbGIGcHJv",
-            "dG8z"));
+            "IAEoAyK9AgoHTW92ZVJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9p",
+            "ZBgCIAEoBBIJCgF4GAMgASgBEgkKAXoYBCABKAESCQoBeRgFIAEoARIPCgdt",
+            "ZXNzYWdlGAYgASgJEhMKC2Fja190aW1lX21zGAcgASgDEhAKCHNpbV90aWNr",
+            "GAggASgDEhAKCGFja190aWNrGAkgASgDEiIKBXN0YXRlGAogASgOMhMuYmln",
+            "d29ybGQuTW92ZVN0YXRlEg8KB3ZveGVsX2sYCyABKAUSEAoIYWlyYm9ybmUY",
+            "DCABKAgSDQoFZGlyX3gYDSABKAESDQoFZGlyX3oYDiABKAESEgoKY3VydmVf",
+            "bm9ybRgPIAEoARIWCg5zdGF0ZV9zdGFydF9tcxgQIAEoAxISCgpmYWxsX3Zl",
+            "bF95GBEgASgBIi8KCFNraWxsUmVxEhEKCXBsYXllcl9pZBgBIAEoBBIQCghz",
+            "a2lsbF9pZBgCIAEoCSI/CghTa2lsbFJzcBIPCgdzdWNjZXNzGAEgASgIEhEK",
+            "CXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiwKEkNsaWVudEhl",
+            "YXJ0YmVhdFJlcRIWCg5jbGllbnRfdGltZV9tcxgBIAEoAyJEChJDbGllbnRI",
+            "ZWFydGJlYXRSc3ASFgoOc2VydmVyX3RpbWVfbXMYASABKAMSFgoOY2xpZW50",
+            "X3RpbWVfbXMYAiABKAMiRwoSVmFsaWRhdGVBY2NvdW50UmVxEg4KBnJlcV9p",
+            "ZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIkQK",
+            "ElZhbGlkYXRlQWNjb3VudFJzcBIOCgZyZXFfaWQYASABKAQSDQoFdmFsaWQY",
+            "AiABKAgSDwoHbWVzc2FnZRgDIAEoCSIgCg1Mb2FkUGxheWVyUmVxEg8KB2Fj",
+            "Y291bnQYASABKAkiaQoNTG9hZFBsYXllclJzcBINCgVmb3VuZBgBIAEoCBIR",
+            "CglwbGF5ZXJfaWQYAiABKAQSDwoHYWNjb3VudBgDIAEoCRIJCgF4GAQgASgB",
+            "EgkKAXoYBSABKAESDwoHbWVzc2FnZRgGIAEoCSJGCgpQbGF5ZXJEYXRhEhEK",
+            "CXBsYXllcl9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEgkKAXgYAyABKAES",
+            "CQoBehgEIAEoASJGCg1TYXZlUGxheWVyUmVxEg4KBnJlcV9pZBgBIAEoBBIl",
+            "CgdwbGF5ZXJzGAIgAygLMhQuYmlnd29ybGQuUGxheWVyRGF0YSJBCg1TYXZl",
+            "UGxheWVyUnNwEg4KBnJlcV9pZBgBIAEoBBIPCgdzdWNjZXNzGAIgASgIEg8K",
+            "B21lc3NhZ2UYAyABKAkiHQoLU2h1dGRvd25SZXESDgoGcmVhc29uGAEgASgJ",
+            "Ii8KC1NodXRkb3duUnNwEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgC",
+            "IAEoCSIgCg5TaHV0ZG93bk5vdGlmeRIOCgZyZWFzb24YASABKAkiIAoLU2h1",
+            "dGRvd25BY2sSEQoJc2VydmVyX2lkGAEgASgJIicKFFNlcnZlclNodXRkb3du",
+            "Tm90aWZ5Eg8KB21lc3NhZ2UYASABKAkqgAEKClNlcnZlclR5cGUSEgoOU0VS",
+            "VkVSX0lOVkFMSUQQABISCg5TRVJWRVJfQ0VOVFJBTBABEhAKDFNFUlZFUl9X",
+            "T1JMRBACEhIKDlNFUlZFUl9HQVRFV0FZEAMSEAoMU0VSVkVSX0xPR0lOEAQS",
+            "EgoOU0VSVkVSX0RCUFJPWFkQBSqCAgoJTW92ZVN0YXRlEg0KCU1PVkVfSURM",
+            "RRAAEg0KCU1PVkVfV0FMSxABEgwKCE1PVkVfUlVOEAISDwoLTU9WRV9TUFJJ",
+            "TlQQAxITCg9NT1ZFX1NUT1BfTElHSFQQBBIRCg1NT1ZFX1NUT1BfTUVEEAUS",
+            "EgoOTU9WRV9TVE9QX0hBUkQQBhITCg9NT1ZFX0xBTkRfTElHSFQQBxINCglN",
+            "T1ZFX1JPTEwQCRINCglNT1ZFX0RBU0gQChIQCgxNT1ZFX0pVTVBfVVAQCxIN",
+            "CglNT1ZFX0ZBTEwQDBISCg5NT1ZFX0pVTVBfRE9XThANIgQICBAIKg5NT1ZF",
+            "X0xBTkRfSEFSREI2WhJiaWd3b3JsZC9jb21tb24vcGKqAh9CaWdXb3JsZENs",
+            "aWVudC5OZXR3b3JrLlByb3RvY29sYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::BigWorldClient.Network.Protocol.ServerType), typeof(global::BigWorldClient.Network.Protocol.MoveState), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -170,7 +174,7 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.StopStartReq), global::BigWorldClient.Network.Protocol.StopStartReq.Parser, new[]{ "PlayerId", "StopKind", "ServerTimeMs" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveStopReq), global::BigWorldClient.Network.Protocol.MoveStopReq.Parser, new[]{ "PlayerId", "ServerTimeMs" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveDirChangeReq), global::BigWorldClient.Network.Protocol.MoveDirChangeReq.Parser, new[]{ "PlayerId", "Dir", "ServerTimeMs" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveRsp), global::BigWorldClient.Network.Protocol.MoveRsp.Parser, new[]{ "Success", "PlayerId", "X", "Z", "Y", "Message", "AckTimeMs" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveRsp), global::BigWorldClient.Network.Protocol.MoveRsp.Parser, new[]{ "Success", "PlayerId", "X", "Z", "Y", "Message", "AckTimeMs", "SimTick", "AckTick", "State", "VoxelK", "Airborne", "DirX", "DirZ", "CurveNorm", "StateStartMs", "FallVelY" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.SkillReq), global::BigWorldClient.Network.Protocol.SkillReq.Parser, new[]{ "PlayerId", "SkillId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.SkillRsp), global::BigWorldClient.Network.Protocol.SkillRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ClientHeartbeatReq), global::BigWorldClient.Network.Protocol.ClientHeartbeatReq.Parser, new[]{ "ClientTimeMs" }, null, null, null, null),
@@ -221,7 +225,6 @@ namespace BigWorldClient.Network.Protocol {
     [pbr::OriginalName("MOVE_STOP_MED")] MoveStopMed = 5,
     [pbr::OriginalName("MOVE_STOP_HARD")] MoveStopHard = 6,
     [pbr::OriginalName("MOVE_LAND_LIGHT")] MoveLandLight = 7,
-    [pbr::OriginalName("MOVE_LAND_HARD")] MoveLandHard = 8,
     [pbr::OriginalName("MOVE_ROLL")] MoveRoll = 9,
     [pbr::OriginalName("MOVE_DASH")] MoveDash = 10,
     [pbr::OriginalName("MOVE_JUMP_UP")] MoveJumpUp = 11,
@@ -11278,6 +11281,11 @@ namespace BigWorldClient.Network.Protocol {
 
   }
 
+  /// <summary>
+  /// 移动响应：成功/失败都尽量携带服务器权威快照，客户端据此做回滚重放。
+  /// SimTick 是快照 tick；AckTick 是已确认到的输入 tick；两者通常相等，
+  /// 客户端恢复 SimTick 快照后重放所有 EventTick > AckTick 的待确认输入。
+  /// </summary>
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
   public sealed partial class MoveRsp : pb::IMessage<MoveRsp>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
@@ -11320,6 +11328,16 @@ namespace BigWorldClient.Network.Protocol {
       y_ = other.y_;
       message_ = other.message_;
       ackTimeMs_ = other.ackTimeMs_;
+      simTick_ = other.simTick_;
+      ackTick_ = other.ackTick_;
+      state_ = other.state_;
+      voxelK_ = other.voxelK_;
+      airborne_ = other.airborne_;
+      dirX_ = other.dirX_;
+      dirZ_ = other.dirZ_;
+      curveNorm_ = other.curveNorm_;
+      stateStartMs_ = other.stateStartMs_;
+      fallVelY_ = other.fallVelY_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -11405,7 +11423,7 @@ namespace BigWorldClient.Network.Protocol {
     public const int AckTimeMsFieldNumber = 7;
     private long ackTimeMs_;
     /// <summary>
-    /// 服务端最新接受的时间戳；客户端据此弹出/丢弃已发送记录
+    /// 兼容旧字段：被确认输入的服务器毫秒
     /// </summary>
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -11413,6 +11431,132 @@ namespace BigWorldClient.Network.Protocol {
       get { return ackTimeMs_; }
       set {
         ackTimeMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "sim_tick" field.</summary>
+    public const int SimTickFieldNumber = 8;
+    private long simTick_;
+    /// <summary>
+    /// 快照对应的服务器 tick
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public long SimTick {
+      get { return simTick_; }
+      set {
+        simTick_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "ack_tick" field.</summary>
+    public const int AckTickFieldNumber = 9;
+    private long ackTick_;
+    /// <summary>
+    /// 已确认输入 tick
+    /// </summary>
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public long AckTick {
+      get { return ackTick_; }
+      set {
+        ackTick_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "state" field.</summary>
+    public const int StateFieldNumber = 10;
+    private global::BigWorldClient.Network.Protocol.MoveState state_ = global::BigWorldClient.Network.Protocol.MoveState.MoveIdle;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::BigWorldClient.Network.Protocol.MoveState State {
+      get { return state_; }
+      set {
+        state_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "voxel_k" field.</summary>
+    public const int VoxelKFieldNumber = 11;
+    private int voxelK_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int VoxelK {
+      get { return voxelK_; }
+      set {
+        voxelK_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "airborne" field.</summary>
+    public const int AirborneFieldNumber = 12;
+    private bool airborne_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Airborne {
+      get { return airborne_; }
+      set {
+        airborne_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "dir_x" field.</summary>
+    public const int DirXFieldNumber = 13;
+    private double dirX_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double DirX {
+      get { return dirX_; }
+      set {
+        dirX_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "dir_z" field.</summary>
+    public const int DirZFieldNumber = 14;
+    private double dirZ_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double DirZ {
+      get { return dirZ_; }
+      set {
+        dirZ_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "curve_norm" field.</summary>
+    public const int CurveNormFieldNumber = 15;
+    private double curveNorm_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double CurveNorm {
+      get { return curveNorm_; }
+      set {
+        curveNorm_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "state_start_ms" field.</summary>
+    public const int StateStartMsFieldNumber = 16;
+    private long stateStartMs_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public long StateStartMs {
+      get { return stateStartMs_; }
+      set {
+        stateStartMs_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "fall_vel_y" field.</summary>
+    public const int FallVelYFieldNumber = 17;
+    private double fallVelY_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double FallVelY {
+      get { return fallVelY_; }
+      set {
+        fallVelY_ = value;
       }
     }
 
@@ -11438,6 +11582,16 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Y, other.Y)) return false;
       if (Message != other.Message) return false;
       if (AckTimeMs != other.AckTimeMs) return false;
+      if (SimTick != other.SimTick) return false;
+      if (AckTick != other.AckTick) return false;
+      if (State != other.State) return false;
+      if (VoxelK != other.VoxelK) return false;
+      if (Airborne != other.Airborne) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(DirX, other.DirX)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(DirZ, other.DirZ)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(CurveNorm, other.CurveNorm)) return false;
+      if (StateStartMs != other.StateStartMs) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(FallVelY, other.FallVelY)) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -11452,6 +11606,16 @@ namespace BigWorldClient.Network.Protocol {
       if (Y != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Y);
       if (Message.Length != 0) hash ^= Message.GetHashCode();
       if (AckTimeMs != 0L) hash ^= AckTimeMs.GetHashCode();
+      if (SimTick != 0L) hash ^= SimTick.GetHashCode();
+      if (AckTick != 0L) hash ^= AckTick.GetHashCode();
+      if (State != global::BigWorldClient.Network.Protocol.MoveState.MoveIdle) hash ^= State.GetHashCode();
+      if (VoxelK != 0) hash ^= VoxelK.GetHashCode();
+      if (Airborne != false) hash ^= Airborne.GetHashCode();
+      if (DirX != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(DirX);
+      if (DirZ != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(DirZ);
+      if (CurveNorm != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(CurveNorm);
+      if (StateStartMs != 0L) hash ^= StateStartMs.GetHashCode();
+      if (FallVelY != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(FallVelY);
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -11498,6 +11662,46 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(56);
         output.WriteInt64(AckTimeMs);
       }
+      if (SimTick != 0L) {
+        output.WriteRawTag(64);
+        output.WriteInt64(SimTick);
+      }
+      if (AckTick != 0L) {
+        output.WriteRawTag(72);
+        output.WriteInt64(AckTick);
+      }
+      if (State != global::BigWorldClient.Network.Protocol.MoveState.MoveIdle) {
+        output.WriteRawTag(80);
+        output.WriteEnum((int) State);
+      }
+      if (VoxelK != 0) {
+        output.WriteRawTag(88);
+        output.WriteInt32(VoxelK);
+      }
+      if (Airborne != false) {
+        output.WriteRawTag(96);
+        output.WriteBool(Airborne);
+      }
+      if (DirX != 0D) {
+        output.WriteRawTag(105);
+        output.WriteDouble(DirX);
+      }
+      if (DirZ != 0D) {
+        output.WriteRawTag(113);
+        output.WriteDouble(DirZ);
+      }
+      if (CurveNorm != 0D) {
+        output.WriteRawTag(121);
+        output.WriteDouble(CurveNorm);
+      }
+      if (StateStartMs != 0L) {
+        output.WriteRawTag(128, 1);
+        output.WriteInt64(StateStartMs);
+      }
+      if (FallVelY != 0D) {
+        output.WriteRawTag(137, 1);
+        output.WriteDouble(FallVelY);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -11536,6 +11740,46 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(56);
         output.WriteInt64(AckTimeMs);
       }
+      if (SimTick != 0L) {
+        output.WriteRawTag(64);
+        output.WriteInt64(SimTick);
+      }
+      if (AckTick != 0L) {
+        output.WriteRawTag(72);
+        output.WriteInt64(AckTick);
+      }
+      if (State != global::BigWorldClient.Network.Protocol.MoveState.MoveIdle) {
+        output.WriteRawTag(80);
+        output.WriteEnum((int) State);
+      }
+      if (VoxelK != 0) {
+        output.WriteRawTag(88);
+        output.WriteInt32(VoxelK);
+      }
+      if (Airborne != false) {
+        output.WriteRawTag(96);
+        output.WriteBool(Airborne);
+      }
+      if (DirX != 0D) {
+        output.WriteRawTag(105);
+        output.WriteDouble(DirX);
+      }
+      if (DirZ != 0D) {
+        output.WriteRawTag(113);
+        output.WriteDouble(DirZ);
+      }
+      if (CurveNorm != 0D) {
+        output.WriteRawTag(121);
+        output.WriteDouble(CurveNorm);
+      }
+      if (StateStartMs != 0L) {
+        output.WriteRawTag(128, 1);
+        output.WriteInt64(StateStartMs);
+      }
+      if (FallVelY != 0D) {
+        output.WriteRawTag(137, 1);
+        output.WriteDouble(FallVelY);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -11566,6 +11810,36 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (AckTimeMs != 0L) {
         size += 1 + pb::CodedOutputStream.ComputeInt64Size(AckTimeMs);
+      }
+      if (SimTick != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(SimTick);
+      }
+      if (AckTick != 0L) {
+        size += 1 + pb::CodedOutputStream.ComputeInt64Size(AckTick);
+      }
+      if (State != global::BigWorldClient.Network.Protocol.MoveState.MoveIdle) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) State);
+      }
+      if (VoxelK != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeInt32Size(VoxelK);
+      }
+      if (Airborne != false) {
+        size += 1 + 1;
+      }
+      if (DirX != 0D) {
+        size += 1 + 8;
+      }
+      if (DirZ != 0D) {
+        size += 1 + 8;
+      }
+      if (CurveNorm != 0D) {
+        size += 1 + 8;
+      }
+      if (StateStartMs != 0L) {
+        size += 2 + pb::CodedOutputStream.ComputeInt64Size(StateStartMs);
+      }
+      if (FallVelY != 0D) {
+        size += 2 + 8;
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -11599,6 +11873,36 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.AckTimeMs != 0L) {
         AckTimeMs = other.AckTimeMs;
+      }
+      if (other.SimTick != 0L) {
+        SimTick = other.SimTick;
+      }
+      if (other.AckTick != 0L) {
+        AckTick = other.AckTick;
+      }
+      if (other.State != global::BigWorldClient.Network.Protocol.MoveState.MoveIdle) {
+        State = other.State;
+      }
+      if (other.VoxelK != 0) {
+        VoxelK = other.VoxelK;
+      }
+      if (other.Airborne != false) {
+        Airborne = other.Airborne;
+      }
+      if (other.DirX != 0D) {
+        DirX = other.DirX;
+      }
+      if (other.DirZ != 0D) {
+        DirZ = other.DirZ;
+      }
+      if (other.CurveNorm != 0D) {
+        CurveNorm = other.CurveNorm;
+      }
+      if (other.StateStartMs != 0L) {
+        StateStartMs = other.StateStartMs;
+      }
+      if (other.FallVelY != 0D) {
+        FallVelY = other.FallVelY;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -11647,6 +11951,46 @@ namespace BigWorldClient.Network.Protocol {
             AckTimeMs = input.ReadInt64();
             break;
           }
+          case 64: {
+            SimTick = input.ReadInt64();
+            break;
+          }
+          case 72: {
+            AckTick = input.ReadInt64();
+            break;
+          }
+          case 80: {
+            State = (global::BigWorldClient.Network.Protocol.MoveState) input.ReadEnum();
+            break;
+          }
+          case 88: {
+            VoxelK = input.ReadInt32();
+            break;
+          }
+          case 96: {
+            Airborne = input.ReadBool();
+            break;
+          }
+          case 105: {
+            DirX = input.ReadDouble();
+            break;
+          }
+          case 113: {
+            DirZ = input.ReadDouble();
+            break;
+          }
+          case 121: {
+            CurveNorm = input.ReadDouble();
+            break;
+          }
+          case 128: {
+            StateStartMs = input.ReadInt64();
+            break;
+          }
+          case 137: {
+            FallVelY = input.ReadDouble();
+            break;
+          }
         }
       }
     #endif
@@ -11692,6 +12036,46 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 56: {
             AckTimeMs = input.ReadInt64();
+            break;
+          }
+          case 64: {
+            SimTick = input.ReadInt64();
+            break;
+          }
+          case 72: {
+            AckTick = input.ReadInt64();
+            break;
+          }
+          case 80: {
+            State = (global::BigWorldClient.Network.Protocol.MoveState) input.ReadEnum();
+            break;
+          }
+          case 88: {
+            VoxelK = input.ReadInt32();
+            break;
+          }
+          case 96: {
+            Airborne = input.ReadBool();
+            break;
+          }
+          case 105: {
+            DirX = input.ReadDouble();
+            break;
+          }
+          case 113: {
+            DirZ = input.ReadDouble();
+            break;
+          }
+          case 121: {
+            CurveNorm = input.ReadDouble();
+            break;
+          }
+          case 128: {
+            StateStartMs = input.ReadInt64();
+            break;
+          }
+          case 137: {
+            FallVelY = input.ReadDouble();
             break;
           }
         }

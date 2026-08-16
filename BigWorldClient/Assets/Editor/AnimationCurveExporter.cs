@@ -97,14 +97,14 @@ public class AnimationCurveExporter : EditorWindow
 
         if (targetBinding == null)
         {
-            Debug.LogWarning($"未找到绑定属性：{propertyName}");
+            {}
             return false;
         }
 
         AnimationCurve sourceCurve = AnimationUtility.GetEditorCurve(sourceClip, targetBinding.Value);
         if (sourceCurve == null || sourceCurve.keys.Length == 0)
         {
-            Debug.LogWarning($"源曲线为空：{propertyName}");
+            {}
             return false;
         }
 
@@ -133,7 +133,7 @@ public class AnimationCurveExporter : EditorWindow
         var asset = ScriptableObject.CreateInstance<DisplacementCurveAsset>();
         asset.curve = curve;
         AssetDatabase.CreateAsset(asset, axisSavePath);
-        Debug.Log($"已导出曲线：{propertyName} -> {axisSavePath}");
+        {}
         return true;
     }
 
@@ -194,7 +194,7 @@ public class AnimationCurveExporter : EditorWindow
             AssetDatabase.SaveAssets();
             var clearedAxes = new List<string>();
             foreach (var a in axesToClear) clearedAxes.Add(a.ToUpper());
-            Debug.Log($"已清除源动画中 {cleared} 条位移曲线（{string.Join("/", clearedAxes)}轴归基准值，位移由曲线驱动）");
+            {}
         }
     }
 

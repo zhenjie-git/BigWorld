@@ -46,16 +46,41 @@ namespace BigWorldClient.Network
     public readonly struct MoveRspInfo
     {
         public readonly bool Success;
+        public readonly bool HasState;
         public readonly double X, Z, Y;
         public readonly string Message;
+        public readonly long AckTimeMs;
+        public readonly long SimTick;
+        public readonly long AckTick;
+        public readonly MoveState State;
+        public readonly int VoxelK;
+        public readonly bool Airborne;
+        public readonly double DirX, DirZ;
+        public readonly double CurveNorm;
+        public readonly long StateStartMs;
+        public readonly double FallVelY;
 
-        public MoveRspInfo(bool success, double x, double z, double y, string message)
+        public MoveRspInfo(bool success, bool hasState, double x, double z, double y, string message,
+            long ackTimeMs, long simTick, long ackTick, MoveState state, int voxelK, bool airborne,
+            double dirX, double dirZ, double curveNorm, long stateStartMs, double fallVelY)
         {
             Success = success;
+            HasState = hasState;
             X = x;
             Z = z;
             Y = y;
             Message = message;
+            AckTimeMs = ackTimeMs;
+            SimTick = simTick;
+            AckTick = ackTick;
+            State = state;
+            VoxelK = voxelK;
+            Airborne = airborne;
+            DirX = dirX;
+            DirZ = dirZ;
+            CurveNorm = curveNorm;
+            StateStartMs = stateStartMs;
+            FallVelY = fallVelY;
         }
     }
 
@@ -103,74 +128,83 @@ namespace BigWorldClient.Network
 
         public bool TryDequeueMove(out MoveRspInfo info) => _moveResponses.TryDequeue(out info);
 
-        public bool SendWalkStart(float dirX, float dirZ)
+        public bool SendWalkStart(float dirX, float dirZ) => SendWalkStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendWalkStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new WalkStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new WalkStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_WalkStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendRunStart(float dirX, float dirZ)
+        public bool SendRunStart(float dirX, float dirZ) => SendRunStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendRunStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new RunStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new RunStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_RunStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendSprintStart(float dirX, float dirZ)
+        public bool SendSprintStart(float dirX, float dirZ) => SendSprintStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendSprintStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new SprintStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new SprintStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_SprintStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendJumpStart(float dirX, float dirZ)
+        public bool SendJumpStart(float dirX, float dirZ) => SendJumpStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendJumpStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new JumpStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new JumpStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_JumpStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendDashStart(float dirX, float dirZ)
+        public bool SendDashStart(float dirX, float dirZ) => SendDashStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendDashStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new DashStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new DashStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_DashStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendRollStart(float dirX, float dirZ)
+        public bool SendRollStart(float dirX, float dirZ) => SendRollStartAt(dirX, dirZ, Clock.TickNow());
+        public bool SendRollStartAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new RollStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new RollStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_RollStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendStopStart(MoveState stopKind)
+        public bool SendStopStart(MoveState stopKind) => SendStopStartAt(stopKind, Clock.TickNow());
+        public bool SendStopStartAt(MoveState stopKind, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new StopStartReq { PlayerId = _playerId, StopKind = stopKind, ServerTimeMs = Clock.NowMs() };
+            var req = new StopStartReq { PlayerId = _playerId, StopKind = stopKind, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_StopStartReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendMoveStop()
+        public bool SendMoveStop() => SendMoveStopAt(Clock.TickNow());
+        public bool SendMoveStopAt(long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new MoveStopReq { PlayerId = _playerId, ServerTimeMs = Clock.NowMs() };
+            var req = new MoveStopReq { PlayerId = _playerId, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_MoveStopReq, req.ToByteArray());
             return true;
         }
 
-        public bool SendMoveDirChange(float dirX, float dirZ)
+        public bool SendMoveDirChange(float dirX, float dirZ) => SendMoveDirChangeAt(dirX, dirZ, Clock.TickNow());
+        public bool SendMoveDirChangeAt(float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new MoveDirChangeReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = Clock.NowMs() };
+            var req = new MoveDirChangeReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
             _client.Send(MessageTypes.Cli2Wd_MoveDirChangeReq, req.ToByteArray());
             return true;
         }
@@ -391,11 +425,18 @@ namespace BigWorldClient.Network
             Clock.Sync(rsp.ServerTimeMs, rsp.ClientTimeMs, NowMs());
         }
 
-        /// <summary>Move reply (InGame): a failed start/correction feeds the authoritative position back to the mover.</summary>
+        /// <summary>Move reply (InGame): carries the authoritative snapshot used for rollback/replay.</summary>
         private void HandleMoveRsp(byte[] payload)
         {
             var rsp = MoveRsp.Parser.ParseFrom(payload);
-            _moveResponses.Enqueue(new MoveRspInfo(rsp.Success, rsp.X, rsp.Z, rsp.Y, rsp.Message));
+            _moveResponses.Enqueue(new MoveRspInfo(
+                rsp.Success,
+                rsp.SimTick > 0,
+                rsp.X, rsp.Z, rsp.Y, rsp.Message,
+                rsp.AckTimeMs, rsp.SimTick, rsp.AckTick,
+                rsp.State, rsp.VoxelK, rsp.Airborne,
+                rsp.DirX, rsp.DirZ, rsp.CurveNorm,
+                rsp.StateStartMs, rsp.FallVelY));
         }
 
         /// <summary>Logout reply (InGame or LoggingOut): the server closes after this.</summary>

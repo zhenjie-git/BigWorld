@@ -211,7 +211,7 @@ public class VoxelGeneratorWindow : EditorWindow
             return;
         }
 
-        Debug.Log("========== 开始体素生成 ==========");
+        {}
         var sw = System.Diagnostics.Stopwatch.StartNew();
 
         try
@@ -221,7 +221,7 @@ public class VoxelGeneratorWindow : EditorWindow
 
             if (result != null)
             {
-                Debug.Log($"========== 体素生成完成，耗时 {sw.ElapsedMilliseconds}ms ==========");
+                {}
                 showResult = true;
 
                 // 自动保存为二进制
@@ -235,7 +235,7 @@ public class VoxelGeneratorWindow : EditorWindow
         catch (System.Exception e)
         {
             sw.Stop();
-            Debug.LogError($"体素生成失败: {e.Message}\n{e.StackTrace}");
+            {}
             EditorUtility.DisplayDialog("错误", $"体素生成失败:\n{e.Message}", "OK");
         }
     }
@@ -259,8 +259,8 @@ public class VoxelGeneratorWindow : EditorWindow
         File.Copy(filePath, clientCopy, true);
 
         AssetDatabase.Refresh();
-        Debug.Log($"[VoxelGeneratorWindow] 已自动保存二进制文件: {filePath}");
-        Debug.Log($"[VoxelGeneratorWindow] 已同步客户端副本: {clientCopy}");
+        {}
+        {}
     }
 
     private void LoadExistingBinary()
@@ -274,11 +274,11 @@ public class VoxelGeneratorWindow : EditorWindow
             result = VoxelGridData.LoadFromBinary(filePath);
             lastSavedBinaryPath = filePath;
             showResult = true;
-            Debug.Log($"[VoxelGeneratorWindow] 已加载: {filePath}, {result.TotalVoxelCount} 个体素");
+            {}
         }
         catch (System.Exception e)
         {
-            Debug.LogError($"加载二进制失败: {e.Message}");
+            {}
             EditorUtility.DisplayDialog("错误", $"加载失败:\n{e.Message}", "OK");
         }
     }
@@ -304,7 +304,7 @@ public class VoxelGeneratorWindow : EditorWindow
         visualizer.SetGridData(result);
         EditorUtility.SetDirty(visualizer);
 
-        Debug.Log($"[VoxelGeneratorWindow] 已更新 VoxelGridVisualizer，共 {result.TotalVoxelCount} 个体素");
+        {}
     }
 
     private void SaveAsAsset()

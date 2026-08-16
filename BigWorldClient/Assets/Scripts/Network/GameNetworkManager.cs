@@ -49,6 +49,16 @@ namespace BigWorldClient.Network
         public bool SendMoveStop() => _session != null && _session.SendMoveStop();
         public bool SendMoveDirChange(float dirX, float dirZ) => _session != null && _session.SendMoveDirChange(dirX, dirZ);
 
+        public bool SendWalkStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendWalkStartAt(dirX, dirZ, tick);
+        public bool SendRunStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendRunStartAt(dirX, dirZ, tick);
+        public bool SendSprintStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendSprintStartAt(dirX, dirZ, tick);
+        public bool SendJumpStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendJumpStartAt(dirX, dirZ, tick);
+        public bool SendDashStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendDashStartAt(dirX, dirZ, tick);
+        public bool SendRollStartAt(float dirX, float dirZ, long tick) => _session != null && _session.SendRollStartAt(dirX, dirZ, tick);
+        public bool SendStopStartAt(MoveState stopKind, long tick) => _session != null && _session.SendStopStartAt(stopKind, tick);
+        public bool SendMoveStopAt(long tick) => _session != null && _session.SendMoveStopAt(tick);
+        public bool SendMoveDirChangeAt(float dirX, float dirZ, long tick) => _session != null && _session.SendMoveDirChangeAt(dirX, dirZ, tick);
+
         public bool TryDequeueMove(out MoveRspInfo info)
         {
             info = default;
@@ -105,7 +115,7 @@ namespace BigWorldClient.Network
             var clock = _session.Clock;
             if (!clock.IsSynced) return;
             _syncLogged = true;
-            Debug.Log($"[network] server clock synced: offset={clock.OffsetMs:F1}ms, bestRtt={clock.BestRttMs}ms, serverNow={clock.NowMs()}");
+            {}
         }
 
         // ===== Public API =====

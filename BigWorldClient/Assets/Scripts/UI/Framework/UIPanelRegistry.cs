@@ -16,14 +16,7 @@ namespace BigWorldClient.UI.Framework
             lookup = new Dictionary<string, PanelEntry>();
             foreach (var entry in entries)
             {
-                if (string.IsNullOrEmpty(entry.panelId))
-                {
-                    Debug.LogWarning("[UIPanelRegistry] Skipping entry with empty panelId");
-                    continue;
-                }
-                if (lookup.ContainsKey(entry.panelId))
-                    Debug.LogWarning("[UIPanelRegistry] Duplicate panelId: " + entry.panelId);
-                lookup[entry.panelId] = entry;
+                if (string.IsNullOrEmpty(entry.panelId)) continue;                lookup[entry.panelId] = entry;
             }
         }
 

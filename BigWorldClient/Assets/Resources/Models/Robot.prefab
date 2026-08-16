@@ -170,7 +170,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <Config>k__BackingField: {fileID: 11400000, guid: 13617ac39b7d91b41a96abf076efcd9a, type: 2}
-  <TransitionTable>k__BackingField: {fileID: 11400000, guid: 7ef4ecddb23be5e49863f86ddec1bc93, type: 2}
   <SkillConfigs>k__BackingField:
   - {fileID: 11400000, guid: 0612ade054482ef47920792647449779, type: 2}
   <GroundCheckCollider>k__BackingField: {fileID: 1932540728443290600}

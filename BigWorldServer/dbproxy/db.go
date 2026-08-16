@@ -38,7 +38,7 @@ const (
 // opens a pool, verifies connectivity, and ensures the schema + seed accounts
 // are present. This lets dbproxy start cleanly on a fresh MySQL instance
 // without any manual SQL setup.
-func openDB(dsn string) (*playerDB, error) {
+func OpenDB(dsn string) (*playerDB, error) {
 	cfg, err := mysql.ParseDSN(dsn)
 	if err != nil {
 		return nil, fmt.Errorf("parse dsn: %w", err)
@@ -71,7 +71,7 @@ func openDB(dsn string) (*playerDB, error) {
 		db.Close()
 		return nil, fmt.Errorf("ping %s: %w", dbName, err)
 	}
-	if err := ensureSchema(db); err != nil {
+	if err := EnsureSchema(db); err != nil {
 		db.Close()
 		return nil, err
 	}
@@ -79,7 +79,7 @@ func openDB(dsn string) (*playerDB, error) {
 	return &playerDB{db: db}, nil
 }
 
-func ensureSchema(db *sql.DB) error {
+func EnsureSchema(db *sql.DB) error {
 	if _, err := db.Exec(schemaPlayers); err != nil {
 		return fmt.Errorf("create players table: %w", err)
 	}
@@ -94,14 +94,14 @@ func ensureSchema(db *sql.DB) error {
 		}
 	}
 	if _, err := db.Exec(`ALTER TABLE players CHANGE y z DOUBLE NOT NULL DEFAULT 0`); err != nil {
-		if !isColumnGone(err) {
+		if !IsColumnGone(err) {
 			return fmt.Errorf("migrate players.y -> z: %w", err)
 		}
 	}
 	return nil
 }
 
-func isColumnGone(err error) bool {
+func IsColumnGone(err error) bool {
 	return strings.Contains(err.Error(), "1054") ||
 		strings.Contains(err.Error(), "Unknown column") ||
 		strings.Contains(err.Error(), "check that column/key exists")

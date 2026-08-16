@@ -33,7 +33,7 @@ if errorlevel 1 echo   [WARN] MySQL not accepting connections within 30s - conti
 echo.
 
 echo [1/6] Starting Central Server ...
-start "central" /D "%~dp0" cmd /c "go run ./central"
+start "central" /D "%~dp0" cmd /c "go run ./Central"
 
 REM "start" returns immediately, but dbproxy/world/login/gateway do a one-shot
 REM dial to central on boot that is FATAL if it fails (no retry). go run must
@@ -43,16 +43,16 @@ powershell -NoProfile -Command "$p=9000;$n=30;for($i=0;$i -lt $n;$i++){ $up=$fal
 if errorlevel 1 echo   [WARN] Central not up within 30s - check the central window; continuing anyway.
 
 echo [2/6] Starting DBProxy Server ...
-start "dbproxy" /D "%~dp0" cmd /c "go run ./dbproxy"
+start "dbproxy" /D "%~dp0" cmd /c "go run ./DbProxy"
 
 echo [3/6] Starting World Server ...
-start "world" /D "%~dp0" cmd /c "go run ./world"
+start "world" /D "%~dp0" cmd /c "go run ./World"
 
 echo [4/6] Starting Login Server ...
-start "login" /D "%~dp0" cmd /c "go run ./login"
+start "login" /D "%~dp0" cmd /c "go run ./Login"
 
 echo [5/6] Starting Gateway Server ...
-start "gateway" /D "%~dp0" cmd /c "go run ./gateway"
+start "gateway" /D "%~dp0" cmd /c "go run ./Gateway"
 
 echo.
 echo All servers started (run from repo root so common/config.json resolves):

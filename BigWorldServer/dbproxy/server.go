@@ -17,27 +17,27 @@ type dbProxyServer struct {
 	peerRouter *common.MessageRouter
 }
 
-func newDbProxyServer(id string, db *playerDB) *dbProxyServer {
+func NewDbProxyServer(id string, db *playerDB) *dbProxyServer {
 	s := &dbProxyServer{
 		ServerBase: common.NewServerBase(common.ServerDbProxy, id),
 		db:         db,
 		peerRouter: common.NewMessageRouter(),
 	}
 
-	common.Register(s.peerRouter, common.Lg2Db_ValidateAccountReq, s.handleValidateAccount)
-	common.Register(s.peerRouter, common.Wd2Db_LoadPlayerReq, s.handleLoadPlayer)
-	common.Register(s.peerRouter, common.Wd2Db_SavePlayerReq, s.handleSavePlayer)
+	common.Register(s.peerRouter, common.Lg2Db_ValidateAccountReq, s.HandleValidateAccount)
+	common.Register(s.peerRouter, common.Wd2Db_LoadPlayerReq, s.HandleLoadPlayer)
+	common.Register(s.peerRouter, common.Wd2Db_SavePlayerReq, s.HandleSavePlayer)
 
-	s.OnMessage = s.handleMessage
-	s.OnCentralMessage = s.handleCentralMessage
+	s.OnMessage = s.HandleMessage
+	s.OnCentralMessage = s.HandleCentralMessage
 	return s
 }
 
-func (s *dbProxyServer) handleMessage(conn *common.ConnWrapper, msg common.Message) {
+func (s *dbProxyServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
 	s.peerRouter.Dispatch(conn, msg)
 }
 
-func (s *dbProxyServer) handleCentralMessage(msg common.Message) {
+func (s *dbProxyServer) HandleCentralMessage(msg common.Message) {
 	switch msg.Type {
 	case common.Ct2Srv_RegisterRsp:
 		var rsp common.RegisterRsp
@@ -62,7 +62,7 @@ func (s *dbProxyServer) handleCentralMessage(msg common.Message) {
 }
 
 // handleValidateAccount answers login's credential check against the accounts table.
-func (s *dbProxyServer) handleValidateAccount(conn *common.ConnWrapper, req *common.ValidateAccountReq) {
+func (s *dbProxyServer) HandleValidateAccount(conn *common.ConnWrapper, req *common.ValidateAccountReq) {
 	rsp := common.ValidateAccountRsp{ReqId: req.ReqId}
 	valid, err := s.db.ValidateAccount(req.Account, req.Password)
 	if err != nil {
@@ -81,7 +81,7 @@ func (s *dbProxyServer) handleValidateAccount(conn *common.ConnWrapper, req *com
 
 // handleLoadPlayer returns a player's saved state, allocating a stable
 // player_id for first-time accounts.
-func (s *dbProxyServer) handleLoadPlayer(conn *common.ConnWrapper, req *common.LoadPlayerReq) {
+func (s *dbProxyServer) HandleLoadPlayer(conn *common.ConnWrapper, req *common.LoadPlayerReq) {
 	rsp := common.LoadPlayerRsp{Account: req.Account}
 	found, pid, x, z, err := s.db.LoadPlayer(req.Account)
 	if err != nil {
@@ -97,7 +97,7 @@ func (s *dbProxyServer) handleLoadPlayer(conn *common.ConnWrapper, req *common.L
 }
 
 // handleSavePlayer upserts player positions (single on destroy, batch on autosave).
-func (s *dbProxyServer) handleSavePlayer(conn *common.ConnWrapper, req *common.SavePlayerReq) {
+func (s *dbProxyServer) HandleSavePlayer(conn *common.ConnWrapper, req *common.SavePlayerReq) {
 	// Echo req_id so world's shutdown flush can correlate its reply. SavePlayers
 	// is synchronous (transaction commits before the reply is sent).
 	rsp := common.SavePlayerRsp{ReqId: req.ReqId}

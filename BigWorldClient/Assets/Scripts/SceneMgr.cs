@@ -38,7 +38,7 @@ namespace BigWorldClient
             var scene = new GameScene(sceneId, templateId, runner, maxStepHeight);
             scenes[sceneId] = scene;
 
-            Debug.Log($"[SceneMgr] Created scene: {sceneId} (template={templateId}, maxStep={maxStepHeight})");
+            {}
             return scene;
         }
 

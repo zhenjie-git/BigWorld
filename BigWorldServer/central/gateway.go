@@ -10,10 +10,10 @@ import (
 // handleLoginPrepareReq is called when the gateway confirms the client has connected.
 // It cancels the gateway timeout, assigns a world, and updates the account state.
 // PlayerId is not yet known at this point — the world generates it during entity creation.
-func (cs *centralServer) handleLoginPrepareReq(conn *common.ConnWrapper, req *common.LoginPrepareReq) {
+func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *common.LoginPrepareReq) {
 	log.Printf("[central] login prepare request: reqID=%d account=%s", req.ReqId, req.Account)
 
-	if cs.isShuttingDown() {
+	if cs.IsShuttingDown() {
 		common.SendMsg(conn, common.Ct2Gw_LoginPrepareRsp, &common.LoginPrepareRsp{
 			ReqId:   req.ReqId,
 			Success: false,
@@ -94,7 +94,7 @@ func (cs *centralServer) handleLoginPrepareReq(conn *common.ConnWrapper, req *co
 // handleLoginFinishReq handles login completion or failure/rollback.
 // On success, transitions the account from AccountLoggingIn to AccountOnline
 // and creates the onlinePlayers entry with the world-generated playerID.
-func (cs *centralServer) handleLoginFinishReq(conn *common.ConnWrapper, req *common.LoginFinishReq) {
+func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *common.LoginFinishReq) {
 	log.Printf("[central] login finish request: account=%s player=%d success=%v",
 		req.Account, req.PlayerId, req.Success)
 
@@ -160,7 +160,7 @@ func (cs *centralServer) handleLoginFinishReq(conn *common.ConnWrapper, req *com
 }
 
 // handleLogoutBeginReq is called when a gateway notifies central that a player is logging out.
-func (cs *centralServer) handleLogoutBeginReq(conn *common.ConnWrapper, req *common.LogoutBeginReq) {
+func (cs *centralServer) HandleLogoutBeginReq(conn *common.ConnWrapper, req *common.LogoutBeginReq) {
 
 	cs.mu.Lock()
 	if _, ok := cs.onlinePlayers[req.PlayerId]; ok {
@@ -181,7 +181,7 @@ func (cs *centralServer) handleLogoutBeginReq(conn *common.ConnWrapper, req *com
 // It checks GatewayId to prevent a stale cleanup from a force-kicked session
 // from deleting the state of a new login with the same playerID (from persistent storage).
 // After cleanup, if a pending assign is waiting for the 顶号 to complete, it continues the login flow.
-func (cs *centralServer) handleLogoutCleanupReq(conn *common.ConnWrapper, req *common.LogoutCleanupReq) {
+func (cs *centralServer) HandleLogoutCleanupReq(conn *common.ConnWrapper, req *common.LogoutCleanupReq) {
 	var (
 		account    string
 		ok         bool
@@ -219,7 +219,7 @@ func (cs *centralServer) handleLogoutCleanupReq(conn *common.ConnWrapper, req *c
 	// If the old player was cleaned up and a pending assign is waiting for this account,
 	// continue the login flow now. 锁内只取响应,锁外发送。
 	if account != "" {
-		assignRsp, assignConn, needAssign = cs.tryContinuePendingAssign(account)
+		assignRsp, assignConn, needAssign = cs.TryContinuePendingAssign(account)
 	}
 
 	cs.mu.Unlock()
@@ -245,7 +245,7 @@ func (cs *centralServer) handleLogoutCleanupReq(conn *common.ConnWrapper, req *c
 // kickedGatewayId is checked to avoid cleaning up a session that was already
 // replaced by a new login with the same playerID.
 // After cleanup, if a pending assign is waiting for the 顶号 to complete, it continues the login flow.
-func (cs *centralServer) handleForceKickTimeout(playerID uint64, kickedGatewayId string) {
+func (cs *centralServer) HandleForceKickTimeout(playerID uint64, kickedGatewayId string) {
 	var (
 		assignRsp  common.GatewayAssignRsp
 		assignConn *common.ConnWrapper
@@ -281,7 +281,7 @@ func (cs *centralServer) handleForceKickTimeout(playerID uint64, kickedGatewayId
 
 	// If a pending assign is waiting for this cleanup, continue the login flow.
 	// 锁内只取响应,锁外发送。
-	assignRsp, assignConn, needAssign = cs.tryContinuePendingAssign(account)
+	assignRsp, assignConn, needAssign = cs.TryContinuePendingAssign(account)
 
 	cs.mu.Unlock()
 

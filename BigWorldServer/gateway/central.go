@@ -7,7 +7,7 @@ import (
 	"bigworld/common"
 )
 
-func (gs *gatewayServer) handleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp *common.LoginPrepareRsp) {
+func (gs *gatewayServer) HandleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp *common.LoginPrepareRsp) {
 	gs.mu.Lock()
 	pending, ok := gs.pendings[rsp.ReqId]
 	if ok {
@@ -36,7 +36,7 @@ func (gs *gatewayServer) handleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp
 		worldAddr: rsp.WorldAddr,
 	}
 	pend.timer = time.AfterFunc(createEntityTimeout, func() {
-		gs.handleCreateEntityTimeout(pending.account)
+		gs.HandleCreateEntityTimeout(pending.account)
 	})
 
 	gs.mu.Lock()
@@ -44,10 +44,10 @@ func (gs *gatewayServer) handleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp
 	gs.mu.Unlock()
 
 	createReq := common.CreateEntityReq{Account: pending.account}
-	gs.forwardMsgToWorld(rsp.WorldId, common.Gw2Wd_CreateEntityReq, &createReq)
+	gs.ForwardMsgToWorld(rsp.WorldId, common.Gw2Wd_CreateEntityReq, &createReq)
 }
 
-func (gs *gatewayServer) handleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp *common.LoginFinishRsp) {
+func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp *common.LoginFinishRsp) {
 	gs.mu.Lock()
 	pend, ok := gs.loginPendings[rsp.Account]
 	if ok {
@@ -103,7 +103,7 @@ func (gs *gatewayServer) handleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 	})
 }
 
-func (gs *gatewayServer) handleCentralForceKick(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
+func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
 	log.Printf("[gateway] force-kick: player=%d account=%s", notify.PlayerId, notify.Account)
 
 	// ForceKick 到达时立即回收本网关会话并断开旧客户端,不能等 destroy->cleanup 往返
@@ -138,16 +138,16 @@ func (gs *gatewayServer) handleCentralForceKick(_ *common.ConnWrapper, notify *c
 		oldConn.Close()
 	}
 
-	// playerConns 已清,后续 cleanup 响应回来时 handleCentralLogoutCleanupRsp
+	// playerConns 已清,后续 cleanup 响应回来时 HandleCentralLogoutCleanupRsp
 	// 命中 clientConn==nil 直接 return,不会重复发下线通知或重复断连。
 	if notify.WorldId != "" {
-		gs.sendDestroyAndArmTimer(notify.PlayerId, notify.WorldId)
+		gs.SendDestroyAndArmTimer(notify.PlayerId, notify.WorldId)
 	} else {
-		gs.sendLogoutCleanup(notify.PlayerId)
+		gs.SendLogoutCleanup(notify.PlayerId)
 	}
 }
 
-func (gs *gatewayServer) handleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+func (gs *gatewayServer) HandleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
 	if rsp.Success {
 		log.Printf("[gateway %s] registered: %s", gs.ServerId, rsp.Message)
 		req := common.ServerListReq{Type: common.ServerWorld}
@@ -155,17 +155,17 @@ func (gs *gatewayServer) handleCentralRegisterRsp(_ *common.ConnWrapper, rsp *co
 	}
 }
 
-func (gs *gatewayServer) handleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
+func (gs *gatewayServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
 	for _, s := range rsp.Servers {
-		gs.connectToWorld(s.ServerId, s.ListenAddr)
+		gs.ConnectToWorld(s.ServerId, s.ListenAddr)
 	}
 }
 
-func (gs *gatewayServer) handleCentralNewWorld(_ *common.ConnWrapper, entry *common.ServerEntry) {
-	gs.connectToWorld(entry.ServerId, entry.ListenAddr)
+func (gs *gatewayServer) HandleCentralNewWorld(_ *common.ConnWrapper, entry *common.ServerEntry) {
+	gs.ConnectToWorld(entry.ServerId, entry.ListenAddr)
 }
 
-func (gs *gatewayServer) handleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp *common.LogoutBeginRsp) {
+func (gs *gatewayServer) HandleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp *common.LogoutBeginRsp) {
 	if !rsp.Success {
 		return
 	}
@@ -185,19 +185,19 @@ func (gs *gatewayServer) handleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp 
 	gs.mu.Unlock()
 
 	if worldID == "" {
-		gs.sendLogoutCleanup(rsp.PlayerId)
+		gs.SendLogoutCleanup(rsp.PlayerId)
 		return
 	}
 
-	gs.sendDestroyAndArmTimer(rsp.PlayerId, worldID)
+	gs.SendDestroyAndArmTimer(rsp.PlayerId, worldID)
 }
 
-// handleCentralShutdownNotify broadcasts a shutdown notice to every connected
+// HandleCentralShutdownNotify broadcasts a shutdown notice to every connected
 // client and closes each connection with SO_LINGER so the final message is
 // actually delivered (rather than dropped by an immediate Close). Then it acks
 // central and stops. Central shuts the gateway down first, so cutting clients
 // here is the cleanest point to signal "server is closing".
-func (gs *gatewayServer) handleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
+func (gs *gatewayServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
 	gs.mu.Lock()
 	clientConns := make([]*common.ConnWrapper, 0, len(gs.sessions))
 	for c := range gs.sessions {
@@ -215,7 +215,7 @@ func (gs *gatewayServer) handleCentralShutdownNotify(_ *common.ConnWrapper, noti
 	go gs.Stop()
 }
 
-func (gs *gatewayServer) handleCentralLogoutCleanupRsp(_ *common.ConnWrapper, rsp *common.LogoutCleanupRsp) {
+func (gs *gatewayServer) HandleCentralLogoutCleanupRsp(_ *common.ConnWrapper, rsp *common.LogoutCleanupRsp) {
 	gs.mu.Lock()
 	clientConn, ok := gs.playerConns[rsp.PlayerId]
 	if ok {

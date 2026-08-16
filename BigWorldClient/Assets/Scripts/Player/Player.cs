@@ -11,31 +11,19 @@ namespace BigWorldClient
     public class Player
     {
         public PlayerController Controller { get; }
-        public PlayerMoveMentStateMachine StateMachine { get; }
         public List<Skill> Skills { get; } = new();
 
         // ── Scene binding ──
         public string SceneId { get; set; }
 
-        // ── Runtime state (moved from PlayerStateReusableData) ──
-        public float MovementOnSlopSpeedModifier { get; set; } = 1f;
+        // ── Runtime rotation target (input/camera direction, not animation) ──
         private Vector3 currentTargetRotation;
-        private Vector3 dampedTargetRotationCurrentVelocity;
-        private Vector3 dampedTargetRotationPassedTime;
 
         public ref Vector3 CurrentTargetRotation => ref currentTargetRotation;
-        public ref Vector3 DampedTargetRotationCurrentVelocity => ref dampedTargetRotationCurrentVelocity;
-        public ref Vector3 DampedTargetRotationPassedTime => ref dampedTargetRotationPassedTime;
 
-        /// <summary>
-        /// Create the player. Skills are built from the supplied <paramref name="skillConfigs"/> —
-        /// one <see cref="Skill"/> instance per non-null config.
-        /// </summary>
-        public Player(PlayerController controller, PlayerMoveMentStateMachine stateMachine,
-            List<SkillConfig> skillConfigs)
+        public Player(PlayerController controller, List<SkillConfig> skillConfigs)
         {
             Controller = controller;
-            StateMachine = stateMachine;
 
             foreach (var config in skillConfigs)
             {
@@ -44,10 +32,6 @@ namespace BigWorldClient
             }
         }
 
-        /// <summary>
-        /// Try to release the skill identified by <paramref name="config"/>.
-        /// Returns true if the skill was released.
-        /// </summary>
         public bool TryReleaseSkill(SkillConfig config)
         {
             var skill = Skills.FirstOrDefault(s => s.Config == config);
@@ -60,10 +44,6 @@ namespace BigWorldClient
             return false;
         }
 
-        /// <summary>
-        /// Try to release the skill with the given <paramref name="skillName"/>.
-        /// Returns true if the skill was released.
-        /// </summary>
         public bool TryReleaseSkill(string skillName)
         {
             var skill = Skills.FirstOrDefault(s => s.Name == skillName);
@@ -76,17 +56,11 @@ namespace BigWorldClient
             return false;
         }
 
-        /// <summary>
-        /// Get the skill instance for the given config, or null if none exists.
-        /// </summary>
         public Skill GetSkill(SkillConfig config)
         {
             return Skills.FirstOrDefault(s => s.Config == config);
         }
 
-        /// <summary>
-        /// Get the skill instance with the given name, or null if none exists.
-        /// </summary>
         public Skill GetSkill(string skillName)
         {
             return Skills.FirstOrDefault(s => s.Name == skillName);

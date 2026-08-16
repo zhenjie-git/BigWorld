@@ -20,7 +20,9 @@ type ServerConfig struct {
 
 	// Shared GameConfig files (relative to the BigWorldServer working dir).
 	// The single source of truth for movement params + state transition table;
-	// movement params are derived from player_config.json, never duplicated here.
+	// movement params are derived from Player/player_config.json, never
+	// duplicated here. The nine server-read scalars are authored in
+	// GameConfig/Player/player_config.xlsx.
 	PlayerConfigFile         string `json:"player_config_file,omitempty"`
 	StateTransitionTableFile string `json:"state_transition_table_file,omitempty"`
 

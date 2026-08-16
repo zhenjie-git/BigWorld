@@ -24,11 +24,7 @@ namespace BigWorldClient.UI.Framework
                             var go = Instantiate(prefab);
                             instance = go.GetComponent<UIManager>();
                         }
-                        else
-                        {
-                            Debug.LogError("[UIManager] Prefab not found at Resources/UI/UIManager");
-                            return null;
-                        }
+                        else return null;
                     }
                 }
                 return instance;
@@ -123,20 +119,15 @@ namespace BigWorldClient.UI.Framework
 
         private PanelEntry GetEntry(string panelId)
         {
-            if (panelRegistry == null) { Debug.LogError("[UIManager] PanelRegistry is null"); return null; }
+            if (panelRegistry == null) return null;
             var entry = panelRegistry.GetEntry(panelId);
-            if (entry == null) Debug.LogError("[UIManager] Panel not found: " + panelId);
             return entry;
         }
 
         private UILayerController GetLayerController(UILayer layer)
         {
             int index = (int)layer;
-            if (layerControllers == null || index >= layerControllers.Length || layerControllers[index] == null)
-            {
-                Debug.LogError("[UIManager] Layer controller missing: " + layer);
-                return null;
-            }
+            if (layerControllers == null || index >= layerControllers.Length || layerControllers[index] == null) return null;
             return layerControllers[index];
         }
 
@@ -154,14 +145,12 @@ namespace BigWorldClient.UI.Framework
             {
                 if (request.asset == null)
                 {
-                    Debug.LogError("[UIManager] Load failed: " + entry.resourcePath);
                     return;
                 }
                 var go = Instantiate(request.asset as GameObject);
                 var panel = go.GetComponent<BasePanel>();
                 if (panel == null)
                 {
-                    Debug.LogError("[UIManager] Prefab missing BasePanel: " + entry.resourcePath);
                     Destroy(go);
                     return;
                 }

@@ -26,9 +26,10 @@ type worldServer struct {
 	playerCounter uint64 // only used in the no-dbproxy fallback path
 	peerRouter    *common.MessageRouter
 
-	// Server-authoritative movement sim: tick interval and last-tick clock.
-	moveTickMs int64
-	lastTickMs int64
+	// Server-authoritative movement sim: fixed tick interval and the number
+	// of ticks covered by the rollback window (maxMoveWindowMs).
+	moveTickMs    int64
+	rollbackTicks int64
 
 	// dbproxy connection (discovered via central) and its inbound router.
 	dbConn   *common.ConnWrapper
@@ -39,8 +40,8 @@ type worldServer struct {
 	// loadPlayerTimeout or we abandon the create (no orphan entity).
 	dbLoadPendings map[string]*dbLoadPending
 
-	// Shutdown flush correlation: flushAllAndWait sets a req id + channel,
-	// handleDbSavePlayerRsp closes the channel when the matching rsp arrives.
+	// Shutdown flush correlation: FlushAllAndWait sets a req id + channel,
+	// HandleDbSavePlayerRsp closes the channel when the matching rsp arrives.
 	flushReqID uint64
 	flushDone  chan struct{}
 }
@@ -52,12 +53,29 @@ type dbLoadPending struct {
 	timer   *time.Timer
 }
 
-func newWorldServer(id string) *worldServer {
+// fillMoveRspState copies a complete simulation snapshot into a MoveRsp so the
+// client can restore authoritative state and roll back deterministically.
+func fillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
+	rsp.SimTick = s.Tick
+	rsp.X = s.X
+	rsp.Y = s.Y
+	rsp.Z = s.Z
+	rsp.State = s.State
+	rsp.VoxelK = int32(s.VoxelK)
+	rsp.Airborne = s.Airborne
+	rsp.DirX = s.MoveDirX
+	rsp.DirZ = s.MoveDirZ
+	rsp.CurveNorm = s.CurveNorm
+	rsp.StateStartMs = s.StateStartMs
+	rsp.FallVelY = s.FallVelY
+}
+
+func NewWorldServer(id string) *worldServer {
 	cfg := common.Config.Servers["world"]
 	ss := &worldServer{
 		ServerBase:     common.NewServerBase(common.ServerWorld, id),
 		players:        make(map[uint64]*playerEntity),
-		sceneMgr:       newSceneMgr(id),
+		sceneMgr:       NewSceneMgr(id),
 		peerRouter:     common.NewMessageRouter(),
 		dbRouter:       common.NewMessageRouter(),
 		dbLoadPendings: make(map[string]*dbLoadPending),
@@ -66,58 +84,76 @@ func newWorldServer(id string) *worldServer {
 	if ss.moveTickMs <= 0 {
 		ss.moveTickMs = 20
 	}
-	ss.lastTickMs = time.Now().UnixMilli()
+	ss.rollbackTicks = maxMoveWindowMs / ss.moveTickMs
+	if maxMoveWindowMs%ss.moveTickMs != 0 {
+		ss.rollbackTicks++
+	}
 
-	common.Register(ss.peerRouter, common.Cli2Wd_WalkStartReq, ss.handleWalkStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_RunStartReq, ss.handleRunStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_SprintStartReq, ss.handleSprintStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_JumpStartReq, ss.handleJumpStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_DashStartReq, ss.handleDashStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_RollStartReq, ss.handleRollStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_StopStartReq, ss.handleStopStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_MoveStopReq, ss.handleMoveStop)
-	common.Register(ss.peerRouter, common.Cli2Wd_MoveDirChangeReq, ss.handleMoveDirChange)
-	common.Register(ss.peerRouter, common.Cli2Wd_SkillReq, ss.handleSkill)
-	common.Register(ss.peerRouter, common.Gw2Wd_DestroyEntityReq, ss.handleDestroyEntity)
-	common.Register(ss.peerRouter, common.Gw2Wd_CreateEntityReq, ss.handleCreateEntity)
+	common.Register(ss.peerRouter, common.Cli2Wd_WalkStartReq, ss.HandleWalkStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_RunStartReq, ss.HandleRunStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_SprintStartReq, ss.HandleSprintStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_JumpStartReq, ss.HandleJumpStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_DashStartReq, ss.HandleDashStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_RollStartReq, ss.HandleRollStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_StopStartReq, ss.HandleStopStart)
+	common.Register(ss.peerRouter, common.Cli2Wd_MoveStopReq, ss.HandleMoveStop)
+	common.Register(ss.peerRouter, common.Cli2Wd_MoveDirChangeReq, ss.HandleMoveDirChange)
+	common.Register(ss.peerRouter, common.Cli2Wd_SkillReq, ss.HandleSkill)
+	common.Register(ss.peerRouter, common.Gw2Wd_DestroyEntityReq, ss.HandleDestroyEntity)
+	common.Register(ss.peerRouter, common.Gw2Wd_CreateEntityReq, ss.HandleCreateEntity)
 
-	common.Register(ss.dbRouter, common.Db2Wd_LoadPlayerRsp, ss.handleDbLoadPlayerRsp)
-	common.Register(ss.dbRouter, common.Db2Wd_SavePlayerRsp, ss.handleDbSavePlayerRsp)
+	common.Register(ss.dbRouter, common.Db2Wd_LoadPlayerRsp, ss.HandleDbLoadPlayerRsp)
+	common.Register(ss.dbRouter, common.Db2Wd_SavePlayerRsp, ss.HandleDbSavePlayerRsp)
 
-	ss.OnMessage = ss.handleMessage
-	ss.OnCentralMessage = ss.handleCentralMessage
+	ss.OnMessage = ss.HandleMessage
+	ss.OnCentralMessage = ss.HandleCentralMessage
 
-	go ss.autosaveLoop(autosaveInterval)
-	go ss.moveLoop()
+	go ss.AutosaveLoop(autosaveInterval)
+	go ss.MoveLoop()
 	return ss
 }
 
-func (ss *worldServer) handleMessage(conn *common.ConnWrapper, msg common.Message) {
+func (ss *worldServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
 	ss.peerRouter.Dispatch(conn, msg)
 }
 
-// handleMoveStart is the shared entry point for the per-state start protocols:
-// validates the transition and the client server_time_ms, then arms the
-// server-side state class (setMoveState resets StateStartMs/CurveNorm).
-func (ss *worldServer) handleMoveStart(conn *common.ConnWrapper, playerID uint64, to pb.MoveState, ts int64, dirX, dirZ float64) {
+// HandleMoveStart is the shared entry point for the per-state start protocols:
+// maps the client server_time_ms onto the fixed tick grid, validates the state
+// transition at that tick, and replays recent inputs when the event arrives late.
+func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64, to pb.MoveState, ts int64, dirX, dirZ float64) {
 	ss.mu.Lock()
 	entity, ok := ss.players[playerID]
 	var rsp *common.MoveRsp
+	var logX, logY, logZ float64
+	var logLayer int
+	var logAccepted bool
 	if ok {
-		now := time.Now().UnixMilli()
-		if !canTransition(entity.State, to) {
-			rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "非法状态转换", AckTimeMs: entity.LastMoveTimeMs}
-		} else if t, reject := moveStartTimeMs(entity, ts, now); reject {
-			rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动时间戳非法", AckTimeMs: entity.LastMoveTimeMs}
+		nowMs := time.Now().UnixMilli()
+		tick, valid := ss.NormalizeInputTick(ts, nowMs)
+		if !valid {
+			rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动时间戳非法", AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
+			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 		} else {
-			if dirX != 0 || dirZ != 0 {
-				setMoveDir(entity, dirX, dirZ)
+			in := moveInput{
+				Seq:   entity.InputSeq,
+				Tick:  tick,
+				Kind:  moveInputStart,
+				State: to,
+				DirX:  dirX,
+				DirZ:  dirZ,
 			}
-			if entity.State != to {
-				setMoveState(entity, to, t)
+			accepted, msg, snap := ss.ProcessMoveInput(entity, in)
+			if !accepted {
+				rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
+				fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+			} else {
+				ackMs := ss.TickToMs(tick)
+				rsp = &common.MoveRsp{Success: true, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动开始", AckTimeMs: ackMs, AckTick: tick}
+				fillMoveRspState(rsp, snap)
+				logAccepted = true
+				logX, logY, logZ = snap.X, snap.Y, snap.Z
+				logLayer = snap.VoxelK
 			}
-			entity.LastMoveTimeMs = t
-			rsp = &common.MoveRsp{Success: true, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动开始", AckTimeMs: t}
 		}
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: playerID, Message: "实体不存在"}
@@ -125,76 +161,72 @@ func (ss *worldServer) handleMoveStart(conn *common.ConnWrapper, playerID uint64
 	ss.mu.Unlock()
 
 	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
-	if ok {
+	if logAccepted {
 		log.Printf("[world %s] player %d move state -> %s at (%.2f, %.2f, %.2f) layer=%d",
-			ss.ServerId, playerID, pb.MoveState_name[int32(to)], entity.X, entity.Z, entity.Y, entity.VoxelK)
+			ss.ServerId, playerID, pb.MoveState_name[int32(to)], logX, logZ, logY, logLayer)
 	}
 }
 
-// moveStartTimeMs sanitizes the client's server_time_ms: <=0 falls back to now;
-// a timestamp far in the future is rejected (clock estimate way off).
-func moveStartTimeMs(e *playerEntity, ts, nowMs int64) (int64, bool) {
-	if ts <= 0 {
-		return nowMs, false
-	}
-	if ts > nowMs+maxMoveWindowMs {
-		return 0, true
-	}
-	return ts, false
+func (ss *worldServer) HandleWalkStart(conn *common.ConnWrapper, req *common.WalkStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_WALK, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleWalkStart(conn *common.ConnWrapper, req *common.WalkStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_WALK, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
+func (ss *worldServer) HandleRunStart(conn *common.ConnWrapper, req *common.RunStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_RUN, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleRunStart(conn *common.ConnWrapper, req *common.RunStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_RUN, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
+func (ss *worldServer) HandleSprintStart(conn *common.ConnWrapper, req *common.SprintStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_SPRINT, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleSprintStart(conn *common.ConnWrapper, req *common.SprintStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_SPRINT, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
+func (ss *worldServer) HandleJumpStart(conn *common.ConnWrapper, req *common.JumpStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_JUMP_UP, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleJumpStart(conn *common.ConnWrapper, req *common.JumpStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_JUMP_UP, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
+func (ss *worldServer) HandleDashStart(conn *common.ConnWrapper, req *common.DashStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_DASH, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleDashStart(conn *common.ConnWrapper, req *common.DashStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_DASH, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
+func (ss *worldServer) HandleRollStart(conn *common.ConnWrapper, req *common.RollStartReq) {
+	ss.HandleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_ROLL, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
 }
 
-func (ss *worldServer) handleRollStart(conn *common.ConnWrapper, req *common.RollStartReq) {
-	ss.handleMoveStart(conn, req.PlayerId, pb.MoveState_MOVE_ROLL, req.ServerTimeMs, float64(req.Dir.X), float64(req.Dir.Z))
-}
-
-func (ss *worldServer) handleStopStart(conn *common.ConnWrapper, req *common.StopStartReq) {
+func (ss *worldServer) HandleStopStart(conn *common.ConnWrapper, req *common.StopStartReq) {
 	switch req.StopKind {
 	case pb.MoveState_MOVE_STOP_LIGHT, pb.MoveState_MOVE_STOP_MED, pb.MoveState_MOVE_STOP_HARD:
-		ss.handleMoveStart(conn, req.PlayerId, req.StopKind, req.ServerTimeMs, 0, 0)
+		ss.HandleMoveStart(conn, req.PlayerId, req.StopKind, req.ServerTimeMs, 0, 0)
 	default:
 		rsp := &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "无效的停止强度"}
 		common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 	}
 }
 
-// handleMoveStop forces the entity to IDLE regardless of the current sim state:
-// the client sends it when it enters a stationary state, and the server may be
-// a tick behind its own landing transition.
-func (ss *worldServer) handleMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
+// HandleMoveStop forces the entity to IDLE at the client's stop tick. A late
+// stop is the main rollback case: the server may already have simulated a few
+// extra ticks (possibly with direction changes); the entity is rewound to the
+// stop tick snapshot and the recent input history is replayed from there.
+func (ss *worldServer) HandleMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
 	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
 	var rsp *common.MoveRsp
 	if ok {
-		now := time.Now().UnixMilli()
-		t := req.ServerTimeMs
-		if t <= 0 || t > now+maxMoveWindowMs {
-			t = now
+		nowMs := time.Now().UnixMilli()
+		tick, valid := ss.NormalizeInputTick(req.ServerTimeMs, nowMs)
+		if !valid {
+			// Preserve the old safety-net behaviour: a wildly wrong stop
+			// timestamp still stops the entity, effective at the current tick.
+			tick = ss.MsToTick(nowMs)
 		}
-		if entity.State != pb.MoveState_MOVE_IDLE {
-			setMoveState(entity, pb.MoveState_MOVE_IDLE, t)
+		in := moveInput{Seq: entity.InputSeq, Tick: tick, Kind: moveInputStop}
+		accepted, msg, snap := ss.ProcessMoveInput(entity, in)
+		if !accepted {
+			rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
+			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+		} else {
+			ackMs := ss.TickToMs(tick)
+			rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "停止", AckTimeMs: ackMs, AckTick: tick}
+			fillMoveRspState(rsp, snap)
 		}
-		entity.LastMoveTimeMs = t
-		rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "停止", AckTimeMs: t}
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
@@ -203,33 +235,45 @@ func (ss *worldServer) handleMoveStop(conn *common.ConnWrapper, req *common.Move
 	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 }
 
-// handleMoveDirChange updates the entity's world-space direction mid-move. The
-// curve progress is untouched; subsequent tick deltas are projected onto the new
-// direction, mirroring the client rotating during walk/run.
-func (ss *worldServer) handleMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
+// HandleMoveDirChange updates the entity's world-space direction mid-move. The
+// change is recorded as an input on the tick grid so a later rollback can replay
+// it at the exact frame it belongs to.
+func (ss *worldServer) HandleMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
 	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
+	var rsp *common.MoveRsp
 	if ok {
-		now := time.Now().UnixMilli()
-		if req.ServerTimeMs > 0 && req.ServerTimeMs <= now+maxMoveWindowMs {
-			entity.LastMoveTimeMs = req.ServerTimeMs
+		nowMs := time.Now().UnixMilli()
+		tick, valid := ss.NormalizeInputTick(req.ServerTimeMs, nowMs)
+		if valid {
+			in := moveInput{
+				Seq:  entity.InputSeq,
+				Tick: tick,
+				Kind: moveInputDirChange,
+				DirX: float64(req.Dir.X),
+				DirZ: float64(req.Dir.Z),
+			}
+			accepted, msg, snap := ss.ProcessMoveInput(entity, in)
+			if accepted {
+				rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "方向变更", AckTimeMs: ss.TickToMs(tick), AckTick: tick}
+				fillMoveRspState(rsp, snap)
+			} else {
+				rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
+				fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+			}
+		} else {
+			rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动时间戳非法", AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
+			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 		}
-		setMoveDir(entity, float64(req.Dir.X), float64(req.Dir.Z))
+	} else {
+		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
 	ss.mu.Unlock()
+
+	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 }
 
-// moveLoop drives the server-authoritative movement sim: every movement tick it
-// advances each moving player's position via its state class update.
-func (ss *worldServer) moveLoop() {
-	ticker := time.NewTicker(time.Duration(ss.moveTickMs) * time.Millisecond)
-	defer ticker.Stop()
-	for range ticker.C {
-		ss.tickMoves()
-	}
-}
-
-func (ss *worldServer) handleSkill(conn *common.ConnWrapper, req *common.SkillReq) {
+func (ss *worldServer) HandleSkill(conn *common.ConnWrapper, req *common.SkillReq) {
 	ss.mu.Lock()
 	_, ok := ss.players[req.PlayerId]
 	ss.mu.Unlock()
@@ -245,7 +289,7 @@ func (ss *worldServer) handleSkill(conn *common.ConnWrapper, req *common.SkillRe
 	log.Printf("[world %s] player %d used skill %s", ss.ServerId, req.PlayerId, req.SkillId)
 }
 
-func (ss *worldServer) handleDestroyEntity(conn *common.ConnWrapper, req *common.DestroyEntityReq) {
+func (ss *worldServer) HandleDestroyEntity(conn *common.ConnWrapper, req *common.DestroyEntityReq) {
 	var saved *playerEntity
 	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
@@ -260,7 +304,7 @@ func (ss *worldServer) handleDestroyEntity(conn *common.ConnWrapper, req *common
 
 	// Persist final position to dbproxy (fire-and-forget; never blocks logout).
 	if saved != nil {
-		ss.savePlayer(saved)
+		ss.SavePlayer(saved)
 	}
 
 	if !ok {
@@ -274,16 +318,16 @@ func (ss *worldServer) handleDestroyEntity(conn *common.ConnWrapper, req *common
 	log.Printf("[world %s] player %d entity destroyed", ss.ServerId, req.PlayerId)
 }
 
-// handleCreateEntity kicks off an async LoadPlayer from dbproxy. If dbproxy is
+// HandleCreateEntity kicks off an async LoadPlayer from dbproxy. If dbproxy is
 // unavailable it falls back to a local random spawn so login still succeeds.
-func (ss *worldServer) handleCreateEntity(conn *common.ConnWrapper, req *common.CreateEntityReq) {
+func (ss *worldServer) HandleCreateEntity(conn *common.ConnWrapper, req *common.CreateEntityReq) {
 	log.Printf("[world %s] creating player: account=%s", ss.ServerId, req.Account)
 
 	ss.mu.Lock()
 	dbConn := ss.dbConn
 	ss.mu.Unlock()
 	if dbConn == nil {
-		ss.createEntityLocal(conn, req.Account)
+		ss.CreateEntityLocal(conn, req.Account)
 		return
 	}
 
@@ -301,19 +345,19 @@ func (ss *worldServer) handleCreateEntity(conn *common.ConnWrapper, req *common.
 	ss.dbLoadPendings[req.Account] = pend
 	ss.mu.Unlock()
 
-	if err := ss.forwardMsgToDb(common.Wd2Db_LoadPlayerReq, &common.LoadPlayerReq{Account: req.Account}); err != nil {
+	if err := ss.ForwardMsgToDb(common.Wd2Db_LoadPlayerReq, &common.LoadPlayerReq{Account: req.Account}); err != nil {
 		ss.mu.Lock()
 		delete(ss.dbLoadPendings, req.Account)
 		ss.mu.Unlock()
 		pend.timer.Stop()
-		ss.createEntityLocal(conn, req.Account)
+		ss.CreateEntityLocal(conn, req.Account)
 		return
 	}
 }
 
-// handleDbLoadPlayerRsp creates the entity at the persisted (or random, for new
+// HandleDbLoadPlayerRsp creates the entity at the persisted (or random, for new
 // accounts) position and replies to the gateway.
-func (ss *worldServer) handleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.LoadPlayerRsp) {
+func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.LoadPlayerRsp) {
 	ss.mu.Lock()
 	pend, ok := ss.dbLoadPendings[rsp.Account]
 	if ok {
@@ -331,13 +375,13 @@ func (ss *worldServer) handleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 	if rsp.PlayerId == 0 {
 		log.Printf("[world %s] LoadPlayerRsp had no id for account=%s: %s; falling back",
 			ss.ServerId, rsp.Account, rsp.Message)
-		ss.createEntityLocal(pend.conn, rsp.Account)
+		ss.CreateEntityLocal(pend.conn, rsp.Account)
 		return
 	}
 
 	ss.mu.Lock()
 	sc := ss.sceneMgr.GetOrCreate(ss.ServerId)
-	x, z, k := sc.spawnPosition(rsp.Found, rsp.X, rsp.Z)
+	x, z, k := sc.SpawnPosition(rsp.Found, rsp.X, rsp.Z)
 	entity := &playerEntity{
 		PlayerId: rsp.PlayerId,
 		Account:  rsp.Account,
@@ -347,8 +391,9 @@ func (ss *worldServer) handleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		Scene:    sc,
 	}
 	if sc.voxelGrid != nil {
-		entity.Y = sc.voxelGrid.surfaceHeight(x, z, k)
+		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)
 	}
+	ss.InitEntityTimeline(entity)
 	sc.Players[rsp.PlayerId] = entity
 	ss.players[rsp.PlayerId] = entity
 	width, height := sc.Width, sc.Height
@@ -369,16 +414,16 @@ func (ss *worldServer) handleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		ss.ServerId, rsp.PlayerId, rsp.Account, x, z, rsp.Found)
 }
 
-// createEntityLocal spawns a player without persistence: local counter-based
+// CreateEntityLocal spawns a player without persistence: local counter-based
 // player_id and random position. Used when dbproxy is unavailable so login
 // still succeeds (degraded mode; position won't be saved this session).
-func (ss *worldServer) createEntityLocal(conn *common.ConnWrapper, account string) {
+func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account string) {
 	ss.mu.Lock()
 	ss.playerCounter++
 	playerID := uint64(common.Config.Servers["world"].ID)*10000 + ss.playerCounter
 
 	sc := ss.sceneMgr.GetOrCreate(ss.ServerId)
-	x, z, k := sc.spawnPosition(false, 0, 0)
+	x, z, k := sc.SpawnPosition(false, 0, 0)
 	entity := &playerEntity{
 		PlayerId: playerID,
 		Account:  account,
@@ -388,8 +433,9 @@ func (ss *worldServer) createEntityLocal(conn *common.ConnWrapper, account strin
 		Scene:    sc,
 	}
 	if sc.voxelGrid != nil {
-		entity.Y = sc.voxelGrid.surfaceHeight(x, z, k)
+		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)
 	}
+	ss.InitEntityTimeline(entity)
 	sc.Players[playerID] = entity
 	ss.players[playerID] = entity
 	width, height := sc.Width, sc.Height
@@ -410,7 +456,7 @@ func (ss *worldServer) createEntityLocal(conn *common.ConnWrapper, account strin
 		ss.ServerId, playerID, account, entity.X, entity.Z)
 }
 
-func (ss *worldServer) handleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.SavePlayerRsp) {
+func (ss *worldServer) HandleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.SavePlayerRsp) {
 	if rsp.ReqId == 0 {
 		// Fire-and-forget path (logout save, autosave): only log failures.
 		if !rsp.Success {
@@ -419,7 +465,7 @@ func (ss *worldServer) handleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.
 		return
 	}
 	// Correlated path: this is the reply to the shutdown flush. Wake up
-	// flushAllAndWait so world does not stop before the save lands.
+	// FlushAllAndWait so world does not stop before the save lands.
 	ss.mu.Lock()
 	if ss.flushDone != nil && rsp.ReqId == ss.flushReqID {
 		close(ss.flushDone)
@@ -428,7 +474,7 @@ func (ss *worldServer) handleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.
 	ss.mu.Unlock()
 }
 
-func (ss *worldServer) handleCentralMessage(msg common.Message) {
+func (ss *worldServer) HandleCentralMessage(msg common.Message) {
 	switch msg.Type {
 	case common.Ct2Srv_RegisterRsp:
 		var rsp common.RegisterRsp
@@ -448,7 +494,7 @@ func (ss *worldServer) handleCentralMessage(msg common.Message) {
 			return
 		}
 		for _, e := range rsp.Servers {
-			ss.connectToDb(e.ServerId, e.ListenAddr)
+			ss.ConnectToDb(e.ServerId, e.ListenAddr)
 		}
 	case common.Ct2Srv_NewDbProxyNotify:
 		var entry common.ServerEntry
@@ -456,35 +502,35 @@ func (ss *worldServer) handleCentralMessage(msg common.Message) {
 			log.Printf("[world %s] bad NewDbProxyNotify: %v", ss.ServerId, err)
 			return
 		}
-		ss.connectToDb(entry.ServerId, entry.ListenAddr)
+		ss.ConnectToDb(entry.ServerId, entry.ListenAddr)
 	case common.Ct2Srv_ShutdownNotify:
 		var notify common.ShutdownNotify
 		if err := proto.Unmarshal(msg.Data, &notify); err != nil {
 			log.Printf("[world %s] bad ShutdownNotify: %v", ss.ServerId, err)
 			return
 		}
-		ss.handleShutdown(&notify)
+		ss.HandleShutdown(&notify)
 	case common.Ct2Srv_HeartbeatRsp:
 	}
 }
 
-// handleShutdown flushes every online player to dbproxy and waits for the save
+// HandleShutdown flushes every online player to dbproxy and waits for the save
 // to be acknowledged (so the last ~30s of movement is not lost), then acks
 // central and stops. Runs on the central-connection read goroutine; the save
 // reply arrives on the dbproxy read goroutine, so this cannot deadlock.
-func (ss *worldServer) handleShutdown(notify *common.ShutdownNotify) {
+func (ss *worldServer) HandleShutdown(notify *common.ShutdownNotify) {
 	log.Printf("[world %s] shutdown requested: %s", ss.ServerId, notify.Reason)
-	if !ss.flushAllAndWait(5 * time.Second) {
+	if !ss.FlushAllAndWait(5 * time.Second) {
 		log.Printf("[world %s] player flush incomplete before shutdown", ss.ServerId)
 	}
 	ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
 	go ss.Stop()
 }
 
-// flushAllAndWait sends a final batch save of every online player and blocks
-// until dbproxy acknowledges it (or the timeout elapses). Unlike autosaveAll,
+// FlushAllAndWait sends a final batch save of every online player and blocks
+// until dbproxy acknowledges it (or the timeout elapses). Unlike AutosaveAll,
 // this is synchronous, so world never stops before the last positions land.
-func (ss *worldServer) flushAllAndWait(timeout time.Duration) bool {
+func (ss *worldServer) FlushAllAndWait(timeout time.Duration) bool {
 	ss.mu.Lock()
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
@@ -501,7 +547,7 @@ func (ss *worldServer) flushAllAndWait(timeout time.Duration) bool {
 	ss.mu.Unlock()
 
 	req := &common.SavePlayerReq{ReqId: id, Players: players}
-	if err := ss.forwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
+	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
 		return false
 	}
 	select {
@@ -515,7 +561,7 @@ func (ss *worldServer) flushAllAndWait(timeout time.Duration) bool {
 
 // --- dbproxy connection ---
 
-func (ss *worldServer) forwardMsgToDb(msgType common.MessageType, m proto.Message) error {
+func (ss *worldServer) ForwardMsgToDb(msgType common.MessageType, m proto.Message) error {
 	data, err := common.MarshalHelper(m)
 	if err != nil {
 		return err
@@ -529,7 +575,7 @@ func (ss *worldServer) forwardMsgToDb(msgType common.MessageType, m proto.Messag
 	return conn.Send(common.Message{Type: msgType, Data: data})
 }
 
-func (ss *worldServer) connectToDb(dbID, dbAddr string) {
+func (ss *worldServer) ConnectToDb(dbID, dbAddr string) {
 	ss.mu.Lock()
 	if ss.dbConn != nil {
 		ss.mu.Unlock()
@@ -547,13 +593,13 @@ func (ss *worldServer) connectToDb(dbID, dbAddr string) {
 	ss.dbConn = cw
 	ss.mu.Unlock()
 	log.Printf("[world %s] connected to dbproxy %s at %s", ss.ServerId, dbID, dbAddr)
-	go ss.dbReadLoop(cw)
+	go ss.DbReadLoop(cw)
 }
 
-func (ss *worldServer) dbReadLoop(cw *common.ConnWrapper) {
+func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[world %s] dbReadLoop panic recovered: %v", ss.ServerId, r)
+			log.Printf("[world %s] DbReadLoop panic recovered: %v", ss.ServerId, r)
 		}
 	}()
 	for {
@@ -576,27 +622,27 @@ func (ss *worldServer) dbReadLoop(cw *common.ConnWrapper) {
 
 // --- persistence ---
 
-// savePlayer persists one player's position to dbproxy (fire-and-forget).
-func (ss *worldServer) savePlayer(e *playerEntity) {
+// SavePlayer persists one player's position to dbproxy (fire-and-forget).
+func (ss *worldServer) SavePlayer(e *playerEntity) {
 	req := &common.SavePlayerReq{
 		Players: []*common.PlayerData{
 			{PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z},
 		},
 	}
-	if err := ss.forwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
+	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
 		log.Printf("[world %s] save player %d failed: %v", ss.ServerId, e.PlayerId, err)
 	}
 }
 
-func (ss *worldServer) autosaveLoop(interval time.Duration) {
+func (ss *worldServer) AutosaveLoop(interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 	for range ticker.C {
-		ss.autosaveAll()
+		ss.AutosaveAll()
 	}
 }
 
-func (ss *worldServer) autosaveAll() {
+func (ss *worldServer) AutosaveAll() {
 	ss.mu.Lock()
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
@@ -608,7 +654,7 @@ func (ss *worldServer) autosaveAll() {
 	if len(players) == 0 {
 		return
 	}
-	if err := ss.forwardMsgToDb(common.Wd2Db_SavePlayerReq, &common.SavePlayerReq{Players: players}); err != nil {
+	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, &common.SavePlayerReq{Players: players}); err != nil {
 		log.Printf("[world %s] autosave failed: %v", ss.ServerId, err)
 		return
 	}

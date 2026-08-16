@@ -7,4 +7,4 @@ require (
 	google.golang.org/protobuf v1.36.11
 )
 
-replace bigworld/common => ../common
+replace bigworld/common => ../Common

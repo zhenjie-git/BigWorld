@@ -71,7 +71,7 @@ type gatewayServer struct {
 	destroyPendings map[uint64]*time.Timer
 
 	recoverableSessions map[string]*clientSession // account → session (SUSPECT)
-	suspectTimers       map[string]*time.Timer     // account → suspect deadline timer
+	suspectTimers       map[string]*time.Timer    // account → suspect deadline timer
 
 	worldConns   map[string]*common.ConnWrapper
 	worldReadLns map[string]bool
@@ -81,79 +81,79 @@ type gatewayServer struct {
 	worldRouter   *common.MessageRouter
 }
 
-func newGatewayServer(id string) *gatewayServer {
+func NewGatewayServer(id string) *gatewayServer {
 	gs := &gatewayServer{
-		ServerBase:      common.NewServerBase(common.ServerGateway, id),
-		pendings:        make(map[uint64]*tokenPending),
-		loginPendings:   make(map[string]*loginPending),
-		sessions:        make(map[*common.ConnWrapper]*clientSession),
-		playerConns:     make(map[uint64]*common.ConnWrapper),
-		loggingOut:      make(map[uint64]bool),
-		destroyPendings:      make(map[uint64]*time.Timer),
-		recoverableSessions:  make(map[string]*clientSession),
-		suspectTimers:        make(map[string]*time.Timer),
-		worldConns:           make(map[string]*common.ConnWrapper),
-		worldReadLns:    make(map[string]bool),
-		clientRouter:    common.NewMessageRouter(),
-		centralRouter:   common.NewMessageRouter(),
-		worldRouter:     common.NewMessageRouter(),
+		ServerBase:          common.NewServerBase(common.ServerGateway, id),
+		pendings:            make(map[uint64]*tokenPending),
+		loginPendings:       make(map[string]*loginPending),
+		sessions:            make(map[*common.ConnWrapper]*clientSession),
+		playerConns:         make(map[uint64]*common.ConnWrapper),
+		loggingOut:          make(map[uint64]bool),
+		destroyPendings:     make(map[uint64]*time.Timer),
+		recoverableSessions: make(map[string]*clientSession),
+		suspectTimers:       make(map[string]*time.Timer),
+		worldConns:          make(map[string]*common.ConnWrapper),
+		worldReadLns:        make(map[string]bool),
+		clientRouter:        common.NewMessageRouter(),
+		centralRouter:       common.NewMessageRouter(),
+		worldRouter:         common.NewMessageRouter(),
 	}
 
 	// Client → Gateway
-	common.Register(gs.clientRouter, common.Cli2Gw_LoginReq, gs.handleClientLogin)
-	common.Register(gs.clientRouter, common.Cli2Wd_WalkStartReq, gs.handleClientWalkStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_RunStartReq, gs.handleClientRunStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_SprintStartReq, gs.handleClientSprintStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_JumpStartReq, gs.handleClientJumpStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_DashStartReq, gs.handleClientDashStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_RollStartReq, gs.handleClientRollStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_StopStartReq, gs.handleClientStopStart)
-	common.Register(gs.clientRouter, common.Cli2Wd_MoveStopReq, gs.handleClientMoveStop)
-	common.Register(gs.clientRouter, common.Cli2Wd_MoveDirChangeReq, gs.handleClientMoveDirChange)
-	common.Register(gs.clientRouter, common.Cli2Wd_SkillReq, gs.handleClientSkill)
-	common.Register(gs.clientRouter, common.Cli2Gw_LogoutReq, gs.handleClientLogout)
-	common.Register(gs.clientRouter, common.Cli2Gw_HeartbeatReq, gs.handleClientHeartbeat)
+	common.Register(gs.clientRouter, common.Cli2Gw_LoginReq, gs.HandleClientLogin)
+	common.Register(gs.clientRouter, common.Cli2Wd_WalkStartReq, gs.HandleClientWalkStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_RunStartReq, gs.HandleClientRunStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_SprintStartReq, gs.HandleClientSprintStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_JumpStartReq, gs.HandleClientJumpStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_DashStartReq, gs.HandleClientDashStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_RollStartReq, gs.HandleClientRollStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_StopStartReq, gs.HandleClientStopStart)
+	common.Register(gs.clientRouter, common.Cli2Wd_MoveStopReq, gs.HandleClientMoveStop)
+	common.Register(gs.clientRouter, common.Cli2Wd_MoveDirChangeReq, gs.HandleClientMoveDirChange)
+	common.Register(gs.clientRouter, common.Cli2Wd_SkillReq, gs.HandleClientSkill)
+	common.Register(gs.clientRouter, common.Cli2Gw_LogoutReq, gs.HandleClientLogout)
+	common.Register(gs.clientRouter, common.Cli2Gw_HeartbeatReq, gs.HandleClientHeartbeat)
 
 	// Central → Gateway
-	common.Register(gs.centralRouter, common.Ct2Gw_LoginPrepareRsp, gs.handleCentralLoginPrepareRsp)
-	common.Register(gs.centralRouter, common.Ct2Gw_LoginFinishRsp, gs.handleCentralLoginFinishRsp)
-	common.Register(gs.centralRouter, common.Ct2Gw_ForceKickNotify, gs.handleCentralForceKick)
-	common.Register(gs.centralRouter, common.Ct2Srv_RegisterRsp, gs.handleCentralRegisterRsp)
-	common.Register(gs.centralRouter, common.Ct2Srv_ServerListRsp, gs.handleCentralServerListRsp)
-	common.Register(gs.centralRouter, common.Ct2Gw_NewWorldNotify, gs.handleCentralNewWorld)
-	common.Register(gs.centralRouter, common.Ct2Gw_LogoutBeginRsp, gs.handleCentralLogoutBeginRsp)
-	common.Register(gs.centralRouter, common.Ct2Gw_LogoutCleanupRsp, gs.handleCentralLogoutCleanupRsp)
-	common.Register(gs.centralRouter, common.Ct2Srv_HeartbeatRsp, gs.noopHeartbeat)
-	common.Register(gs.centralRouter, common.Ct2Srv_ShutdownNotify, gs.handleCentralShutdownNotify)
+	common.Register(gs.centralRouter, common.Ct2Gw_LoginPrepareRsp, gs.HandleCentralLoginPrepareRsp)
+	common.Register(gs.centralRouter, common.Ct2Gw_LoginFinishRsp, gs.HandleCentralLoginFinishRsp)
+	common.Register(gs.centralRouter, common.Ct2Gw_ForceKickNotify, gs.HandleCentralForceKick)
+	common.Register(gs.centralRouter, common.Ct2Srv_RegisterRsp, gs.HandleCentralRegisterRsp)
+	common.Register(gs.centralRouter, common.Ct2Srv_ServerListRsp, gs.HandleCentralServerListRsp)
+	common.Register(gs.centralRouter, common.Ct2Gw_NewWorldNotify, gs.HandleCentralNewWorld)
+	common.Register(gs.centralRouter, common.Ct2Gw_LogoutBeginRsp, gs.HandleCentralLogoutBeginRsp)
+	common.Register(gs.centralRouter, common.Ct2Gw_LogoutCleanupRsp, gs.HandleCentralLogoutCleanupRsp)
+	common.Register(gs.centralRouter, common.Ct2Srv_HeartbeatRsp, gs.NoopHeartbeat)
+	common.Register(gs.centralRouter, common.Ct2Srv_ShutdownNotify, gs.HandleCentralShutdownNotify)
 
 	// World → Gateway
-	common.Register(gs.worldRouter, common.Wd2Cli_MoveRsp, gs.handleWorldMoveRsp)
-	common.Register(gs.worldRouter, common.Wd2Cli_SkillRsp, gs.handleWorldSkillRsp)
-	common.Register(gs.worldRouter, common.Wd2Gw_CreateEntityRsp, gs.handleWorldCreateEntityRsp)
-	common.Register(gs.worldRouter, common.Wd2Gw_DestroyEntityRsp, gs.handleWorldDestroyEntityRsp)
+	common.Register(gs.worldRouter, common.Wd2Cli_MoveRsp, gs.HandleWorldMoveRsp)
+	common.Register(gs.worldRouter, common.Wd2Cli_SkillRsp, gs.HandleWorldSkillRsp)
+	common.Register(gs.worldRouter, common.Wd2Gw_CreateEntityRsp, gs.HandleWorldCreateEntityRsp)
+	common.Register(gs.worldRouter, common.Wd2Gw_DestroyEntityRsp, gs.HandleWorldDestroyEntityRsp)
 
-	gs.OnMessage = gs.handleMessage
-	gs.OnCentralMessage = gs.handleCentralMessage
-	gs.OnDisconnect = gs.handleClientDisconnect
+	gs.OnMessage = gs.HandleMessage
+	gs.OnCentralMessage = gs.HandleCentralMessage
+	gs.OnDisconnect = gs.HandleClientDisconnect
 
-	go gs.heartbeatScanner()
+	go gs.HeartbeatScanner()
 
 	return gs
 }
 
-func (gs *gatewayServer) noopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
+func (gs *gatewayServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (gs *gatewayServer) handleMessage(conn *common.ConnWrapper, msg common.Message) {
+func (gs *gatewayServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
 	gs.clientRouter.Dispatch(conn, msg)
 }
 
-func (gs *gatewayServer) handleCentralMessage(msg common.Message) {
+func (gs *gatewayServer) HandleCentralMessage(msg common.Message) {
 	gs.centralRouter.Dispatch(nil, msg)
 }
 
 // --- Client handlers ---
 
-func (gs *gatewayServer) handleClientLogin(conn *common.ConnWrapper, req *common.LoginReq) {
+func (gs *gatewayServer) HandleClientLogin(conn *common.ConnWrapper, req *common.LoginReq) {
 	token := req.Account
 	if token == "" {
 		rsp := common.LoginRsp{Success: false, Message: "令牌为空"}
@@ -203,7 +203,7 @@ func (gs *gatewayServer) handleClientLogin(conn *common.ConnWrapper, req *common
 	reqID := gs.reqCounter
 	pending := &tokenPending{conn: conn, reqID: reqID, account: account}
 	pending.timer = time.AfterFunc(loginPrepareTimeout, func() {
-		gs.handleLoginPrepareTimeout(reqID, account)
+		gs.HandleLoginPrepareTimeout(reqID, account)
 	})
 	gs.pendings[reqID] = pending
 	gs.mu.Unlock()
@@ -216,7 +216,7 @@ func (gs *gatewayServer) handleClientLogin(conn *common.ConnWrapper, req *common
 // forwardClientMove stamps the session's PlayerId onto a client move request and
 // forwards it to the player's world; on failure it replies with a MoveRsp so the
 // client snaps back.
-func (gs *gatewayServer) forwardClientMove(conn *common.ConnWrapper, msgType common.MessageType, setPlayerID func(uid uint64), m proto.Message) {
+func (gs *gatewayServer) ForwardClientMove(conn *common.ConnWrapper, msgType common.MessageType, setPlayerID func(uid uint64), m proto.Message) {
 	gs.mu.Lock()
 	session, ok := gs.sessions[conn]
 	gs.mu.Unlock()
@@ -224,48 +224,48 @@ func (gs *gatewayServer) forwardClientMove(conn *common.ConnWrapper, msgType com
 		return
 	}
 	setPlayerID(session.PlayerId)
-	if err := gs.forwardMsgToWorld(session.WorldId, msgType, m); err != nil {
+	if err := gs.ForwardMsgToWorld(session.WorldId, msgType, m); err != nil {
 		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: session.PlayerId, Message: "世界服不可用"})
 	}
 }
 
-func (gs *gatewayServer) handleClientWalkStart(conn *common.ConnWrapper, req *common.WalkStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_WalkStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientWalkStart(conn *common.ConnWrapper, req *common.WalkStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_WalkStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientRunStart(conn *common.ConnWrapper, req *common.RunStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_RunStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientRunStart(conn *common.ConnWrapper, req *common.RunStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_RunStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientSprintStart(conn *common.ConnWrapper, req *common.SprintStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_SprintStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientSprintStart(conn *common.ConnWrapper, req *common.SprintStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_SprintStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientJumpStart(conn *common.ConnWrapper, req *common.JumpStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_JumpStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientJumpStart(conn *common.ConnWrapper, req *common.JumpStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_JumpStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientDashStart(conn *common.ConnWrapper, req *common.DashStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_DashStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientDashStart(conn *common.ConnWrapper, req *common.DashStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_DashStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientRollStart(conn *common.ConnWrapper, req *common.RollStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_RollStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientRollStart(conn *common.ConnWrapper, req *common.RollStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_RollStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientStopStart(conn *common.ConnWrapper, req *common.StopStartReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_StopStartReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientStopStart(conn *common.ConnWrapper, req *common.StopStartReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_StopStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_MoveStopReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_MoveStopReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
-	gs.forwardClientMove(conn, common.Cli2Wd_MoveDirChangeReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_MoveDirChangeReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) handleClientSkill(conn *common.ConnWrapper, req *common.SkillReq) {
+func (gs *gatewayServer) HandleClientSkill(conn *common.ConnWrapper, req *common.SkillReq) {
 	gs.mu.Lock()
 	session, ok := gs.sessions[conn]
 	gs.mu.Unlock()
@@ -273,12 +273,12 @@ func (gs *gatewayServer) handleClientSkill(conn *common.ConnWrapper, req *common
 		return
 	}
 	req.PlayerId = session.PlayerId
-	if err := gs.forwardMsgToWorld(session.WorldId, common.Cli2Wd_SkillReq, req); err != nil {
+	if err := gs.ForwardMsgToWorld(session.WorldId, common.Cli2Wd_SkillReq, req); err != nil {
 		common.SendMsg(conn, common.Wd2Cli_SkillRsp, &common.SkillRsp{Success: false, PlayerId: req.PlayerId, Message: "世界服不可用"})
 	}
 }
 
-func (gs *gatewayServer) handleClientLogout(conn *common.ConnWrapper, _ *common.LogoutReq) {
+func (gs *gatewayServer) HandleClientLogout(conn *common.ConnWrapper, _ *common.LogoutReq) {
 	gs.mu.Lock()
 	session, ok := gs.sessions[conn]
 	if !ok {
@@ -296,7 +296,7 @@ func (gs *gatewayServer) handleClientLogout(conn *common.ConnWrapper, _ *common.
 
 // --- Timeout handlers ---
 
-func (gs *gatewayServer) handleLoginPrepareTimeout(reqID uint64, account string) {
+func (gs *gatewayServer) HandleLoginPrepareTimeout(reqID uint64, account string) {
 	gs.mu.Lock()
 	pending, ok := gs.pendings[reqID]
 	if ok {
@@ -312,7 +312,7 @@ func (gs *gatewayServer) handleLoginPrepareTimeout(reqID uint64, account string)
 	pending.conn.Close()
 }
 
-func (gs *gatewayServer) handleCreateEntityTimeout(account string) {
+func (gs *gatewayServer) HandleCreateEntityTimeout(account string) {
 	gs.mu.Lock()
 	pend, ok := gs.loginPendings[account]
 	if ok {
@@ -329,36 +329,36 @@ func (gs *gatewayServer) handleCreateEntityTimeout(account string) {
 }
 
 // sendDestroyAndArmTimer 向 world 发送销毁实体请求,并装上超时定时器(若未存在)。
-func (gs *gatewayServer) sendDestroyAndArmTimer(playerID uint64, worldID string) {
+func (gs *gatewayServer) SendDestroyAndArmTimer(playerID uint64, worldID string) {
 	destroyReq := common.DestroyEntityReq{PlayerId: playerID}
-	gs.forwardMsgToWorld(worldID, common.Gw2Wd_DestroyEntityReq, &destroyReq)
+	gs.ForwardMsgToWorld(worldID, common.Gw2Wd_DestroyEntityReq, &destroyReq)
 
 	gs.mu.Lock()
 	if _, exists := gs.destroyPendings[playerID]; !exists {
 		gs.destroyPendings[playerID] = time.AfterFunc(destroyTimeout, func() {
-			gs.handleDestroyTimeout(playerID)
+			gs.HandleDestroyTimeout(playerID)
 		})
 	}
 	gs.mu.Unlock()
 }
 
 // sendLogoutCleanup 通知 central 清理在线表。
-func (gs *gatewayServer) sendLogoutCleanup(playerID uint64) {
+func (gs *gatewayServer) SendLogoutCleanup(playerID uint64) {
 	cleanupReq := common.LogoutCleanupReq{PlayerId: playerID, GatewayId: gs.ServerId}
 	gs.SendToCentralMsg(common.Gw2Ct_LogoutCleanupReq, &cleanupReq)
 }
 
-func (gs *gatewayServer) handleDestroyTimeout(playerID uint64) {
+func (gs *gatewayServer) HandleDestroyTimeout(playerID uint64) {
 	gs.mu.Lock()
 	delete(gs.destroyPendings, playerID)
 	gs.mu.Unlock()
 	log.Printf("[gateway] destroy entity timeout for player %d, cleaning up central directly", playerID)
-	gs.sendLogoutCleanup(playerID)
+	gs.SendLogoutCleanup(playerID)
 }
 
 // --- World message handlers ---
 
-func (gs *gatewayServer) handleWorldMoveRsp(_ *common.ConnWrapper, rsp *common.MoveRsp) {
+func (gs *gatewayServer) HandleWorldMoveRsp(_ *common.ConnWrapper, rsp *common.MoveRsp) {
 	gs.mu.Lock()
 	clientConn, ok := gs.playerConns[rsp.PlayerId]
 	gs.mu.Unlock()
@@ -367,7 +367,7 @@ func (gs *gatewayServer) handleWorldMoveRsp(_ *common.ConnWrapper, rsp *common.M
 	}
 }
 
-func (gs *gatewayServer) handleWorldSkillRsp(_ *common.ConnWrapper, rsp *common.SkillRsp) {
+func (gs *gatewayServer) HandleWorldSkillRsp(_ *common.ConnWrapper, rsp *common.SkillRsp) {
 	gs.mu.Lock()
 	clientConn, ok := gs.playerConns[rsp.PlayerId]
 	gs.mu.Unlock()
@@ -376,7 +376,7 @@ func (gs *gatewayServer) handleWorldSkillRsp(_ *common.ConnWrapper, rsp *common.
 	}
 }
 
-func (gs *gatewayServer) handleWorldCreateEntityRsp(_ *common.ConnWrapper, rsp *common.CreateEntityRsp) {
+func (gs *gatewayServer) HandleWorldCreateEntityRsp(_ *common.ConnWrapper, rsp *common.CreateEntityRsp) {
 	log.Printf("[gateway] CreateEntityRsp from world: player=%d account=%s success=%v",
 		rsp.PlayerId, rsp.Account, rsp.Success)
 
@@ -410,7 +410,7 @@ func (gs *gatewayServer) handleWorldCreateEntityRsp(_ *common.ConnWrapper, rsp *
 	gs.SendToCentralMsg(common.Gw2Ct_LoginFinishReq, &finishReq)
 }
 
-func (gs *gatewayServer) handleWorldDestroyEntityRsp(_ *common.ConnWrapper, rsp *common.DestroyEntityRsp) {
+func (gs *gatewayServer) HandleWorldDestroyEntityRsp(_ *common.ConnWrapper, rsp *common.DestroyEntityRsp) {
 	log.Printf("[gateway] player %d entity destroyed, cleaning up central online table", rsp.PlayerId)
 	gs.mu.Lock()
 	if timer, ok := gs.destroyPendings[rsp.PlayerId]; ok {
@@ -418,12 +418,12 @@ func (gs *gatewayServer) handleWorldDestroyEntityRsp(_ *common.ConnWrapper, rsp 
 		delete(gs.destroyPendings, rsp.PlayerId)
 	}
 	gs.mu.Unlock()
-	gs.sendLogoutCleanup(rsp.PlayerId)
+	gs.SendLogoutCleanup(rsp.PlayerId)
 }
 
 // --- World connection ---
 
-func (gs *gatewayServer) forwardToWorld(worldID string, msg common.Message) error {
+func (gs *gatewayServer) ForwardToWorld(worldID string, msg common.Message) error {
 	gs.mu.Lock()
 	conn, ok := gs.worldConns[worldID]
 	gs.mu.Unlock()
@@ -439,15 +439,15 @@ func (gs *gatewayServer) forwardToWorld(worldID string, msg common.Message) erro
 }
 
 // forwardMsgToWorld marshals m and forwards it to the named world.
-func (gs *gatewayServer) forwardMsgToWorld(worldID string, msgType common.MessageType, m proto.Message) error {
+func (gs *gatewayServer) ForwardMsgToWorld(worldID string, msgType common.MessageType, m proto.Message) error {
 	data, err := common.MarshalHelper(m)
 	if err != nil {
 		return err
 	}
-	return gs.forwardToWorld(worldID, common.Message{Type: msgType, Data: data})
+	return gs.ForwardToWorld(worldID, common.Message{Type: msgType, Data: data})
 }
 
-func (gs *gatewayServer) connectToWorld(worldID, worldAddr string) {
+func (gs *gatewayServer) ConnectToWorld(worldID, worldAddr string) {
 	gs.mu.Lock()
 	if _, ok := gs.worldConns[worldID]; ok {
 		gs.mu.Unlock()
@@ -465,10 +465,10 @@ func (gs *gatewayServer) connectToWorld(worldID, worldAddr string) {
 	gs.worldConns[worldID] = cw
 	gs.mu.Unlock()
 	log.Printf("[gateway] connected to world %s at %s", worldID, worldAddr)
-	go gs.worldReadLoop(cw)
+	go gs.WorldReadLoop(cw)
 }
 
-func (gs *gatewayServer) worldReadLoop(cw *common.ConnWrapper) {
+func (gs *gatewayServer) WorldReadLoop(cw *common.ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[gateway %s] worldReadLoop panic recovered: %v", gs.ServerId, r)
@@ -488,7 +488,7 @@ func (gs *gatewayServer) worldReadLoop(cw *common.ConnWrapper) {
 // handleClientHeartbeat refreshes session liveness and stamps the server's
 // wall-clock time (Unix ms) into the reply, echoing the client's send time so
 // the client can derive the server-clock offset from the reply alone.
-func (gs *gatewayServer) handleClientHeartbeat(conn *common.ConnWrapper, req *common.ClientHeartbeatReq) {
+func (gs *gatewayServer) HandleClientHeartbeat(conn *common.ConnWrapper, req *common.ClientHeartbeatReq) {
 	gs.mu.Lock()
 	session, ok := gs.sessions[conn]
 	if ok {
@@ -502,7 +502,7 @@ func (gs *gatewayServer) handleClientHeartbeat(conn *common.ConnWrapper, req *co
 	common.SendMsg(conn, common.Gw2Cli_HeartbeatRsp, &rsp)
 }
 
-func (gs *gatewayServer) heartbeatScanner() {
+func (gs *gatewayServer) HeartbeatScanner() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 	for range ticker.C {
@@ -516,7 +516,7 @@ func (gs *gatewayServer) heartbeatScanner() {
 				continue
 			}
 			if now.Sub(session.LastHeartbeat) > heartbeatTimeout {
-				gs.markSuspectLocked(conn, session)
+				gs.MarkSuspectLocked(conn, session)
 				log.Printf("[gateway] session SUSPECT: account=%s player=%d", session.Account, session.PlayerId)
 			}
 		}
@@ -527,21 +527,21 @@ func (gs *gatewayServer) heartbeatScanner() {
 // markSuspectLocked 将一个 healthy session 转入 suspect 状态:从 sessions/playerConns
 // 移除(立即隔绝断连的 conn),加入 recoverableSessions 并启动重连窗口定时器。
 // 必须持有 gs.mu。
-func (gs *gatewayServer) markSuspectLocked(conn *common.ConnWrapper, session *clientSession) {
+func (gs *gatewayServer) MarkSuspectLocked(conn *common.ConnWrapper, session *clientSession) {
 	session.State = stateSuspect
 	delete(gs.sessions, conn)
 	delete(gs.playerConns, session.PlayerId)
 	gs.recoverableSessions[session.Account] = session
 	account := session.Account
 	gs.suspectTimers[account] = time.AfterFunc(suspectTimeout, func() {
-		gs.handleSuspectTimeout(account)
+		gs.HandleSuspectTimeout(account)
 	})
 }
 
 // handleClientDisconnect 是 OnDisconnect 回调:客户端连接读失败/断开时,立即把 session
 // 转入 suspect,不必等 heartbeatScanner 的 15s 心跳超时(断连后心跳必然停)。提前转换
 // 可消除"死 conn 残活、向其 Send 失败"的空窗,同时保留 30s 重连窗口(recoverableSessions)。
-func (gs *gatewayServer) handleClientDisconnect(conn *common.ConnWrapper) {
+func (gs *gatewayServer) HandleClientDisconnect(conn *common.ConnWrapper) {
 	gs.mu.Lock()
 	session, ok := gs.sessions[conn]
 	if !ok {
@@ -552,13 +552,13 @@ func (gs *gatewayServer) handleClientDisconnect(conn *common.ConnWrapper) {
 		gs.mu.Unlock()
 		return // 主动登出进行中,交给 logout 流程
 	}
-	gs.markSuspectLocked(conn, session)
+	gs.MarkSuspectLocked(conn, session)
 	account := session.Account
 	gs.mu.Unlock()
 	log.Printf("[gateway] client disconnect: account=%s player=%d -> SUSPECT", account, session.PlayerId)
 }
 
-func (gs *gatewayServer) handleSuspectTimeout(account string) {
+func (gs *gatewayServer) HandleSuspectTimeout(account string) {
 	gs.mu.Lock()
 	session, ok := gs.recoverableSessions[account]
 	if ok {
@@ -574,5 +574,5 @@ func (gs *gatewayServer) handleSuspectTimeout(account string) {
 	// 直接 destroy:cleanup 由 DestroyEntityRsp 触发,central 收到后清在线表。
 	// 不发 LogoutBeginReq:suspect 与顶号的 WaitingKick 都关乎 accountStates.Status,
 	// 发了会覆盖 WaitingKick 导致 tryContinuePendingAssign 失败。
-	gs.sendDestroyAndArmTimer(session.PlayerId, session.WorldId)
+	gs.SendDestroyAndArmTimer(session.PlayerId, session.WorldId)
 }

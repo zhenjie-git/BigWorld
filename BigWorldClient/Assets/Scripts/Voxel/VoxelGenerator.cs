@@ -28,10 +28,10 @@ namespace BigWorldClient
             List<WorldTriangle> triangles = CollectTriangles(config, scene);
             if (triangles.Count == 0)
             {
-                Debug.LogWarning("[VoxelGenerator] 场景中没有找到任何三角形");
+                {}
                 return null;
             }
-            Debug.Log($"[VoxelGenerator] 收集到 {triangles.Count} 个三角形");
+            {}
 
             // Step 2: 计算世界空间包围盒
             Bounds worldBounds;
@@ -53,7 +53,7 @@ namespace BigWorldClient
             int dimY = Mathf.Max(1, Mathf.CeilToInt(worldBounds.size.y / config.voxelSize.y - kDimEps));
             int dimZ = Mathf.Max(1, Mathf.CeilToInt(worldBounds.size.z / config.voxelSize.z - kDimEps));
 
-            Debug.Log($"[VoxelGenerator] 网格维度: {dimX} × {dimY} × {dimZ} = {dimX * dimY * dimZ} 体素单元");
+            {}
 
             // Step 4: 光栅化 — 对每个三角形，测试其可能覆盖的体素
             bool[,,] occupied = new bool[dimX, dimY, dimZ];
@@ -69,7 +69,7 @@ namespace BigWorldClient
 
             // 统计占用体素
             int occupiedCount = CountOccupied(occupied, dimX, dimY, dimZ);
-            Debug.Log($"[VoxelGenerator] 光栅化后占用体素: {occupiedCount}");
+            {}
 
             // Step 5: 填充内部封闭空腔（可选）
             if (config.fillInteriorCavities)
@@ -77,22 +77,21 @@ namespace BigWorldClient
                 int filledCount = FillInteriorCavities(occupied, dimX, dimY, dimZ);
                 if (filledCount > 0)
                 {
-                    Debug.Log($"[VoxelGenerator] 填充内部空腔: {filledCount} 个体素 " +
-                              $"(占比 {filledCount * 100f / Mathf.Max(1, dimX * dimY * dimZ):F2}%)");
+                    {}
                     int newOccupied = CountOccupied(occupied, dimX, dimY, dimZ);
-                    Debug.Log($"[VoxelGenerator] 填充后占用体素: {newOccupied} (增加 {newOccupied - occupiedCount})");
+                    {}
                     occupiedCount = newOccupied;
                 }
                 else
                 {
-                    Debug.Log("[VoxelGenerator] 未检测到内部封闭空腔");
+                    {}
                 }
             }
 
             // Step 6: 垂直合并
             List<List<VoxelData>> columnVoxels = MergeVoxels(
                 occupied, config, gridOrigin, dimX, dimY, dimZ);
-            Debug.Log($"[VoxelGenerator] 合并后体素总数: {TotalCount(columnVoxels)}");
+            {}
 
             // Step 7: 计算原点偏移并构建输出
             VoxelGridData gridData = BuildGridData(columnVoxels, config.voxelSize, gridOrigin, dimX, dimZ);
@@ -519,9 +518,9 @@ namespace BigWorldClient
                 }
             }
 
-            Debug.Log($"[VoxelGenerator] 原点偏移: {originOffset}");
-            Debug.Log($"[VoxelGenerator] 最终体素总数: {totalVoxelCount}");
-            Debug.Log($"[VoxelGenerator] 有体素的列数: {gridData.OccupiedColumnCount} / {totalColumns}");
+            {}
+            {}
+            {}
 
             return gridData;
         }
@@ -675,8 +674,7 @@ namespace BigWorldClient
                         blockedDirs++;
                 }
             }
-            Debug.Log($"[VoxelGenerator] 连通性计算完成: {blockedDirs}/{totalDirs} 方向阻塞 " +
-                      $"({(totalDirs - blockedDirs) * 100f / Mathf.Max(1, totalDirs):F1}% 可直达)");
+            {}
         }
 
         /// <summary>

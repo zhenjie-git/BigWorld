@@ -98,11 +98,11 @@ namespace BigWorldClient
             if (UIManager.Instance != null)
             {
                 UIManager.Instance.OpenPanel(loginPanelId);
-                Debug.Log("[Game] Login panel opened: " + loginPanelId);
+                {}
             }
             else
             {
-                Debug.LogError("[Game] UIManager is not available. Ensure UIManager.prefab exists at Resources/UI/.");
+                {}
             }
         }
 
@@ -138,7 +138,7 @@ namespace BigWorldClient
 
             // GameScene loads voxel binary + Unity scene async
             scene.LoadAsync();
-            Debug.Log("[Game] Login success, loading scene: " + mainCitySceneName);
+            {}
         }
 
         // ===== Scene load complete =====
@@ -148,7 +148,7 @@ namespace BigWorldClient
             if (evt.SceneName != mainCitySceneName) return;
             if (currentSceneId == null) return; // session ended before this scene finished loading
 
-            Debug.Log("[Game] MainCity scene loaded, spawning player...");
+            {}
             SpawnPlayer();
         }
 
@@ -156,7 +156,7 @@ namespace BigWorldClient
 
         private void OnSessionEnded(SessionEndedEvent evt)
         {
-            Debug.Log("[Game] Session ended (" + evt.Reason + "), returning to entry scene.");
+            {}
             ReturnToEntry();
         }
 
@@ -169,7 +169,7 @@ namespace BigWorldClient
             }
 
             SceneManager.LoadScene(entrySceneName, LoadSceneMode.Single);
-            Debug.Log("[Game] Returned to entry scene: " + entrySceneName);
+            {}
         }
 
         // ===== Player spawning =====
@@ -180,7 +180,7 @@ namespace BigWorldClient
             var existing = FindObjectOfType<PlayerController>();
             if (existing != null)
             {
-                Debug.Log("[Game] Using existing player in scene: " + existing.name);
+                {}
                 OnPlayerReady(existing);
                 return;
             }
@@ -189,7 +189,7 @@ namespace BigWorldClient
             var prefab = Resources.Load<GameObject>(playerPrefabPath);
             if (prefab == null)
             {
-                Debug.LogError("[Game] Player prefab not found at Resources/" + playerPrefabPath);
+                {}
                 return;
             }
 
@@ -201,7 +201,7 @@ namespace BigWorldClient
                 && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
             {
                 spawnPos = serverPos;
-                Debug.Log("[Game] Spawning at server position: " + spawnPos);
+                {}
             }
             else
             {
@@ -211,7 +211,7 @@ namespace BigWorldClient
                 {
                     spawnPos = spawnPoint.transform.position;
                     spawnRot = spawnPoint.transform.rotation;
-                    Debug.Log("[Game] Spawn point found: " + spawnPointName + " at " + spawnPos);
+                    {}
                 }
             }
 
@@ -221,12 +221,12 @@ namespace BigWorldClient
             var controller = playerGO.GetComponent<PlayerController>();
             if (controller != null)
             {
-                Debug.Log("[Game] Player spawned from prefab at " + spawnPos);
+                {}
                 OnPlayerReady(controller);
             }
             else
             {
-                Debug.LogError("[Game] Player prefab is missing PlayerController component!");
+                {}
             }
         }
 
@@ -239,6 +239,17 @@ namespace BigWorldClient
             // Bind the player to the current scene (voxel data lookup by sceneId)
             controller.Player.SceneId = currentSceneId;
 
+            // Initialise the tick predictor with the server-authoritative spawn.
+            if (GameNetworkManager.Instance != null
+                && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
+            {
+                controller.InitPrediction(serverPos.x, serverPos.z);
+            }
+            else
+            {
+                {}
+            }
+
             // Assign the player's CameraLookPoint as the camera follow target
             var cameraController = FindObjectOfType<CameraController>();
             if (cameraController != null)
@@ -247,16 +258,16 @@ namespace BigWorldClient
                 if (cameraLookPoint != null)
                 {
                     cameraController.SetTarget(cameraLookPoint);
-                    Debug.Log("[Game] Camera target assigned to Player/CameraLookPoint");
+                    {}
                 }
                 else
                 {
-                    Debug.LogWarning("[Game] CameraLookPoint not found under Player prefab, falling back to player root");
+                    {}
                     cameraController.SetTarget(controller.transform);
                 }
             }
 
-            Debug.Log("[Game] Player ready: " + controller.name);
+            {}
         }
     }
 }

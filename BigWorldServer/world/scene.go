@@ -11,15 +11,16 @@ type scene struct {
 	Height  float64
 	Players map[uint64]*playerEntity
 
-	voxelGrid   *voxelGrid
+	voxelGrid    *voxelGrid
 	displacement *displacementTable
-	maxStep     float64
-	spawnX      float64
-	spawnZ      float64
+	maxStep      float64
+	spawnX       float64
+	spawnZ       float64
 
 	// Server-authoritative movement simulation parameters (constant-speed states
 	// and the character collider metrics used by the per-state classes).
 	sprintSpeedMps    float64
+	sprintToRunTime   float64
 	rollSpeedMps      float64
 	fallGravityMps2   float64
 	fallSpeedLimitMps float64
@@ -27,28 +28,28 @@ type scene struct {
 	playerCenterY     float64
 }
 
-func newScene(id string, w, h float64, g *voxelGrid, d *displacementTable, maxStep, spawnX, spawnZ float64,
-	sprintSpeed, rollSpeed, fallGravity, fallSpeedLimit, playerHeight, playerCenterY float64) *scene {
+func NewScene(id string, w, h float64, g *voxelGrid, d *displacementTable, maxStep, spawnX, spawnZ float64,
+	sprintSpeed, sprintToRunTime, rollSpeed, fallGravity, fallSpeedLimit, playerHeight, playerCenterY float64) *scene {
 	return &scene{
-		SceneId:          id,
-		Width:            w,
-		Height:           h,
-		Players:          make(map[uint64]*playerEntity),
-		voxelGrid:        g,
-		displacement:     d,
-		maxStep:          maxStep,
-		spawnX:           spawnX,
-		spawnZ:           spawnZ,
-		sprintSpeedMps:   sprintSpeed,
-		rollSpeedMps:     rollSpeed,
-		fallGravityMps2:  fallGravity,
+		SceneId:           id,
+		Width:             w,
+		Height:            h,
+		Players:           make(map[uint64]*playerEntity),
+		voxelGrid:         g,
+		displacement:      d,
+		maxStep:           maxStep,
+		spawnX:            spawnX,
+		spawnZ:            spawnZ,
+		sprintSpeedMps:    sprintSpeed,
+		rollSpeedMps:      rollSpeed,
+		fallGravityMps2:   fallGravity,
 		fallSpeedLimitMps: fallSpeedLimit,
-		playerHeight:     playerHeight,
-		playerCenterY:    playerCenterY,
+		playerHeight:      playerHeight,
+		playerCenterY:     playerCenterY,
 	}
 }
 
-func (sc *scene) spawnPosition(resume bool, rx, ry float64) (float64, float64, int) {
+func (sc *scene) SpawnPosition(resume bool, rx, ry float64) (float64, float64, int) {
 	if sc.voxelGrid == nil {
 		if resume {
 			return rx, ry, -1
@@ -56,11 +57,11 @@ func (sc *scene) spawnPosition(resume bool, rx, ry float64) (float64, float64, i
 		return 100 + rand.Float64()*(sc.Width-200), 100 + rand.Float64()*(sc.Height-200), -1
 	}
 	if resume {
-		if cx, cz, ok := sc.voxelGrid.worldToColumn(rx, ry); ok {
-			if k := sc.voxelGrid.topLayerAt(cx, cz); k >= 0 {
+		if cx, cz, ok := sc.voxelGrid.WorldToColumn(rx, ry); ok {
+			if k := sc.voxelGrid.TopLayerAt(cx, cz); k >= 0 {
 				return rx, ry, k
 			}
 		}
 	}
-	return sc.voxelGrid.resolveSpawn(sc.spawnX, sc.spawnZ)
+	return sc.voxelGrid.ResolveSpawn(sc.spawnX, sc.spawnZ)
 }

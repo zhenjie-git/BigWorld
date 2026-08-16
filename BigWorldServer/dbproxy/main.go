@@ -13,12 +13,12 @@ func main() {
 
 	// Connect to MySQL before anything else: a dbproxy that cannot reach its
 	// database is useless. Auto-creates the database, tables, and seed accounts.
-	db, err := openDB(common.Config.MySQL.DSN)
+	db, err := OpenDB(common.Config.MySQL.DSN)
 	if err != nil {
 		log.Fatalf("failed to connect to MySQL: %v", err)
 	}
 
-	srv := newDbProxyServer(cfg.Name, db)
+	srv := NewDbProxyServer(cfg.Name, db)
 	if err := srv.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

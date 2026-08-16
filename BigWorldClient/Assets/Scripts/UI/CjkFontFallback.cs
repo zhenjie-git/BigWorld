@@ -28,7 +28,7 @@ namespace BigWorldClient.UI
             var font = Resources.Load<Font>("Fonts/SimHei");
             if (font == null)
             {
-                Debug.LogWarning("[CjkFont] Resources/Fonts/SimHei.ttf not found — Chinese text will show as boxes.");
+                {}
                 return;
             }
 
@@ -37,7 +37,7 @@ namespace BigWorldClient.UI
             var cjkFontAsset = TMP_FontAsset.CreateFontAsset(font);
             if (cjkFontAsset == null)
             {
-                Debug.LogWarning("[CjkFont] Failed to create dynamic font asset from SimHei.");
+                {}
                 return;
             }
 
@@ -45,7 +45,7 @@ namespace BigWorldClient.UI
             if (fallbacks == null || fallbacks.Contains(cjkFontAsset)) return;
 
             fallbacks.Add(cjkFontAsset);
-            Debug.Log("[CjkFont] Registered SimHei dynamic font as global TMP fallback (" + fallbacks.Count + " fallback(s)).");
+            {}
         }
     }
 }

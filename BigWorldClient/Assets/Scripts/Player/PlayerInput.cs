@@ -1,41 +1,42 @@
-using System;
-using System.Collections;
+using System.Collections.Generic;
+using BigWorldClient.Network;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
 namespace BigWorldClient
 {
+    /// <summary>
+    /// 纯输入采集器：不判断状态、不决定切换、不发送协议。
+    /// 只把输入事件和当前移动向量放进队列，由 MovePredictor 统一消费。
+    /// </summary>
     public class PlayerInput : MonoBehaviour
     {
         public PlayerInputActions InputActions { get; private set; }
         public PlayerInputActions.PlayerActions PlayerActions { get; private set; }
+        public Vector2 CurrentMovement { get; private set; }
 
-        private PlayerController player;
+        private readonly Queue<PlayerInputCommand> _commands = new();
 
         private void Awake()
         {
             InputActions = new PlayerInputActions();
             PlayerActions = InputActions.Player;
 
-            player = GetComponent<PlayerController>();
-
-            PlayerActions.WalkToggle.started += _ =>
+            PlayerActions.WalkToggle.started += _ => Enqueue(PlayerInputCommandKind.WalkToggle);
+            PlayerActions.Movement.started += _ =>
             {
-                player.OnWalkToggleInput();
+                Enqueue(PlayerInputCommandKind.MovementStarted);
             };
-
-            PlayerActions.Movement.started += OnMovementStarted;
             PlayerActions.Movement.canceled += _ =>
             {
                 CameraController.Instance.DisableRecentering();
-                player.OnMovementCanceledInput();
+                Enqueue(PlayerInputCommandKind.MovementCanceled);
             };
-            PlayerActions.Look.started += OnLookStarted;
-
-            PlayerActions.Dash.started += _ => player.OnDashInput();
-            PlayerActions.Jump.started += _ => player.OnJumpInput();
-            PlayerActions.Sprint.performed += _ => player.OnSprintInput();
-            PlayerActions.Movement.performed += _ => player.OnMovementPerformedInput();
+            PlayerActions.Movement.performed += _ => Enqueue(PlayerInputCommandKind.MovementPerformed);
+            PlayerActions.Look.started += _ => { };
+            PlayerActions.Dash.started += _ => Enqueue(PlayerInputCommandKind.Dash);
+            PlayerActions.Jump.started += _ => Enqueue(PlayerInputCommandKind.Jump);
+            PlayerActions.Sprint.performed += _ => Enqueue(PlayerInputCommandKind.Sprint);
         }
 
         private void OnEnable() => InputActions.Enable();
@@ -43,20 +44,26 @@ namespace BigWorldClient
 
         private void Update()
         {
-            player.MovementInput = PlayerActions.Movement.ReadValue<Vector2>();
-            // CameraController.Instance.UpdateRecenteringState(player.MovementInput);
+            CurrentMovement = PlayerActions.Movement.ReadValue<Vector2>();
         }
 
-        private void OnMovementStarted(InputAction.CallbackContext ctx)
+        public List<PlayerInputCommand> DrainCommands()
         {
-            player.OnMovementStartedInput();
+            var list = new List<PlayerInputCommand>(_commands.Count);
+            while (_commands.Count > 0)
+                list.Add(_commands.Dequeue());
+            return list;
         }
 
-        private void OnLookStarted(InputAction.CallbackContext ctx)
+        private void Enqueue(PlayerInputCommandKind kind)
         {
-            
+            long tick = GameNetworkManager.Instance?.Clock?.TickNow() ?? 0;
+            _commands.Enqueue(new PlayerInputCommand
+            {
+                Kind = kind,
+                Movement = PlayerActions.Movement.ReadValue<Vector2>(),
+                Tick = tick,
+            });
         }
-
-
     }
 }

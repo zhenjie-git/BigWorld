@@ -22,7 +22,7 @@ type displacementTable struct {
 	caps       map[pb.MoveState]float64
 }
 
-func loadDisplacementTable(path string) (*displacementTable, error) {
+func LoadDisplacementTable(path string) (*displacementTable, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -45,7 +45,7 @@ func loadDisplacementTable(path string) (*displacementTable, error) {
 		}
 		state := pb.MoveState(id)
 		if len(st.Curves) > 0 && st.Duration > 0 {
-			t.caps[state] = computeStateCap(st, t.FixedDelta) * t.Margin
+			t.caps[state] = ComputeStateCap(st, t.FixedDelta) * t.Margin
 		} else {
 			t.caps[state] = st.MaxPerFrame
 		}
@@ -55,7 +55,7 @@ func loadDisplacementTable(path string) (*displacementTable, error) {
 
 // stateEntry returns the displacement state data for a MoveState, used by the
 // per-state sim classes to evaluate the exported curves.
-func (t *displacementTable) stateEntry(s pb.MoveState) (displacementState, bool) {
+func (t *displacementTable) StateEntry(s pb.MoveState) (displacementState, bool) {
 	name, ok := pb.MoveState_name[int32(s)]
 	if !ok {
 		return displacementState{}, false
@@ -64,21 +64,21 @@ func (t *displacementTable) stateEntry(s pb.MoveState) (displacementState, bool)
 	return st, ok
 }
 
-func (t *displacementTable) maxPerFrame(state pb.MoveState) float64 {
+func (t *displacementTable) MaxPerFrame(state pb.MoveState) float64 {
 	if v, ok := t.caps[state]; ok {
 		return v
 	}
 	return maxMoveDelta
 }
 
-func computeStateCap(st displacementState, fixedDelta float64) float64 {
+func ComputeStateCap(st displacementState, fixedDelta float64) float64 {
 	sub := 16
 	dt := fixedDelta / st.Duration
 	step := dt / float64(sub)
 	best := 0.0
 	for a := 0.0; a < 1.0; a += step {
-		dx := axisDelta(st.Curves["x"], a, a+dt)
-		dz := axisDelta(st.Curves["z"], a, a+dt)
+		dx := AxisDelta(st.Curves["x"], a, a+dt)
+		dz := AxisDelta(st.Curves["z"], a, a+dt)
 		if m := math.Hypot(dx, dz); m > best {
 			best = m
 		}
@@ -86,18 +86,18 @@ func computeStateCap(st displacementState, fixedDelta float64) float64 {
 	return best
 }
 
-func axisDelta(keys [][2]float64, a, b float64) float64 {
+func AxisDelta(keys [][2]float64, a, b float64) float64 {
 	if len(keys) == 0 {
 		return 0
 	}
-	ca := evalCurve(keys, a)
+	ca := EvalCurve(keys, a)
 	if b <= 1 {
-		return evalCurve(keys, b) - ca
+		return EvalCurve(keys, b) - ca
 	}
-	return evalCurve(keys, 1) - ca + evalCurve(keys, b-1) - evalCurve(keys, 0)
+	return EvalCurve(keys, 1) - ca + EvalCurve(keys, b-1) - EvalCurve(keys, 0)
 }
 
-func evalCurve(keys [][2]float64, t float64) float64 {
+func EvalCurve(keys [][2]float64, t float64) float64 {
 	if t <= keys[0][0] {
 		return keys[0][1]
 	}
@@ -115,10 +115,10 @@ func evalCurve(keys [][2]float64, t float64) float64 {
 	return last[1]
 }
 
-func (t *displacementTable) debugDump() {
+func (t *displacementTable) DebugDump() {
 	for name, st := range t.States {
 		if len(st.Curves) > 0 {
-			log.Printf("[displacement] %s dur=%.4f cap=%.4f", name, st.Duration, t.maxPerFrame(pb.MoveState(pb.MoveState_value[name])))
+			log.Printf("[displacement] %s dur=%.4f cap=%.4f", name, st.Duration, t.MaxPerFrame(pb.MoveState(pb.MoveState_value[name])))
 		} else {
 			log.Printf("[displacement] %s cap=%.4f", name, st.MaxPerFrame)
 		}

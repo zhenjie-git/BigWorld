@@ -7,7 +7,7 @@ import (
 	"bigworld/common"
 )
 
-func (cs *centralServer) handleRegister(conn *common.ConnWrapper, req *common.RegisterReq) {
+func (cs *centralServer) HandleRegister(conn *common.ConnWrapper, req *common.RegisterReq) {
 	log.Printf("[central] register request: type=%s id=%s addr=%s",
 		req.ServerType, req.ServerId, req.ListenAddr)
 
@@ -66,7 +66,7 @@ func (cs *centralServer) handleRegister(conn *common.ConnWrapper, req *common.Re
 	}
 }
 
-func (cs *centralServer) handleHeartbeat(conn *common.ConnWrapper, req *common.HeartbeatReq) {
+func (cs *centralServer) HandleHeartbeat(conn *common.ConnWrapper, req *common.HeartbeatReq) {
 	cs.mu.Lock()
 	if record, ok := cs.servers[req.ServerId]; ok {
 		record.lastHB = time.Now().Unix()
@@ -77,7 +77,7 @@ func (cs *centralServer) handleHeartbeat(conn *common.ConnWrapper, req *common.H
 	common.SendMsg(conn, common.Ct2Srv_HeartbeatRsp, &rsp)
 }
 
-func (cs *centralServer) handleServerList(conn *common.ConnWrapper, req *common.ServerListReq) {
+func (cs *centralServer) HandleServerList(conn *common.ConnWrapper, req *common.ServerListReq) {
 	cs.mu.RLock()
 	var entries []*common.ServerEntry
 	for _, rec := range cs.servers {

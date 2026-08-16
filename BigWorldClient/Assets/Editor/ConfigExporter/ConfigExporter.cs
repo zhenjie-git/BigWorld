@@ -2,25 +2,22 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 
 namespace BigWorldClient
 {
     /// <summary>
-    /// 客户端与服务器共享配置的导出/导入工具。
-    /// 唯一数据源在 <see cref="GameConfigDir"/>（D:/UnityStudy/BigWorld/GameConfig）。
-    ///   - 导出：读 Player.asset / StateTransitionTable.asset -> 写 player_config.json / state_transition_table.json
-    ///   - 导入：读共享 JSON -> 原地重建两个 .asset（GUID 不变，场景/预制体引用不断）
-    /// 运行时代码不受影响。
+    /// 客户端与服务器共享玩家配置的导出/导入工具。
+    /// Unity 侧字段（曲线/旋转/动画名/资产路径等）从 Player.asset 导出；
+    /// 服务器读取的 9 个数值字段以 GameConfig/Player/player_config.xlsx 为准。
     /// </summary>
     public static class ConfigExporter
     {
         // ------------------------------------------------------------------ paths
         const string PlayerAssetPath = "Assets/Data/Player.asset";
-        const string TransitionAssetPath = "Assets/Data/StateTransitionTable.asset";
-        const string PlayerJsonFile = "player_config.json";
-        const string TransitionJsonFile = "state_transition_table.json";
+        const string PlayerJsonFile = "Player/player_config.json";
 
         // Assets = .../BigWorldClient/Assets -> ../../GameConfig
         static string GameConfigDir =>
@@ -35,12 +32,11 @@ namespace BigWorldClient
             {
                 Directory.CreateDirectory(GameConfigDir);
                 WritePlayerConfig();
-                WriteTransitionTable();
-                Debug.Log($"[ConfigExporter] 已导出到 {GameConfigDir}");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[ConfigExporter] 导出失败: {e}");
+                Debug.LogError($"[Config] 导出到共享文件夹失败: {e.Message}\n{e.StackTrace}");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
             }
         }
 
@@ -51,13 +47,12 @@ namespace BigWorldClient
             try
             {
                 ReadPlayerConfig();
-                ReadTransitionTable();
                 AssetDatabase.SaveAssets();
-                Debug.Log($"[ConfigExporter] 已从 {GameConfigDir} 导入并重建 .asset");
             }
             catch (Exception e)
             {
-                Debug.LogError($"[ConfigExporter] 导入失败: {e}");
+                Debug.LogError($"[Config] 从共享文件夹导入失败: {e.Message}\n{e.StackTrace}");
+                if (Application.isBatchMode) EditorApplication.Exit(1);
             }
         }
 
@@ -110,20 +105,12 @@ namespace BigWorldClient
             public JsonSlope slope; public JsonLayers layers;
             public float voxel_max_step_height; public JsonAnimation animation;
         }
-        [Serializable] public class StateTransitionJsonEntry { public string source; public string[] allowed_targets; }
-        [Serializable] public class StateTransitionTableJson { public StateTransitionJsonEntry[] entries; }
 
         // ------------------------------------------------------------------ helpers
         static bool EnsureAssets()
         {
             if (AssetDatabase.LoadAssetAtPath<PlayerConfig>(PlayerAssetPath) == null)
             {
-                Debug.LogError($"[ConfigExporter] 找不到 {PlayerAssetPath}");
-                return false;
-            }
-            if (AssetDatabase.LoadAssetAtPath<PlayerStateTransitionTable>(TransitionAssetPath) == null)
-            {
-                Debug.LogError($"[ConfigExporter] 找不到 {TransitionAssetPath}");
                 return false;
             }
             return true;
@@ -359,7 +346,9 @@ namespace BigWorldClient
                 },
             };
 
-            File.WriteAllText(PlayerJsonPath, JsonUtility.ToJson(dto, true));
+            PlayerConfigExcelExporter.ApplyExcelServerParams(dto);
+            Directory.CreateDirectory(Path.GetDirectoryName(PlayerJsonPath) ?? GameConfigDir);
+            File.WriteAllText(PlayerJsonPath, JsonUtility.ToJson(dto, true), new UTF8Encoding(false));
         }
 
         static int LayerBits(SerializedProperty p)
@@ -374,7 +363,7 @@ namespace BigWorldClient
             if (bits != null) bits.intValue = v; else p.intValue = v;
         }
 
-        static void ReadPlayerConfig()
+        public static void ReadPlayerConfig()
         {
             var json = JsonUtility.FromJson<PlayerConfigJson>(File.ReadAllText(PlayerJsonPath));
             if (json == null || json.grounded == null) throw new InvalidDataException($"{PlayerJsonPath} 解析失败");
@@ -467,56 +456,5 @@ namespace BigWorldClient
             EditorUtility.SetDirty(cfg);
         }
 
-        // ------------------------------------------------------------------ state transition table
-        static string TransitionJsonPath => Path.Combine(GameConfigDir, TransitionJsonFile);
-
-        static void WriteTransitionTable()
-        {
-            var tbl = AssetDatabase.LoadAssetAtPath<PlayerStateTransitionTable>(TransitionAssetPath);
-            var so = new SerializedObject(tbl);
-            var entries = so.FindProperty("Entries");
-
-            var dto = new StateTransitionTableJson { entries = new StateTransitionJsonEntry[entries.arraySize] };
-            for (int i = 0; i < entries.arraySize; i++)
-            {
-                var e = entries.GetArrayElementAtIndex(i);
-                var targets = e.FindPropertyRelative("AllowedTargets");
-                var names = new string[targets.arraySize];
-                for (int j = 0; j < targets.arraySize; j++)
-                    names[j] = Enum.GetName(typeof(PlayerMovementStateType), targets.GetArrayElementAtIndex(j).intValue);
-                dto.entries[i] = new StateTransitionJsonEntry
-                {
-                    source = Enum.GetName(typeof(PlayerMovementStateType), e.FindPropertyRelative("SourceState").intValue),
-                    allowed_targets = names,
-                };
-            }
-
-            File.WriteAllText(TransitionJsonPath, JsonUtility.ToJson(dto, true));
-        }
-
-        static void ReadTransitionTable()
-        {
-            var json = JsonUtility.FromJson<StateTransitionTableJson>(File.ReadAllText(TransitionJsonPath));
-            if (json == null || json.entries == null) throw new InvalidDataException($"{TransitionJsonPath} 解析失败");
-
-            var tbl = AssetDatabase.LoadAssetAtPath<PlayerStateTransitionTable>(TransitionAssetPath);
-            var so = new SerializedObject(tbl);
-            var entries = so.FindProperty("Entries");
-            entries.arraySize = json.entries.Length;
-            for (int i = 0; i < json.entries.Length; i++)
-            {
-                var e = entries.GetArrayElementAtIndex(i);
-                e.FindPropertyRelative("SourceState").intValue =
-                    (int)Enum.Parse(typeof(PlayerMovementStateType), json.entries[i].source);
-                var targets = e.FindPropertyRelative("AllowedTargets");
-                targets.arraySize = json.entries[i].allowed_targets.Length;
-                for (int j = 0; j < targets.arraySize; j++)
-                    targets.GetArrayElementAtIndex(j).intValue =
-                        (int)Enum.Parse(typeof(PlayerMovementStateType), json.entries[i].allowed_targets[j]);
-            }
-
-            so.ApplyModifiedPropertiesWithoutUndo();
-            EditorUtility.SetDirty(tbl);
-        }
     }
 }

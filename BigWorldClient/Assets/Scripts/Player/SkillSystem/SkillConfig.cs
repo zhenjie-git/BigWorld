@@ -1,4 +1,5 @@
 using UnityEngine;
+using BigWorldClient.Network.Protocol;
 
 namespace BigWorldClient
 {
@@ -16,7 +17,7 @@ namespace BigWorldClient
         [field: Header("State Transition")]
         [field: SerializeField]
         [field: Tooltip("Which movement state to switch to when this skill is released.")]
-        public PlayerMovementStateType TargetState { get; private set; }
+        public MoveState TargetState { get; private set; }
 
         [field: Header("Consecutive Use (连击)")]
         [field: SerializeField]

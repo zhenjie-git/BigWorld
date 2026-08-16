@@ -12,13 +12,13 @@ const shutdownAckTimeout = 10 * time.Second
 // handleShutdown is triggered by the shutdown tool (shutdown/main.go). It replies
 // immediately that shutdown has been initiated, then orchestrates the graceful
 // shutdown in a background goroutine so the reply is not blocked on server drains.
-func (cs *centralServer) handleShutdown(conn *common.ConnWrapper, req *common.ShutdownReq) {
+func (cs *centralServer) HandleShutdown(conn *common.ConnWrapper, req *common.ShutdownReq) {
 	log.Printf("[central] shutdown requested: %s", req.Reason)
 	common.SendMsg(conn, common.Ct2Srv_ShutdownRsp, &common.ShutdownRsp{
 		Success: true,
 		Message: "shutdown initiated",
 	})
-	go cs.runShutdown(req.Reason)
+	go cs.RunShutdown(req.Reason)
 }
 
 // runShutdown stops servers in dependency-safe order: gateways first (cut the
@@ -28,13 +28,13 @@ func (cs *centralServer) handleShutdown(conn *common.ConnWrapper, req *common.Sh
 // sequence is confirmed by acks rather than guessed from timing.
 // isShuttingDown reports whether a graceful shutdown is in progress, so login
 // orchestration can reject new logins instead of half-completing them.
-func (cs *centralServer) isShuttingDown() bool {
+func (cs *centralServer) IsShuttingDown() bool {
 	cs.mu.RLock()
 	defer cs.mu.RUnlock()
 	return cs.shuttingDown
 }
 
-func (cs *centralServer) runShutdown(reason string) {
+func (cs *centralServer) RunShutdown(reason string) {
 	cs.mu.Lock()
 	cs.shuttingDown = true
 	cs.mu.Unlock()
@@ -45,7 +45,7 @@ func (cs *centralServer) runShutdown(reason string) {
 		common.ServerWorld,
 		common.ServerDbProxy,
 	} {
-		cs.shutdownServerType(st, reason)
+		cs.ShutdownServerType(st, reason)
 	}
 
 	log.Printf("[central] all servers stopped, shutting down central")
@@ -55,7 +55,7 @@ func (cs *centralServer) runShutdown(reason string) {
 // shutdownServerType sends Ct2Srv_ShutdownNotify to every registered server of
 // the given type and waits for each to acknowledge (mirrors the inline
 // cs.servers iteration pattern in registry.go).
-func (cs *centralServer) shutdownServerType(st common.ServerType, reason string) {
+func (cs *centralServer) ShutdownServerType(st common.ServerType, reason string) {
 	cs.mu.RLock()
 	var targets []*serverRecord
 	for _, rec := range cs.servers {
@@ -70,11 +70,11 @@ func (cs *centralServer) shutdownServerType(st common.ServerType, reason string)
 		return
 	}
 	for _, rec := range targets {
-		cs.shutdownOne(rec, reason)
+		cs.ShutdownOne(rec, reason)
 	}
 }
 
-func (cs *centralServer) shutdownOne(rec *serverRecord, reason string) {
+func (cs *centralServer) ShutdownOne(rec *serverRecord, reason string) {
 	log.Printf("[central] sending shutdown to %s (%s)", rec.info.ServerId, rec.info.ServerType)
 	common.SendMsg(rec.conn, common.Ct2Srv_ShutdownNotify, &common.ShutdownNotify{Reason: reason})
 
@@ -100,7 +100,7 @@ func (cs *centralServer) shutdownOne(rec *serverRecord, reason string) {
 
 // handleShutdownAck records a server's acknowledgement. The channel is deleted
 // on close so a duplicate ack cannot double-close (which would panic).
-func (cs *centralServer) handleShutdownAck(_ *common.ConnWrapper, ack *common.ShutdownAck) {
+func (cs *centralServer) HandleShutdownAck(_ *common.ConnWrapper, ack *common.ShutdownAck) {
 	cs.mu.Lock()
 	if ch, ok := cs.shutdownAcks[ack.ServerId]; ok {
 		delete(cs.shutdownAcks, ack.ServerId)

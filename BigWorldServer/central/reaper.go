@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func (cs *centralServer) reapStale(timeout time.Duration) {
+func (cs *centralServer) ReapStale(timeout time.Duration) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
 	now := time.Now().Unix()

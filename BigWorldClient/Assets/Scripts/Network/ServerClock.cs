@@ -17,6 +17,8 @@ namespace BigWorldClient.Network
     /// </summary>
     public sealed class ServerClock
     {
+        public const long TickMs = 20;
+
         private readonly object _lock = new object();
         private long _bestRttMs = long.MaxValue; // sentinel: not synced yet
         private double _offsetMs;                // server - local, in ms
@@ -84,6 +86,42 @@ namespace BigWorldClient.Network
                 return _bestRttMs == long.MaxValue
                     ? LocalNowMs()
                     : (long)(LocalNowMs() + _offsetMs);
+            }
+        }
+
+        /// <summary>Current server simulation tick: floor(serverNowMs / TickMs).</summary>
+        public long TickNow()
+        {
+            long ms = NowMs();
+            return ms >= 0 ? ms / TickMs : 0;
+        }
+
+        public static long TickToMs(long tick) => tick * TickMs;
+
+        /// <summary>
+        /// Use an authoritative server tick from a MoveRsp to gently correct the
+        /// clock estimate. The heartbeat RTT offset is good on average but can be
+        /// off by a tick or two; this keeps predicted event ticks inside the
+        /// server's acceptance window without hard snapping the clock.
+        /// </summary>
+        public void LearnServerTick(long serverTick, long receiveLocalMs)
+        {
+            if (serverTick <= 0) return;
+            double observedOffset = (double)TickToMs(serverTick) - receiveLocalMs;
+
+            lock (_lock)
+            {
+                if (_bestRttMs == long.MaxValue)
+                {
+                    _bestRttMs = 0;
+                    _offsetMs = observedOffset;
+                    return;
+                }
+
+                double delta = observedOffset - _offsetMs;
+                if (delta > 500.0) delta = 500.0;
+                if (delta < -500.0) delta = -500.0;
+                _offsetMs += delta * 0.25;
             }
         }
 

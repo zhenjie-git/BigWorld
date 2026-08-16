@@ -30,11 +30,11 @@ const (
 	maxMoveWindowMs = 300
 )
 
-func voxelGetFlag(connectivity uint16, dir int) byte {
+func VoxelGetFlag(connectivity uint16, dir int) byte {
 	return byte((connectivity >> (dir * 2)) & 3)
 }
 
-func voxelDirectionIndex(dx, dz int) int {
+func VoxelDirectionIndex(dx, dz int) int {
 	if dx < -1 {
 		dx = -1
 	}
@@ -86,7 +86,7 @@ type voxelGrid struct {
 	maxTopY    float64
 }
 
-func loadVoxelGrid(path string) (*voxelGrid, error) {
+func LoadVoxelGrid(path string) (*voxelGrid, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
@@ -164,11 +164,11 @@ func loadVoxelGrid(path string) (*voxelGrid, error) {
 	return g, nil
 }
 
-func (g *voxelGrid) gridIndex(x, z int) int { return x + z*g.dimX }
+func (g *voxelGrid) GridIndex(x, z int) int { return x + z*g.dimX }
 
-func (g *voxelGrid) columnCount(x, z int) int { return g.columns[g.gridIndex(x, z)] }
+func (g *voxelGrid) ColumnCount(x, z int) int { return g.columns[g.GridIndex(x, z)] }
 
-func (g *voxelGrid) worldToColumn(wx, wz float64) (int, int, bool) {
+func (g *voxelGrid) WorldToColumn(wx, wz float64) (int, int, bool) {
 	x := int(math.Floor((wx - g.origin[0]) / g.voxelSize[0]))
 	z := int(math.Floor((wz - g.origin[2]) / g.voxelSize[2]))
 	if x < 0 || x >= g.dimX || z < 0 || z >= g.dimZ {
@@ -177,28 +177,28 @@ func (g *voxelGrid) worldToColumn(wx, wz float64) (int, int, bool) {
 	return x, z, true
 }
 
-func (g *voxelGrid) columnCenter(x, z int) (float64, float64) {
+func (g *voxelGrid) ColumnCenter(x, z int) (float64, float64) {
 	return g.origin[0] + (float64(x)+0.5)*g.voxelSize[0],
 		g.origin[2] + (float64(z)+0.5)*g.voxelSize[2]
 }
 
-func (g *voxelGrid) resolveSpawn(sx, sz float64) (float64, float64, int) {
-	startX, startZ, ok := g.worldToColumn(sx, sz)
+func (g *voxelGrid) ResolveSpawn(sx, sz float64) (float64, float64, int) {
+	startX, startZ, ok := g.WorldToColumn(sx, sz)
 	if !ok {
 		startX, startZ = g.dimX/2, g.dimZ/2
 	}
 	for radius := 0; radius <= 1000; radius++ {
 		for dx := -radius; dx <= radius; dx++ {
 			for dz := -radius; dz <= radius; dz++ {
-				if abs(dx) != radius && abs(dz) != radius {
+				if Abs(dx) != radius && Abs(dz) != radius {
 					continue
 				}
 				x, z := startX+dx, startZ+dz
 				if x < 0 || x >= g.dimX || z < 0 || z >= g.dimZ {
 					continue
 				}
-				if cnt := g.columnCount(x, z); cnt > 0 {
-					wx, wz := g.columnCenter(x, z)
+				if cnt := g.ColumnCount(x, z); cnt > 0 {
+					wx, wz := g.ColumnCenter(x, z)
 					return wx, wz, cnt - 1
 				}
 			}
@@ -207,30 +207,30 @@ func (g *voxelGrid) resolveSpawn(sx, sz float64) (float64, float64, int) {
 	return sx, sz, -1
 }
 
-func (g *voxelGrid) topLayerAt(x, z int) int {
-	return g.columnCount(x, z) - 1
+func (g *voxelGrid) TopLayerAt(x, z int) int {
+	return g.ColumnCount(x, z) - 1
 }
 
-func (g *voxelGrid) validateMove(fromX, fromZ float64, curK int, dx, dz, maxStep float64) (bool, int) {
-	curX, curZ, ok := g.worldToColumn(fromX, fromZ)
+func (g *voxelGrid) ValidateMove(fromX, fromZ float64, curK int, dx, dz, maxStep float64) (bool, int) {
+	curX, curZ, ok := g.WorldToColumn(fromX, fromZ)
 	if !ok {
 		return false, curK
 	}
-	targetX, targetZ, ok := g.worldToColumn(fromX+dx, fromZ+dz)
+	targetX, targetZ, ok := g.WorldToColumn(fromX+dx, fromZ+dz)
 	if !ok {
 		return false, curK
 	}
-	if abs(targetX-curX) > 1 || abs(targetZ-curZ) > 1 {
+	if Abs(targetX-curX) > 1 || Abs(targetZ-curZ) > 1 {
 		return false, curK
 	}
 
-	targetIdx := g.gridIndex(targetX, targetZ)
+	targetIdx := g.GridIndex(targetX, targetZ)
 	targetCount := g.columns[targetIdx]
 	if targetCount == 0 {
 		return false, curK
 	}
 
-	curIdx := g.gridIndex(curX, curZ)
+	curIdx := g.GridIndex(curX, curZ)
 	curCount := g.columns[curIdx]
 	if curK < 0 || curK >= curCount {
 		return false, curK
@@ -239,7 +239,7 @@ func (g *voxelGrid) validateMove(fromX, fromZ float64, curK int, dx, dz, maxStep
 
 	resolvedK := curK
 	if targetX != curX || targetZ != curZ {
-		resolvedK = g.resolveTargetLayer(curX, curZ, curK, targetX, targetZ)
+		resolvedK = g.ResolveTargetLayer(curX, curZ, curK, targetX, targetZ)
 		if resolvedK < 0 || resolvedK >= targetCount {
 			return false, curK
 		}
@@ -253,22 +253,22 @@ func (g *voxelGrid) validateMove(fromX, fromZ float64, curK int, dx, dz, maxStep
 	return true, resolvedK
 }
 
-func (g *voxelGrid) surfaceHeight(x, z float64, k int) float64 {
+func (g *voxelGrid) SurfaceHeight(x, z float64, k int) float64 {
 	if k < 0 {
 		return g.origin[1]
 	}
-	cx, cz, ok := g.worldToColumn(x, z)
+	cx, cz, ok := g.WorldToColumn(x, z)
 	if !ok {
 		return g.origin[1]
 	}
-	idx := g.gridIndex(cx, cz)
-	if k >= g.columnCount(cx, cz) {
+	idx := g.GridIndex(cx, cz)
+	if k >= g.ColumnCount(cx, cz) {
 		return g.origin[1]
 	}
 	return g.origin[1] + g.voxels[g.starts[idx]+k].maxY
 }
 
-func (g *voxelGrid) validateGroundMove(fromX, fromZ float64, curK int, dx, dz, maxStep, maxDelta float64) (bool, int, float64) {
+func (g *voxelGrid) ValidateGroundMove(fromX, fromZ float64, curK int, dx, dz, maxStep, maxDelta float64) (bool, int, float64) {
 	if math.Hypot(dx, dz) > maxDelta {
 		return false, curK, g.origin[1]
 	}
@@ -281,22 +281,22 @@ func (g *voxelGrid) validateGroundMove(fromX, fromZ float64, curK int, dx, dz, m
 	for i := 1; i <= steps; i++ {
 		nx := fromX + dx*float64(i)/float64(steps)
 		nz := fromZ + dz*float64(i)/float64(steps)
-		ok, nk := g.validateMove(px, pz, k, nx-px, nz-pz, maxStep)
+		ok, nk := g.ValidateMove(px, pz, k, nx-px, nz-pz, maxStep)
 		if !ok {
 			return false, curK, g.origin[1]
 		}
 		px, pz, k = nx, nz, nk
 	}
-	return true, k, g.surfaceHeight(px, pz, k)
+	return true, k, g.SurfaceHeight(px, pz, k)
 }
 
-func (g *voxelGrid) resolveLayerNearY(x, z float64, refY float64) int {
-	cx, cz, ok := g.worldToColumn(x, z)
+func (g *voxelGrid) ResolveLayerNearY(x, z float64, refY float64) int {
+	cx, cz, ok := g.WorldToColumn(x, z)
 	if !ok {
 		return -1
 	}
-	idx := g.gridIndex(cx, cz)
-	cnt := g.columnCount(cx, cz)
+	idx := g.GridIndex(cx, cz)
+	cnt := g.ColumnCount(cx, cz)
 	if cnt == 0 {
 		return -1
 	}
@@ -312,12 +312,12 @@ func (g *voxelGrid) resolveLayerNearY(x, z float64, refY float64) int {
 	return best
 }
 
-func (g *voxelGrid) validateAirborne(fromX, fromZ float64, dx, dz, y, maxDelta float64) bool {
+func (g *voxelGrid) ValidateAirborne(fromX, fromZ float64, dx, dz, y, maxDelta float64) bool {
 	if math.Hypot(dx, dz) > maxDelta {
 		return false
 	}
 	nx, nz := fromX+dx, fromZ+dz
-	if _, _, ok := g.worldToColumn(nx, nz); !ok {
+	if _, _, ok := g.WorldToColumn(nx, nz); !ok {
 		return false
 	}
 	if y < g.origin[1]-airborneMargin || y > g.origin[1]+g.maxTopY+airborneCeilH {
@@ -326,15 +326,15 @@ func (g *voxelGrid) validateAirborne(fromX, fromZ float64, dx, dz, y, maxDelta f
 	return true
 }
 
-func (g *voxelGrid) resolveTargetLayer(curX, curZ, curK, targetX, targetZ int) int {
-	curIdx := g.gridIndex(curX, curZ)
-	targetIdx := g.gridIndex(targetX, targetZ)
+func (g *voxelGrid) ResolveTargetLayer(curX, curZ, curK, targetX, targetZ int) int {
+	curIdx := g.GridIndex(curX, curZ)
+	targetIdx := g.GridIndex(targetX, targetZ)
 	targetCount := g.columns[targetIdx]
 	targetStart := g.starts[targetIdx]
 	curVoxel := g.voxels[g.starts[curIdx]+curK]
 
-	dir := voxelDirectionIndex(targetX-curX, targetZ-curZ)
-	flag := voxelGetFlag(curVoxel.connectivity, dir)
+	dir := VoxelDirectionIndex(targetX-curX, targetZ-curZ)
+	flag := VoxelGetFlag(curVoxel.connectivity, dir)
 
 	switch flag {
 	case voxelFlagSameLayer:
@@ -369,13 +369,13 @@ func (g *voxelGrid) resolveTargetLayer(curX, curZ, curK, targetX, targetZ int) i
 // ceilingHit mirrors the client's CheckCeilingVoxel: it reports whether a voxel
 // in the column under (x,z) overlaps the character's vertical range and returns
 // the lowest such voxel's bottom surface (world Y).
-func (g *voxelGrid) ceilingHit(x, z, feetY, headTopY float64) (bool, float64) {
-	cx, cz, ok := g.worldToColumn(x, z)
+func (g *voxelGrid) CeilingHit(x, z, feetY, headTopY float64) (bool, float64) {
+	cx, cz, ok := g.WorldToColumn(x, z)
 	if !ok {
 		return false, 0
 	}
-	idx := g.gridIndex(cx, cz)
-	cnt := g.columnCount(cx, cz)
+	idx := g.GridIndex(cx, cz)
+	cnt := g.ColumnCount(cx, cz)
 	if cnt == 0 {
 		return false, 0
 	}
@@ -385,7 +385,8 @@ func (g *voxelGrid) ceilingHit(x, z, feetY, headTopY float64) (bool, float64) {
 		v := g.voxels[g.starts[idx]+i]
 		minY := g.origin[1] + v.minY
 		maxY := g.origin[1] + v.maxY
-		if minY < headTopY && maxY > feetY {
+		// 只有体素底面高于脚底才算天花板；脚底以下的支撑体素直接排除。
+		if minY > feetY+0.01 && minY < headTopY && headTopY > minY && headTopY < maxY {
 			if minY < ceiling {
 				ceiling = minY
 				found = true
@@ -395,7 +396,7 @@ func (g *voxelGrid) ceilingHit(x, z, feetY, headTopY float64) (bool, float64) {
 	return found, ceiling
 }
 
-func (g *voxelGrid) debugDump() {
+func (g *voxelGrid) DebugDump() {
 	occupied := 0
 	for _, c := range g.columns {
 		if c > 0 {
@@ -406,7 +407,7 @@ func (g *voxelGrid) debugDump() {
 		g.dimX, g.dimZ, len(g.voxels), occupied, len(g.columns), g.width, g.height, g.origin[0], g.origin[1], g.origin[2])
 }
 
-func abs(x int) int {
+func Abs(x int) int {
 	if x < 0 {
 		return -x
 	}

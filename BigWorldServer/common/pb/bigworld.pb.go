@@ -93,7 +93,6 @@ const (
 	MoveState_MOVE_STOP_MED   MoveState = 5
 	MoveState_MOVE_STOP_HARD  MoveState = 6
 	MoveState_MOVE_LAND_LIGHT MoveState = 7
-	MoveState_MOVE_LAND_HARD  MoveState = 8
 	MoveState_MOVE_ROLL       MoveState = 9
 	MoveState_MOVE_DASH       MoveState = 10
 	MoveState_MOVE_JUMP_UP    MoveState = 11
@@ -112,7 +111,6 @@ var (
 		5:  "MOVE_STOP_MED",
 		6:  "MOVE_STOP_HARD",
 		7:  "MOVE_LAND_LIGHT",
-		8:  "MOVE_LAND_HARD",
 		9:  "MOVE_ROLL",
 		10: "MOVE_DASH",
 		11: "MOVE_JUMP_UP",
@@ -128,7 +126,6 @@ var (
 		"MOVE_STOP_MED":   5,
 		"MOVE_STOP_HARD":  6,
 		"MOVE_LAND_LIGHT": 7,
-		"MOVE_LAND_HARD":  8,
 		"MOVE_ROLL":       9,
 		"MOVE_DASH":       10,
 		"MOVE_JUMP_UP":    11,
@@ -2586,6 +2583,9 @@ func (x *MoveDirChangeReq) GetServerTimeMs() int64 {
 	return 0
 }
 
+// 移动响应：成功/失败都尽量携带服务器权威快照，客户端据此做回滚重放。
+// SimTick 是快照 tick；AckTick 是已确认到的输入 tick；两者通常相等，
+// 客户端恢复 SimTick 快照后重放所有 EventTick > AckTick 的待确认输入。
 type MoveRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -2594,7 +2594,17 @@ type MoveRsp struct {
 	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
 	Y             float64                `protobuf:"fixed64,5,opt,name=y,proto3" json:"y,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
-	AckTimeMs     int64                  `protobuf:"varint,7,opt,name=ack_time_ms,json=ackTimeMs,proto3" json:"ack_time_ms,omitempty"` // 服务端最新接受的时间戳；客户端据此弹出/丢弃已发送记录
+	AckTimeMs     int64                  `protobuf:"varint,7,opt,name=ack_time_ms,json=ackTimeMs,proto3" json:"ack_time_ms,omitempty"` // 兼容旧字段：被确认输入的服务器毫秒
+	SimTick       int64                  `protobuf:"varint,8,opt,name=sim_tick,json=simTick,proto3" json:"sim_tick,omitempty"`         // 快照对应的服务器 tick
+	AckTick       int64                  `protobuf:"varint,9,opt,name=ack_tick,json=ackTick,proto3" json:"ack_tick,omitempty"`         // 已确认输入 tick
+	State         MoveState              `protobuf:"varint,10,opt,name=state,proto3,enum=bigworld.MoveState" json:"state,omitempty"`
+	VoxelK        int32                  `protobuf:"varint,11,opt,name=voxel_k,json=voxelK,proto3" json:"voxel_k,omitempty"`
+	Airborne      bool                   `protobuf:"varint,12,opt,name=airborne,proto3" json:"airborne,omitempty"`
+	DirX          float64                `protobuf:"fixed64,13,opt,name=dir_x,json=dirX,proto3" json:"dir_x,omitempty"`
+	DirZ          float64                `protobuf:"fixed64,14,opt,name=dir_z,json=dirZ,proto3" json:"dir_z,omitempty"`
+	CurveNorm     float64                `protobuf:"fixed64,15,opt,name=curve_norm,json=curveNorm,proto3" json:"curve_norm,omitempty"`
+	StateStartMs  int64                  `protobuf:"varint,16,opt,name=state_start_ms,json=stateStartMs,proto3" json:"state_start_ms,omitempty"`
+	FallVelY      float64                `protobuf:"fixed64,17,opt,name=fall_vel_y,json=fallVelY,proto3" json:"fall_vel_y,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2674,6 +2684,76 @@ func (x *MoveRsp) GetMessage() string {
 func (x *MoveRsp) GetAckTimeMs() int64 {
 	if x != nil {
 		return x.AckTimeMs
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetSimTick() int64 {
+	if x != nil {
+		return x.SimTick
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetAckTick() int64 {
+	if x != nil {
+		return x.AckTick
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetState() MoveState {
+	if x != nil {
+		return x.State
+	}
+	return MoveState_MOVE_IDLE
+}
+
+func (x *MoveRsp) GetVoxelK() int32 {
+	if x != nil {
+		return x.VoxelK
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetAirborne() bool {
+	if x != nil {
+		return x.Airborne
+	}
+	return false
+}
+
+func (x *MoveRsp) GetDirX() float64 {
+	if x != nil {
+		return x.DirX
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetDirZ() float64 {
+	if x != nil {
+		return x.DirZ
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetCurveNorm() float64 {
+	if x != nil {
+		return x.CurveNorm
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetStateStartMs() int64 {
+	if x != nil {
+		return x.StateStartMs
+	}
+	return 0
+}
+
+func (x *MoveRsp) GetFallVelY() float64 {
+	if x != nil {
+		return x.FallVelY
 	}
 	return 0
 }
@@ -3730,7 +3810,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x10MoveDirChangeReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12#\n" +
 	"\x03dir\x18\x02 \x01(\v2\x11.bigworld.MoveDirR\x03dir\x12$\n" +
-	"\x0eserver_time_ms\x18\x03 \x01(\x03R\fserverTimeMs\"\xa4\x01\n" +
+	"\x0eserver_time_ms\x18\x03 \x01(\x03R\fserverTimeMs\"\xc7\x03\n" +
 	"\aMoveRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\f\n" +
@@ -3738,7 +3818,20 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01z\x18\x04 \x01(\x01R\x01z\x12\f\n" +
 	"\x01y\x18\x05 \x01(\x01R\x01y\x12\x18\n" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x1e\n" +
-	"\vack_time_ms\x18\a \x01(\x03R\tackTimeMs\"B\n" +
+	"\vack_time_ms\x18\a \x01(\x03R\tackTimeMs\x12\x19\n" +
+	"\bsim_tick\x18\b \x01(\x03R\asimTick\x12\x19\n" +
+	"\back_tick\x18\t \x01(\x03R\aackTick\x12)\n" +
+	"\x05state\x18\n" +
+	" \x01(\x0e2\x13.bigworld.MoveStateR\x05state\x12\x17\n" +
+	"\avoxel_k\x18\v \x01(\x05R\x06voxelK\x12\x1a\n" +
+	"\bairborne\x18\f \x01(\bR\bairborne\x12\x13\n" +
+	"\x05dir_x\x18\r \x01(\x01R\x04dirX\x12\x13\n" +
+	"\x05dir_z\x18\x0e \x01(\x01R\x04dirZ\x12\x1d\n" +
+	"\n" +
+	"curve_norm\x18\x0f \x01(\x01R\tcurveNorm\x12$\n" +
+	"\x0estate_start_ms\x18\x10 \x01(\x03R\fstateStartMs\x12\x1c\n" +
+	"\n" +
+	"fall_vel_y\x18\x11 \x01(\x01R\bfallVelY\"B\n" +
 	"\bSkillReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x19\n" +
 	"\bskill_id\x18\x02 \x01(\tR\askillId\"[\n" +
@@ -3799,7 +3892,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\fSERVER_WORLD\x10\x02\x12\x12\n" +
 	"\x0eSERVER_GATEWAY\x10\x03\x12\x10\n" +
 	"\fSERVER_LOGIN\x10\x04\x12\x12\n" +
-	"\x0eSERVER_DBPROXY\x10\x05*\x80\x02\n" +
+	"\x0eSERVER_DBPROXY\x10\x05*\x82\x02\n" +
 	"\tMoveState\x12\r\n" +
 	"\tMOVE_IDLE\x10\x00\x12\r\n" +
 	"\tMOVE_WALK\x10\x01\x12\f\n" +
@@ -3808,14 +3901,13 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x0fMOVE_STOP_LIGHT\x10\x04\x12\x11\n" +
 	"\rMOVE_STOP_MED\x10\x05\x12\x12\n" +
 	"\x0eMOVE_STOP_HARD\x10\x06\x12\x13\n" +
-	"\x0fMOVE_LAND_LIGHT\x10\a\x12\x12\n" +
-	"\x0eMOVE_LAND_HARD\x10\b\x12\r\n" +
+	"\x0fMOVE_LAND_LIGHT\x10\a\x12\r\n" +
 	"\tMOVE_ROLL\x10\t\x12\r\n" +
 	"\tMOVE_DASH\x10\n" +
 	"\x12\x10\n" +
 	"\fMOVE_JUMP_UP\x10\v\x12\r\n" +
 	"\tMOVE_FALL\x10\f\x12\x12\n" +
-	"\x0eMOVE_JUMP_DOWN\x10\rB4Z\x12bigworld/common/pb\xaa\x02\x1dGameplayDemo.Network.Protocolb\x06proto3"
+	"\x0eMOVE_JUMP_DOWN\x10\r\"\x04\b\b\x10\b*\x0eMOVE_LAND_HARDB6Z\x12bigworld/common/pb\xaa\x02\x1fBigWorldClient.Network.Protocolb\x06proto3"
 
 var (
 	file_bigworld_proto_rawDescOnce sync.Once
@@ -3904,12 +3996,13 @@ var file_bigworld_proto_depIdxs = []int32{
 	31, // 9: bigworld.RollStartReq.dir:type_name -> bigworld.MoveDir
 	1,  // 10: bigworld.StopStartReq.stop_kind:type_name -> bigworld.MoveState
 	31, // 11: bigworld.MoveDirChangeReq.dir:type_name -> bigworld.MoveDir
-	50, // 12: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
-	13, // [13:13] is the sub-list for method output_type
-	13, // [13:13] is the sub-list for method input_type
-	13, // [13:13] is the sub-list for extension type_name
-	13, // [13:13] is the sub-list for extension extendee
-	0,  // [0:13] is the sub-list for field type_name
+	1,  // 12: bigworld.MoveRsp.state:type_name -> bigworld.MoveState
+	50, // 13: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_bigworld_proto_init() }

@@ -107,7 +107,7 @@ namespace BigWorldClient.UI.Panels
                 Password = password
             });
 
-            Debug.Log("[LoginVM] Login attempt: " + usernameTrimmed);
+            {}
         }
 
         // ===== Event subscription =====

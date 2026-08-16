@@ -9,6 +9,7 @@ BigWorldServer/common/config.json
 
 # ---- 本地工具配置（含个人凭据/计划）----
 .claude/
+.zcode/
 
 # ---- IDE / 系统 ----
 .vscode/
@@ -20,6 +21,7 @@ Thumbs.db
 *.exe
 *.out
 *.test
+__debug_bin.exe*
 
 # ---- 服务器日志 ----
 *.log

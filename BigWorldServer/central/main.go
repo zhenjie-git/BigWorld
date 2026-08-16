@@ -11,7 +11,7 @@ func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
 	cfg := common.MustLoadServerConfig("common/config.json", "central")
-	cs := newCentralServer(cfg.Name)
+	cs := NewCentralServer(cfg.Name)
 	if err := cs.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -19,7 +19,7 @@ func main() {
 	reapTicker := time.NewTicker(15 * time.Second)
 	go func() {
 		for range reapTicker.C {
-			cs.reapStale(25 * time.Second)
+			cs.ReapStale(25 * time.Second)
 		}
 	}()
 	defer reapTicker.Stop()

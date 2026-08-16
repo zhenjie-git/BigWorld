@@ -3,7 +3,7 @@ syntax = "proto3";
 package bigworld;
 
 option go_package = "bigworld/common/pb";
-option csharp_namespace = "GameplayDemo.Network.Protocol";
+option csharp_namespace = "BigWorldClient.Network.Protocol";
 
 // ServerType enumerates the different server roles. Values mirror the
 // hand-written common.ServerType constants so they stay wire-compatible.
@@ -220,12 +220,13 @@ enum MoveState {
   MOVE_STOP_MED   = 5;
   MOVE_STOP_HARD  = 6;
   MOVE_LAND_LIGHT = 7;
-  MOVE_LAND_HARD  = 8;
   MOVE_ROLL       = 9;
   MOVE_DASH       = 10;
   MOVE_JUMP_UP    = 11;
   MOVE_FALL       = 12;
   MOVE_JUMP_DOWN  = 13;
+  reserved 8;
+  reserved "MOVE_LAND_HARD";
 }
 
 // 每状态一条开始协议 + 方向变更：客户端进入某个移动状态时发一次开始协议，
@@ -288,14 +289,27 @@ message MoveDirChangeReq {
   int64  server_time_ms = 3;
 }
 
+// 移动响应：成功/失败都尽量携带服务器权威快照，客户端据此做回滚重放。
+// SimTick 是快照 tick；AckTick 是已确认到的输入 tick；两者通常相等，
+// 客户端恢复 SimTick 快照后重放所有 EventTick > AckTick 的待确认输入。
 message MoveRsp {
-  bool   success   = 1;
-  uint64 player_id = 2;
-  double x         = 3;
-  double z         = 4;
-  double y         = 5;
-  string message   = 6;
-  int64  ack_time_ms = 7; // 服务端最新接受的时间戳；客户端据此弹出/丢弃已发送记录
+  bool   success      = 1;
+  uint64 player_id    = 2;
+  double x            = 3;
+  double z            = 4;
+  double y            = 5;
+  string message      = 6;
+  int64  ack_time_ms  = 7; // 兼容旧字段：被确认输入的服务器毫秒
+  int64  sim_tick     = 8; // 快照对应的服务器 tick
+  int64  ack_tick     = 9; // 已确认输入 tick
+  MoveState state     = 10;
+  int32  voxel_k      = 11;
+  bool   airborne     = 12;
+  double dir_x        = 13;
+  double dir_z        = 14;
+  double curve_norm   = 15;
+  int64  state_start_ms = 16;
+  double fall_vel_y   = 17;
 }
 
 message SkillReq {

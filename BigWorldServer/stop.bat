@@ -8,7 +8,7 @@ REM ---- 1. Graceful shutdown via central --------------------------------------
 REM Ask central to orchestrate a graceful stop: gateway notifies clients, world
 REM flushes players to dbproxy, each server exits in dependency order.
 echo [1/3] Requesting graceful shutdown ...
-go run ./shutdown
+go run ./Shutdown
 if errorlevel 1 (
     echo   [WARN] Graceful shutdown trigger failed - central may be down.
     echo          Falling through to force-kill.

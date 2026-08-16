@@ -26,6 +26,21 @@ namespace BigWorldClient
         [SerializeField] private string fallAnimationName = "Fall";
 
         public float TransitionDuration => transitionDuration;
+
+        public string IdleAnimationName => idleAnimationName;
+        public string WalkAnimationName => walkAnimationName;
+        public string RunAnimationName => runAnimationName;
+        public string SprintAnimationName => sprintAnimationName;
+        public string DashAnimationName => dashAnimationName;
+        public string LightStopAnimationName => lightStopAnimationName;
+        public string MediumStopAnimationName => mediumStopAnimationName;
+        public string HardStopAnimationName => hardStopAnimationName;
+        public string LightLandAnimationName => lightLandAnimationName;
+        public string HardLandAnimationName => hardLandAnimationName;
+        public string RollAnimationName => rollAnimationName;
+        public string JumpUpAnimationName => jumpUpAnimationName;
+        public string JumpDownAnimationName => jumpDownAnimationName;
+        public string FallAnimationName => fallAnimationName;
   
         public int IdleAnimationHash { get; private set; }
         public int WalkAnimationHash { get; private set; }

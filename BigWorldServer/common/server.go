@@ -63,8 +63,8 @@ func (s *ServerBase) Listen(addr string) error {
 	return nil
 }
 
-// acceptLoop accepts peer connections and dispatches messages.
-func (s *ServerBase) acceptLoop() {
+// AcceptLoop accepts peer connections and dispatches messages.
+func (s *ServerBase) AcceptLoop() {
 	s.wg.Add(1)
 	go func() {
 		defer s.wg.Done()
@@ -92,17 +92,17 @@ func (s *ServerBase) acceptLoop() {
 					delete(s.conns, cw)
 					s.mu.Unlock()
 				}()
-				s.readLoop(cw)
+				s.ReadLoop(cw)
 			}()
 		}
 	}()
 }
 
-// readLoop reads messages from a single connection and dispatches them.
-func (s *ServerBase) readLoop(cw *ConnWrapper) {
+// ReadLoop reads messages from a single connection and dispatches them.
+func (s *ServerBase) ReadLoop(cw *ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[%s] readLoop panic recovered: %v", s.ServerId, r)
+			log.Printf("[%s] ReadLoop panic recovered: %v", s.ServerId, r)
 			return
 		}
 		if s.OnDisconnect != nil {
@@ -123,16 +123,16 @@ func (s *ServerBase) readLoop(cw *ConnWrapper) {
 // ConnectToCentral connects to the central controller and starts the central
 // message loop with automatic reconnect on disconnect.
 func (s *ServerBase) ConnectToCentral(addr string) error {
-	if err := s.dialCentral(addr); err != nil {
+	if err := s.DialCentral(addr); err != nil {
 		return err
 	}
 	s.wg.Add(1)
-	go s.centralConnectionLoop(addr)
+	go s.CentralConnectionLoop(addr)
 	return nil
 }
 
-// dialCentral dials central and stores the connection. Does not reconnect.
-func (s *ServerBase) dialCentral(addr string) error {
+// DialCentral dials central and stores the connection. Does not reconnect.
+func (s *ServerBase) DialCentral(addr string) error {
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return err
@@ -145,10 +145,10 @@ func (s *ServerBase) dialCentral(addr string) error {
 	return nil
 }
 
-// centralConnectionLoop reads messages from central. On disconnect it clears
+// CentralConnectionLoop reads messages from central. On disconnect it clears
 // centralConn and reconnects with exponential backoff (1s..30s) until quit.
 // After a successful reconnect it re-registers so central recognises this server again.
-func (s *ServerBase) centralConnectionLoop(addr string) {
+func (s *ServerBase) CentralConnectionLoop(addr string) {
 	defer s.wg.Done()
 	backoff := time.Second
 	for {
@@ -164,7 +164,7 @@ func (s *ServerBase) centralConnectionLoop(addr string) {
 
 		if cw == nil {
 			// 断连后重连
-			if err := s.dialCentral(addr); err != nil {
+			if err := s.DialCentral(addr); err != nil {
 				log.Printf("[%s %s] reconnect to central failed: %v, retry in %v", s.ServerType, s.ServerId, err, backoff)
 				select {
 				case <-s.quit:
@@ -198,7 +198,7 @@ func (s *ServerBase) centralConnectionLoop(addr string) {
 			func() {
 				defer func() {
 					if r := recover(); r != nil {
-						log.Printf("[%s %s] central readLoop panic recovered: %v", s.ServerType, s.ServerId, r)
+						log.Printf("[%s %s] central connection loop panic recovered: %v", s.ServerType, s.ServerId, r)
 					}
 				}()
 				s.OnCentralMessage(msg)
@@ -267,7 +267,7 @@ func (s *ServerBase) Start(centralAddr string) error {
 	s.centralAddr = centralAddr
 
 	// Start accepting peer connections.
-	s.acceptLoop()
+	s.AcceptLoop()
 
 	// Connect to central (skip for central itself).
 	if centralAddr != "" {

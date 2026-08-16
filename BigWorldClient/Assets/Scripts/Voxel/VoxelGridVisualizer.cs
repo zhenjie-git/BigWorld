@@ -86,7 +86,7 @@ namespace BigWorldClient
         {
             if (!File.Exists(filePath))
             {
-                Debug.LogError($"[VoxelGridVisualizer] 文件不存在: {filePath}");
+                {}
                 return;
             }
             var data = VoxelGridData.LoadFromBinary(filePath);
@@ -105,7 +105,7 @@ namespace BigWorldClient
         {
             if (asset == null)
             {
-                Debug.LogError("[VoxelGridVisualizer] TextAsset 为空");
+                {}
                 return;
             }
             var data = VoxelGridData.FromBytes(asset.bytes);
@@ -202,7 +202,7 @@ namespace BigWorldClient
             ClearMesh();
             meshFilter.sharedMesh = mesh;
 
-            Debug.Log($"[VoxelGridVisualizer] Mesh生成完毕: {voxelCount} 体素, {vertexCount} 顶点, {indexCount} 三角形");
+            {}
         }
 
         private void ComputeYRange(out float yMin, out float yMax)
