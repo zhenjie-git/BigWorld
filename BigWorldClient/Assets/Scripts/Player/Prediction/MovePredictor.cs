@@ -8,7 +8,6 @@ namespace BigWorldClient
 {
     public enum PredictedEventKind { StartState = 0, DirChange = 1, Stop = 2 }
 
-    /// <summary>客户端已发送、等待服务器 AckTick 确认的输入事件。</summary>
     public struct PendingMoveEvent
     {
         public ulong Seq;
@@ -18,15 +17,10 @@ namespace BigWorldClient
         public double DirX, DirZ;
     }
 
-    /// <summary>
-    /// 客户端移动预测器：以服务器时钟驱动固定 tick 模拟。
-    /// 本地输入在事件 tick 上应用并发送协议；收到 MoveRsp 后恢复权威快照，
-    /// 弹出已确认事件，重放未确认事件。渲染使用相邻 tick 快照插值。
-    /// </summary>
     public sealed class MovePredictor
     {
         public const long TickMs = ServerClock.TickMs;
-        private const int MaxWindowTick = 15;   // 与服务器 maxMoveWindowMs / TickMs 一致
+        private const int MaxWindowTick = 15;
         private const int MaxCatchUpPerFrame = 8;
         private const long MaxSnapDeficit = 60;
 
@@ -41,8 +35,8 @@ namespace BigWorldClient
         public MoveStateMachine StateMachine { get; private set; }
 
         private SimContext _ctx;
-        private MoveSimEntity _cur;   // _simTick 结束时的预测状态
-        private MoveSimEntity _prev;  // _simTick - 1 结束时的状态（渲染插值）
+        private MoveSimEntity _cur;
+        private MoveSimEntity _prev;
         private long _simTick;
         private ulong _seq;
         private readonly List<PendingMoveEvent> _pending = new();
@@ -62,14 +56,10 @@ namespace BigWorldClient
             _clock = clock;
         }
 
-        /// <summary>
-        /// 以服务器出生点初始化。出生层使用体素列最顶层，避免旧实现用 Y=0
-        /// 就近找层导致角色突然站到房顶的问题。
-        /// </summary>
         public void Init(SimContext ctx, double spawnX, double spawnZ)
         {
             _ctx = ctx;
-            StateMachine = new MoveStateMachine(MoveTransitionTable.Load());
+            StateMachine = new MoveStateMachine(MoveTransitionTable.Instance);
             StateMachine.TransitionOccurred += OnTransitionOccurred;
             _simTick = _clock != null && _clock.IsSynced ? _clock.TickNow() : 0;
             ctx.InitSpawnState(spawnX, spawnZ, out int voxelK, out double y);
@@ -100,7 +90,6 @@ namespace BigWorldClient
             {}
         }
 
-        /// <summary>每帧消费输入队列，解释成协议命令，再追赶服务器 tick。</summary>
         public void Update(List<PlayerInputCommand> commands, Vector2 movement, Vector3 worldDir, float realtime)
         {
             if (!Ready) return;
@@ -119,7 +108,7 @@ namespace BigWorldClient
             long deficit = target - _simTick;
             if (deficit > MaxSnapDeficit)
             {
-                // 时钟跳变/长时间卡顿：直接对齐，不逐 tick 补。服务器回包会再校正。
+
                 {}
                 _simTick = target - 1;
                 _prev = _cur;
@@ -163,8 +152,6 @@ namespace BigWorldClient
             }
         }
 
-
-
         public Vector3 GetRenderPosition(long nowMs)
         {
             long baseTick = _simTick > 1 ? _simTick - 1 : _simTick;
@@ -183,12 +170,6 @@ namespace BigWorldClient
 
         private static double DoubleLerp(double a, double b, double t) => a + (b - a) * t;
 
-        // ── 本地输入 ──
-
-        /// <summary>
-        /// 与服务器 NormalizeInputTick 一致：把事件戳夹在可接受窗口内，
-        /// 且绝不落在当前已模拟 tick 之前。
-        /// </summary>
         private void ProcessInputCommand(PlayerInputCommand command, Vector3 worldDir)
         {
             long tick = command.Tick > 0 ? ClampEventTick(command.Tick) : EventTick();
@@ -216,11 +197,6 @@ namespace BigWorldClient
                             break;
                         case MoveState.MoveWalk:
                             EnqueueStartAt(MoveState.MoveStopLight, 0, 0, tick);
-                            break;
-                        case MoveState.MoveJumpUp:
-                        case MoveState.MoveJumpDown:
-                        case MoveState.MoveFall:
-                            EnqueueMoveStopAt(tick);
                             break;
                     }
                     break;
@@ -335,7 +311,6 @@ namespace BigWorldClient
                 AddPending(tick, PredictedEventKind.StartState, to, dirX, dirZ);
                 if (tick == _simTick) ApplyEventsAtTick(tick);
                 SendStart(to, dirX, dirZ, tick);
-                if (to == MoveState.MoveJumpUp || to == MoveState.MoveJumpDown)
             }
             else if (dirX != 0f || dirZ != 0f)
             {
@@ -354,7 +329,7 @@ namespace BigWorldClient
             if (!Ready || _net == null) return;
             AddPending(tick, PredictedEventKind.DirChange, default, dirX, dirZ);
             if (tick == _simTick) ApplyEventsAtTick(tick);
-            _net.SendMoveDirChangeAt(dirX, dirZ, tick);
+            _net.SendDirStart(MessageTypes.Cli2Wd_MoveDirChangeReq, dirX, dirZ, tick);
         }
 
         public void EnqueueMoveStop()
@@ -368,7 +343,7 @@ namespace BigWorldClient
             if (!Ready || _net == null) return;
             AddPending(tick, PredictedEventKind.Stop, default, 0, 0);
             if (tick == _simTick) ApplyEventsAtTick(tick);
-            _net.SendMoveStopAt(tick);
+            _net.SendMoveStop(tick);
         }
 
         private void AddPending(long tick, PredictedEventKind kind, MoveState state, double dirX, double dirZ)
@@ -398,15 +373,15 @@ namespace BigWorldClient
         {
             switch (to)
             {
-                case MoveState.MoveWalk: _net.SendWalkStartAt(dirX, dirZ, tick); break;
-                case MoveState.MoveRun: _net.SendRunStartAt(dirX, dirZ, tick); break;
-                case MoveState.MoveSprint: _net.SendSprintStartAt(dirX, dirZ, tick); break;
-                case MoveState.MoveJumpUp: _net.SendJumpStartAt(dirX, dirZ, tick); break;
-                case MoveState.MoveDash: _net.SendDashStartAt(dirX, dirZ, tick); break;
-                case MoveState.MoveRoll: _net.SendRollStartAt(dirX, dirZ, tick); break;
+                case MoveState.MoveWalk: _net.SendDirStart(MessageTypes.Cli2Wd_WalkStartReq, dirX, dirZ, tick); break;
+                case MoveState.MoveRun: _net.SendDirStart(MessageTypes.Cli2Wd_RunStartReq, dirX, dirZ, tick); break;
+                case MoveState.MoveSprint: _net.SendDirStart(MessageTypes.Cli2Wd_SprintStartReq, dirX, dirZ, tick); break;
+                case MoveState.MoveJumpUp: _net.SendDirStart(MessageTypes.Cli2Wd_JumpStartReq, dirX, dirZ, tick); break;
+                case MoveState.MoveDash: _net.SendDirStart(MessageTypes.Cli2Wd_DashStartReq, dirX, dirZ, tick); break;
+                case MoveState.MoveRoll: _net.SendDirStart(MessageTypes.Cli2Wd_RollStartReq, dirX, dirZ, tick); break;
                 case MoveState.MoveStopLight:
                 case MoveState.MoveStopMed:
-                case MoveState.MoveStopHard: _net.SendStopStartAt(to, tick); break;
+                case MoveState.MoveStopHard: _net.SendStopStart(to, tick); break;
             }
         }
 
@@ -427,8 +402,6 @@ namespace BigWorldClient
                     break;
             }
         }
-
-        // ── 服务器权威回包：回滚 + 重放 ──
 
         public void OnAuthoritative(in MoveRspInfo info)
         {
@@ -475,11 +448,6 @@ namespace BigWorldClient
             StateMachine.ApplyAuthoritative(_cur.State, _cur.CurveNorm);
         }
 
-        /// <summary>
-        /// 对应服务器 RebuildEntityWithInput 的重放语义：先模拟到事件 tick，再应用事件。
-        /// 回放每帧只补 MaxCatchUpPerFrame 个 tick，避免时钟首次校正跳变时把 Jump/Dash
-        /// 一整个动画在一帧内跑完。
-        /// </summary>
         private void ReplayPending(long localNow)
         {
             SortPending();
@@ -489,7 +457,7 @@ namespace BigWorldClient
             {
                 PendingMoveEvent ev = _pending[i];
                 if (ev.Tick <= cur) continue;
-                if (ev.Tick > limit) break; // 剩余未来事件由后续 Update 推进
+                if (ev.Tick > limit) break;
                 StepTo(ev.Tick);
                 ApplyEvent(ev);
                 cur = ev.Tick;

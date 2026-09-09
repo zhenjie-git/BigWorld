@@ -2050,13 +2050,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a4719250d8fa7564b88ee89b3a90e8b3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelId: login
-  defaultLayer: 1
-  priority: 50
-  cacheable: 1
-  usernameInput: {fileID: 7293313628412442607}
-  passwordInput: {fileID: 219182171997549910}
-  loginButton: {fileID: 6907243707552245762}
-  statusText: {fileID: 5359529679872261087}
-  minUsernameLength: 3
-  minPasswordLength: 6
+  _usernameInput: {fileID: 7293313628412442607}
+  _passwordInput: {fileID: 219182171997549910}
+  _loginButton: {fileID: 6907243707552245762}
+  _statusText: {fileID: 5359529679872261087}
+  _minUsernameLength: 3
+  _minPasswordLength: 6
