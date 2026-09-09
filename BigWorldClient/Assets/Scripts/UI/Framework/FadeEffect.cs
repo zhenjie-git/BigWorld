@@ -5,44 +5,44 @@ namespace BigWorldClient.UI.Framework
 {
     public class FadeEffect : UIEffectBase
     {
-        [SerializeField] private float showDuration = 0.25f;
-        [SerializeField] private float hideDuration = 0.15f;
+        [SerializeField] private float _showDuration = 0.25f;
+        [SerializeField] private float _hideDuration = 0.15f;
 
-        private CanvasGroup canvasGroup;
+        private CanvasGroup _canvasGroup;
 
         private void Awake()
         {
-            canvasGroup = GetComponent<CanvasGroup>();
-            if (canvasGroup == null)
-                canvasGroup = gameObject.AddComponent<CanvasGroup>();
+            _canvasGroup = GetComponent<CanvasGroup>();
+            if (_canvasGroup == null)
+                _canvasGroup = gameObject.AddComponent<CanvasGroup>();
         }
 
         public override IEnumerator PlayShowEffect()
         {
-            if (canvasGroup == null) yield break;
-            canvasGroup.alpha = 0f;
+            if (_canvasGroup == null) yield break;
+            _canvasGroup.alpha = 0f;
             float elapsed = 0f;
-            while (elapsed < showDuration)
+            while (elapsed < _showDuration)
             {
                 elapsed += Time.deltaTime;
-                canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / showDuration);
+                _canvasGroup.alpha = Mathf.Lerp(0f, 1f, elapsed / _showDuration);
                 yield return null;
             }
-            canvasGroup.alpha = 1f;
+            _canvasGroup.alpha = 1f;
         }
 
         public override IEnumerator PlayHideEffect()
         {
-            if (canvasGroup == null) yield break;
-            float startAlpha = canvasGroup.alpha;
+            if (_canvasGroup == null) yield break;
+            float startAlpha = _canvasGroup.alpha;
             float elapsed = 0f;
-            while (elapsed < hideDuration)
+            while (elapsed < _hideDuration)
             {
                 elapsed += Time.deltaTime;
-                canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / hideDuration);
+                _canvasGroup.alpha = Mathf.Lerp(startAlpha, 0f, elapsed / _hideDuration);
                 yield return null;
             }
-            canvasGroup.alpha = 0f;
+            _canvasGroup.alpha = 0f;
         }
     }
 }

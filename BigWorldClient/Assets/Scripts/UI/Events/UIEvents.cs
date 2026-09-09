@@ -1,21 +1,5 @@
 namespace BigWorldClient.UI.Events
 {
-    public struct PanelOpenEvent
-    {
-        public string PanelId;
-    }
-
-    public struct PanelCloseEvent
-    {
-        public string PanelId;
-    }
-
-    public struct PanelFocusChanged
-    {
-        public string PanelId;
-        public bool IsFocused;
-    }
-
     public struct LoginAttemptEvent
     {
         public string Username;
@@ -35,7 +19,7 @@ namespace BigWorldClient.UI.Events
 
     public struct SessionEndedEvent
     {
-        /// <summary>Why the session ended: "logout", "disconnected", "server_shutdown".</summary>
+
         public string Reason;
     }
 }

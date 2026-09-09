@@ -7,9 +7,6 @@ namespace BigWorldClient
     [RequireComponent(typeof(PlayerInput), typeof(CapsuleCollider))]
     public class PlayerController : MonoBehaviour
     {
-        [field: Header("Config")]
-        [field: SerializeField] public PlayerConfig Config { get; private set; }
-
         [field: Header("Skills")]
         [field: SerializeField] public List<SkillConfig> SkillConfigs { get; private set; } = new();
 
@@ -29,7 +26,6 @@ namespace BigWorldClient
 
         public Player Player { get; private set; }
         public Vector2 MovementInput { get; set; }
-
 
         private void Awake()
         {
@@ -55,19 +51,19 @@ namespace BigWorldClient
 
         private void ApplyColliderConfig()
         {
-            var config = PlayerConfig.Instance;
+            var config = PlayerConfigTable.Instance;
             if (config == null || CapsuleCollider == null)
                 return;
 
-            CapsuleCollider.radius = config.DefaultColliderData.Radius;
-            CapsuleCollider.height = config.DefaultColliderData.Height * (1f - config.SlopeData.StepHeightPercentage);
+            CapsuleCollider.radius = config.ColliderRadius;
+            CapsuleCollider.height = config.ColliderHeight * (1f - config.StepHeightPercentage);
 
             float halfHeight = CapsuleCollider.height / 2f;
             if (halfHeight < CapsuleCollider.radius)
                 CapsuleCollider.radius = halfHeight;
 
-            float heightDifference = config.DefaultColliderData.Height - CapsuleCollider.height;
-            CapsuleCollider.center = new Vector3(0f, config.DefaultColliderData.CenterY + (heightDifference / 2f), 0f);
+            float heightDifference = config.ColliderHeight - CapsuleCollider.height;
+            CapsuleCollider.center = new Vector3(0f, config.ColliderCenterY + (heightDifference / 2f), 0f);
 
             UpdateColliderData();
         }
@@ -112,10 +108,9 @@ namespace BigWorldClient
         {
             if (Predictor != null) return;
 
-            PlayerConfig cfg = Config != null ? Config : PlayerConfig.Instance;
+            PlayerConfigTable cfg = PlayerConfigTable.Instance;
             GameScene scene = string.IsNullOrEmpty(Player?.SceneId) ? null : SceneMgr.Instance.GetScene(Player.SceneId);
-            SimDisplacementTable table = SimDisplacementTable.Build(cfg);
-            SimContext = SimContext.Build(scene, cfg, table);
+            SimContext = SimContext.Build(scene, cfg);
 
             GameNetworkManager mgr = GameNetworkManager.Instance;
             if (mgr == null) return;
@@ -170,7 +165,6 @@ namespace BigWorldClient
         {
             return new Vector3(MovementInput.x, 0f, MovementInput.y);
         }
-
 
         public float UpdateTargetRotation(Vector3 direction, bool shouldConsiderCameraRotation = true)
         {

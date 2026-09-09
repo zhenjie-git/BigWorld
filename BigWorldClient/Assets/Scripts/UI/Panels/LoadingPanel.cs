@@ -3,31 +3,20 @@ using UnityEngine.UI;
 
 namespace BigWorldClient.UI.Panels
 {
-    /// <summary>
-    /// Full-screen loading panel with a spinning indicator and message text.
-    /// Expects args to be a string message (optional).
-    /// </summary>
+
     public class LoadingPanel : Framework.BasePanel
     {
         [Header("UI References")]
-        [SerializeField] private Text loadingText;
-        [SerializeField] private Image spinnerImage;
+        [SerializeField] private Text _loadingText;
+        [SerializeField] private Image _spinnerImage;
 
         [Header("Settings")]
-        [SerializeField] private float spinnerSpeed = 180f;
+        [SerializeField] private float _spinnerSpeed = 180f;
 
-        private bool isSpinning;
+        private bool _isSpinning;
 
-        protected override void OnShow(object args)
+        protected override void OnInit()
         {
-            isSpinning = true;
-
-            if (args is string msg && loadingText != null)
-                loadingText.text = msg;
-            else if (loadingText != null)
-                loadingText.text = "Loading...";
-
-            // Ensure the background covers the full screen
             var bg = GetComponent<Image>();
             if (bg == null)
             {
@@ -45,27 +34,37 @@ namespace BigWorldClient.UI.Panels
             }
         }
 
+        protected override void OnShow(object args)
+        {
+            _isSpinning = true;
+
+            if (args is string msg && _loadingText != null)
+                _loadingText.text = msg;
+            else if (_loadingText != null)
+                _loadingText.text = "Loading...";
+        }
+
         protected override void OnHide()
         {
-            isSpinning = false;
+            _isSpinning = false;
         }
 
         private void Update()
         {
-            if (!isSpinning || spinnerImage == null) return;
-            spinnerImage.rectTransform.Rotate(0f, 0f, -spinnerSpeed * Time.deltaTime);
+            if (!_isSpinning || _spinnerImage == null) return;
+            _spinnerImage.rectTransform.Rotate(0f, 0f, -_spinnerSpeed * Time.deltaTime);
         }
 
         public void SetMessage(string message)
         {
-            if (loadingText != null)
-                loadingText.text = message;
+            if (_loadingText != null)
+                _loadingText.text = message;
         }
 
         public void SetProgress(float progress)
         {
-            if (loadingText != null)
-                loadingText.text = "Loading... " + (int)(Mathf.Clamp01(progress) * 100) + "%";
+            if (_loadingText != null)
+                _loadingText.text = "Loading... " + (int)(Mathf.Clamp01(progress) * 100) + "%";
         }
     }
 }

@@ -1,3 +1,4 @@
+using BigWorldClient.Network.Protocol;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -11,70 +12,62 @@ namespace BigWorldClient
         [field: SerializeField] public float DefaultHorizontalWaitTime { get; private set; } = 0f;
         [field: SerializeField] public float DefaultHorizontalRecenteringTime { get; private set; } = 4f;
 
-        [Header("Recentering Data")]
-        [SerializeField] private List<PlayerCameraRecenteringData> backwardsRecenteringData;
-        [SerializeField] private List<PlayerCameraRecenteringData> sidewaysRecenteringData;
-
         [Header("Target")]
-        [SerializeField] private Transform target;
+        [SerializeField] private Transform _target;
 
         [Header("Orbit")]
-        [SerializeField] private float orbitSensitivity = 2f;
-        [SerializeField] private float minPitch = -30f;
-        [SerializeField] private float maxPitch = 80f;
+        [SerializeField] private float _orbitSensitivity = 2f;
+        [SerializeField] private float _minPitch = -30f;
+        [SerializeField] private float _maxPitch = 80f;
 
         [Header("Zoom")]
-        [SerializeField] private float defaultDistance = 6f;
-        [SerializeField] private float minDistance = 1f;
-        [SerializeField] private float maxDistance = 10f;
-        [SerializeField] private float zoomSensitivity = 0.1f;
-        [SerializeField] private float zoomSmoothing = 4f;
+        [SerializeField] private float _defaultDistance = 6f;
+        [SerializeField] private float _minDistance = 1f;
+        [SerializeField] private float _maxDistance = 10f;
+        [SerializeField] private float _zoomSensitivity = 0.1f;
+        [SerializeField] private float _zoomSmoothing = 4f;
 
         [Header("Obstacle Avoidance")]
-        [SerializeField] private LayerMask obstacleMask;
-        [SerializeField] private float obstacleCameraRadius = 0.2f;
+        [SerializeField] private LayerMask _obstacleMask;
+        [SerializeField] private float _obstacleCameraRadius = 0.2f;
 
         public Transform MainCameraTransform { get; private set; }
 
-        // Spherical coordinates
-        private float currentYaw;
-        private float currentPitch;
-        private float currentDistance;
-        private float targetDistance;
-        private float zoomVelocity;
+        private float _currentYaw;
+        private float _currentPitch;
+        private float _currentDistance;
+        private float _targetDistance;
+        private float _zoomVelocity;
 
-        // Recentering state
-        private bool recenteringEnabled;
-        private bool isRecentering;
-        private float recenteringWaitTimer;
-        private float recenteringTimer;
-        private float recenteringStartYaw;
-        private float recenteringTargetYaw;
-        private float recenteringWaitTime;
-        private float recenteringTimeDuration;
+        private bool _recenteringEnabled;
+        private bool _isRecentering;
+        private float _recenteringWaitTimer;
+        private float _recenteringTimer;
+        private float _recenteringStartYaw;
+        private float _recenteringTargetYaw;
+        private float _recenteringWaitTime;
+        private float _recenteringTimeDuration;
 
-        // Orbit input state
-        private bool isOrbiting;
+        private bool _isOrbiting;
 
         private void Awake()
         {
             Instance = this;
             MainCameraTransform = Camera.main.transform;
 
-            currentDistance = defaultDistance;
-            targetDistance = defaultDistance;
+            _currentDistance = _defaultDistance;
+            _targetDistance = _defaultDistance;
 
-            // Initialize spherical coords from current camera position
-            if (target != null)
+            if (_target != null)
             {
-                Vector3 offset = MainCameraTransform.position - target.position;
-                currentDistance = offset.magnitude;
-                targetDistance = currentDistance;
-                currentYaw = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg;
-                currentPitch = -Mathf.Asin(offset.y / currentDistance) * Mathf.Rad2Deg;
+                Vector3 offset = MainCameraTransform.position - _target.position;
+                _currentDistance = offset.magnitude;
+                _targetDistance = _currentDistance;
+                _currentYaw = Mathf.Atan2(offset.x, offset.z) * Mathf.Rad2Deg;
+                _currentPitch = -Mathf.Asin(offset.y / _currentDistance) * Mathf.Rad2Deg;
             }
 
-            lastMousePosition = GetMousePosition();
+            _lastMousePosition = GetMousePosition();
         }
 
         private void OnDestroy()
@@ -83,37 +76,35 @@ namespace BigWorldClient
                 Instance = null;
         }
 
-        private Vector2 lastMousePosition;
+        private Vector2 _lastMousePosition;
 
         private void LateUpdate()
         {
-            if (target == null)
+            if (_target == null)
                 return;
 
             HandleOrbitInput();
             HandleRecentering();
             HandleZoomInput();
 
-            // Build rotation from spherical coords
-            float effectiveYaw = currentYaw;
-            if (recenteringEnabled && isRecentering)
+            float effectiveYaw = _currentYaw;
+            if (_recenteringEnabled && _isRecentering)
             {
-                float t = recenteringTimeDuration > 0f
-                    ? Mathf.Clamp01(recenteringTimer / recenteringTimeDuration)
+                float t = _recenteringTimeDuration > 0f
+                    ? Mathf.Clamp01(_recenteringTimer / _recenteringTimeDuration)
                     : 1f;
-                // Smoothstep easing
+
                 float easedT = t * t * (3f - 2f * t);
-                effectiveYaw = Mathf.LerpAngle(recenteringStartYaw, recenteringTargetYaw, easedT);
+                effectiveYaw = Mathf.LerpAngle(_recenteringStartYaw, _recenteringTargetYaw, easedT);
             }
 
-            Quaternion rotation = Quaternion.Euler(currentPitch, effectiveYaw, 0f);
-            Vector3 desiredPosition = target.position + rotation * (Vector3.back * currentDistance);
-            // Obstacle avoidance
+            Quaternion rotation = Quaternion.Euler(_currentPitch, effectiveYaw, 0f);
+            Vector3 desiredPosition = _target.position + rotation * (Vector3.back * _currentDistance);
+
             desiredPosition = ApplyObstacleAvoidance(desiredPosition);
 
-            // Apply to camera transform
             MainCameraTransform.position = desiredPosition;
-            MainCameraTransform.LookAt(target.position);
+            MainCameraTransform.LookAt(_target.position);
         }
 
         #region Orbit Input
@@ -129,24 +120,23 @@ namespace BigWorldClient
 
             if (leftButtonPressed && mouseInWindow)
             {
-                if (!isOrbiting)
+                if (!_isOrbiting)
                 {
-                    // Orbit just started — reset last position to avoid jump
-                    isOrbiting = true;
-                    lastMousePosition = mousePosition;
+
+                    _isOrbiting = true;
+                    _lastMousePosition = mousePosition;
                     return;
                 }
 
-                Vector2 delta = mousePosition - lastMousePosition;
-                lastMousePosition = mousePosition;
+                Vector2 delta = mousePosition - _lastMousePosition;
+                _lastMousePosition = mousePosition;
 
                 if (delta.magnitude > 0.01f)
                 {
-                    currentYaw += delta.x * orbitSensitivity * 0.1f;
-                    currentPitch -= delta.y * orbitSensitivity * 0.1f;
-                    currentPitch = Mathf.Clamp(currentPitch, minPitch, maxPitch);
+                    _currentYaw += delta.x * _orbitSensitivity * 0.1f;
+                    _currentPitch -= delta.y * _orbitSensitivity * 0.1f;
+                    _currentPitch = Mathf.Clamp(_currentPitch, _minPitch, _maxPitch);
 
-                    // Cancel recentering when user manually orbits
                     if (delta.magnitude > 0.5f)
                     {
                         DisableRecentering();
@@ -155,7 +145,7 @@ namespace BigWorldClient
             }
             else
             {
-                isOrbiting = false;
+                _isOrbiting = false;
             }
         }
 
@@ -177,43 +167,42 @@ namespace BigWorldClient
 
         private void HandleRecentering()
         {
-            if (!recenteringEnabled)
+            if (!_recenteringEnabled)
                 return;
-            
-            // Don't recenter while orbiting
-            if (isOrbiting)
+
+            if (_isOrbiting)
             {
-                recenteringEnabled = false;
-                isRecentering = false;
+                _recenteringEnabled = false;
+                _isRecentering = false;
                 return;
             }
 
-            if (isRecentering)
+            if (_isRecentering)
             {
-                recenteringTimer += Time.deltaTime;
+                _recenteringTimer += Time.deltaTime;
 
-                if (recenteringTimer >= recenteringTimeDuration)
+                if (_recenteringTimer >= _recenteringTimeDuration)
                 {
-                    // Recentering complete — snap to target
-                    currentYaw = recenteringTargetYaw;
-                    isRecentering = false;
-                    recenteringEnabled = false;
+
+                    _currentYaw = _recenteringTargetYaw;
+                    _isRecentering = false;
+                    _recenteringEnabled = false;
                 }
             }
             else
             {
-                // Waiting phase
-                if (recenteringWaitTimer < recenteringWaitTime)
+
+                if (_recenteringWaitTimer < _recenteringWaitTime)
                 {
-                    recenteringWaitTimer += Time.deltaTime;
+                    _recenteringWaitTimer += Time.deltaTime;
                 }
                 else
                 {
-                    // Start the recentering movement
-                    isRecentering = true;
-                    recenteringStartYaw = currentYaw;
-                    recenteringTargetYaw = target.eulerAngles.y;
-                    recenteringTimer = 0f;
+
+                    _isRecentering = true;
+                    _recenteringStartYaw = _currentYaw;
+                    _recenteringTargetYaw = _target.eulerAngles.y;
+                    _recenteringTimer = 0f;
                 }
             }
         }
@@ -227,24 +216,22 @@ namespace BigWorldClient
             if (Mouse.current == null)
                 return;
 
-            // Mouse scroll returns ~120 per notch on Windows; normalize to ~1 per notch
             float scrollValue = Mouse.current.scroll.y.ReadValue() / 120f;
 
             if (Mathf.Abs(scrollValue) > 0.001f)
             {
-                targetDistance -= scrollValue * zoomSensitivity;
-                targetDistance = Mathf.Clamp(targetDistance, minDistance, maxDistance);
+                _targetDistance -= scrollValue * _zoomSensitivity;
+                _targetDistance = Mathf.Clamp(_targetDistance, _minDistance, _maxDistance);
             }
 
-            // Smooth zoom
-            if (Mathf.Abs(currentDistance - targetDistance) > 0.001f)
+            if (Mathf.Abs(_currentDistance - _targetDistance) > 0.001f)
             {
-                currentDistance = Mathf.SmoothDamp(currentDistance, targetDistance,
-                    ref zoomVelocity, 1f / zoomSmoothing);
+                _currentDistance = Mathf.SmoothDamp(_currentDistance, _targetDistance,
+                    ref _zoomVelocity, 1f / _zoomSmoothing);
             }
             else
             {
-                currentDistance = targetDistance;
+                _currentDistance = _targetDistance;
             }
         }
 
@@ -254,17 +241,17 @@ namespace BigWorldClient
 
         private Vector3 ApplyObstacleAvoidance(Vector3 desiredPosition)
         {
-            if (obstacleMask == 0)
+            if (_obstacleMask == 0)
                 return desiredPosition;
 
-            Vector3 direction = (desiredPosition - target.position).normalized;
-            float maxDistance = Vector3.Distance(target.position, desiredPosition);
+            Vector3 direction = (desiredPosition - _target.position).normalized;
+            float _maxDistance = Vector3.Distance(_target.position, desiredPosition);
 
-            if (Physics.SphereCast(target.position, obstacleCameraRadius, direction,
-                out RaycastHit hit, maxDistance, obstacleMask, QueryTriggerInteraction.Ignore))
+            if (Physics.SphereCast(_target.position, _obstacleCameraRadius, direction,
+                out RaycastHit hit, _maxDistance, _obstacleMask, QueryTriggerInteraction.Ignore))
             {
-                // Pull camera in front of the obstacle
-                return target.position + direction * Mathf.Max(0.3f, hit.distance - 0.2f);
+
+                return _target.position + direction * Mathf.Max(0.3f, hit.distance - 0.2f);
             }
 
             return desiredPosition;
@@ -276,7 +263,7 @@ namespace BigWorldClient
 
         public void SetTarget(Transform newTarget)
         {
-            target = newTarget;
+            _target = newTarget;
         }
 
         public void UpdateRecenteringState(Vector2 movementInput)
@@ -295,25 +282,35 @@ namespace BigWorldClient
                 cameraVerticalAngle -= 360f;
             cameraVerticalAngle = Mathf.Abs(cameraVerticalAngle);
 
+            PlayerConfigTable config = PlayerConfigTable.Instance;
+            if (config == null)
+            {
+                DisableRecentering();
+                return;
+            }
+
             var recenteringData = (movementInput == Vector2.down)
-                ? backwardsRecenteringData
-                : sidewaysRecenteringData;
+                ? config.BackwardsRecenteringData
+                : config.SidewaysRecenteringData;
 
             ApplyRecenteringState(cameraVerticalAngle, recenteringData);
         }
 
         private void ApplyRecenteringState(
             float cameraVerticalAngle,
-            List<PlayerCameraRecenteringData> recenteringDataList)
+            List<CameraRecenteringEntry> recenteringDataList)
         {
-            
-            foreach (var recenteringData in recenteringDataList)
+            if (recenteringDataList != null)
             {
-                if (!recenteringData.IsWithinRange(cameraVerticalAngle))
-                    continue;
+                foreach (var recenteringData in recenteringDataList)
+                {
+                    if (cameraVerticalAngle < recenteringData.MinimumAngle ||
+                        cameraVerticalAngle > recenteringData.MaximumAngle)
+                        continue;
 
-                EnableRecentering(recenteringData.WaitTime, recenteringData.RecenteringTime);
-                return;
+                    EnableRecentering(recenteringData.WaitTime, recenteringData.RecenteringTime);
+                    return;
+                }
             }
 
             DisableRecentering();
@@ -324,23 +321,22 @@ namespace BigWorldClient
             float resolvedWaitTime = waitTime < 0f ? DefaultHorizontalWaitTime : waitTime;
             float resolvedRecenteringTime = recenteringTime < 0f ? DefaultHorizontalRecenteringTime : recenteringTime;
 
-            // Already enabled with the same parameters — don't reset the wait timer
-            if (recenteringEnabled
-                && Mathf.Approximately(recenteringWaitTime, resolvedWaitTime)
-                && Mathf.Approximately(recenteringTimeDuration, resolvedRecenteringTime))
+            if (_recenteringEnabled
+                && Mathf.Approximately(_recenteringWaitTime, resolvedWaitTime)
+                && Mathf.Approximately(_recenteringTimeDuration, resolvedRecenteringTime))
                 return;
 
-            recenteringEnabled = true;
-            isRecentering = false;
-            recenteringWaitTimer = 0f;
-            recenteringWaitTime = resolvedWaitTime;
-            recenteringTimeDuration = resolvedRecenteringTime;
+            _recenteringEnabled = true;
+            _isRecentering = false;
+            _recenteringWaitTimer = 0f;
+            _recenteringWaitTime = resolvedWaitTime;
+            _recenteringTimeDuration = resolvedRecenteringTime;
         }
 
         public void DisableRecentering()
         {
-            recenteringEnabled = false;
-            isRecentering = false;
+            _recenteringEnabled = false;
+            _isRecentering = false;
         }
 
         #endregion
@@ -349,7 +345,7 @@ namespace BigWorldClient
         {
             if (!hasFocus)
             {
-                isOrbiting = false;
+                _isOrbiting = false;
             }
         }
     }

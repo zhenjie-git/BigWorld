@@ -1,21 +1,27 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace BigWorldClient.UI.Framework
 {
     public class UILayerController : MonoBehaviour
     {
-        [SerializeField] private UILayer layerType;
-        [SerializeField] private int baseSortOrder = 0;
+        [SerializeField] private UILayer _layerType;
+        [SerializeField] private int _baseSortOrder = 0;
+        [SerializeField] private bool _dimBackground = false;
+        [SerializeField] private float _dimAlpha = 0.45f;
 
-        public UILayer LayerType { get { return layerType; } }
+        public UILayer LayerType { get { return _layerType; } }
+        public bool DimBackground { get { return _dimBackground; } }
         public Canvas Canvas { get; private set; }
-        public int PanelCount { get { return panelStack.Count; } }
+        public int PanelCount { get { return _panelStack.Count; } }
 
-        private readonly List<BasePanel> panelStack = new List<BasePanel>();
+        private readonly List<BasePanel> _panelStack = new List<BasePanel>();
+        private GameObject _blocker;
 
         public event Action<BasePanel> OnPanelHidden;
+        public event Action StackChanged;
 
         private void Awake()
         {
@@ -23,20 +29,20 @@ namespace BigWorldClient.UI.Framework
             if (Canvas == null)
                 Canvas = gameObject.AddComponent<Canvas>();
             Canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            Canvas.sortingOrder = baseSortOrder;
+            Canvas.sortingOrder = _baseSortOrder;
 
-            var scaler = GetComponent<UnityEngine.UI.CanvasScaler>();
+            var scaler = GetComponent<CanvasScaler>();
             if (scaler == null)
             {
-                scaler = gameObject.AddComponent<UnityEngine.UI.CanvasScaler>();
-                scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+                scaler = gameObject.AddComponent<CanvasScaler>();
+                scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
                 scaler.referenceResolution = new Vector2(1920, 1080);
-                scaler.screenMatchMode = UnityEngine.UI.CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+                scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
                 scaler.matchWidthOrHeight = 0.5f;
             }
 
-            if (GetComponent<UnityEngine.UI.GraphicRaycaster>() == null)
-                gameObject.AddComponent<UnityEngine.UI.GraphicRaycaster>();
+            if (GetComponent<GraphicRaycaster>() == null)
+                gameObject.AddComponent<GraphicRaycaster>();
         }
 
         public void Push(BasePanel panel)
@@ -48,84 +54,78 @@ namespace BigWorldClient.UI.Framework
         {
             if (panel == null) return;
 
-            if (panelStack.Count > 0)
-            {
-                var currentTop = panelStack[panelStack.Count - 1];
-                currentTop.Internal_Pause();
-            }
-
-            panelStack.Add(panel);
+            _panelStack.Add(panel);
             panel.RectTransform.SetParent(transform, false);
-            ApplySorting(panel);
+            panel.RectTransform.SetAsLastSibling();
+            UpdateBlocker();
+            RaiseStackChanged();
             panel.Internal_Show(args);
         }
 
         public void Pop()
         {
-            if (panelStack.Count == 0) return;
+            if (_panelStack.Count == 0) return;
 
-            var topPanel = panelStack[panelStack.Count - 1];
-            panelStack.RemoveAt(panelStack.Count - 1);
+            var topPanel = _panelStack[_panelStack.Count - 1];
+            _panelStack.RemoveAt(_panelStack.Count - 1);
+            UpdateBlocker();
+            RaiseStackChanged();
 
             topPanel.Internal_Hide(() =>
             {
                 if (OnPanelHidden != null) OnPanelHidden(topPanel);
             });
-
-            if (panelStack.Count > 0)
-            {
-                var newTop = panelStack[panelStack.Count - 1];
-                newTop.Internal_Resume();
-            }
         }
 
         public void PopTo(BasePanel target)
         {
             if (target == null) return;
-            int targetIndex = panelStack.IndexOf(target);
+            int targetIndex = _panelStack.IndexOf(target);
             if (targetIndex < 0) return;
-            while (panelStack.Count > targetIndex + 1)
+            while (_panelStack.Count > targetIndex + 1)
                 Pop();
         }
 
         public void PopAll()
         {
-            while (panelStack.Count > 0)
+            while (_panelStack.Count > 0)
                 Pop();
         }
 
-        /// <summary>
-        /// Hide a specific panel. If it's the top of stack, pop normally (resumes panel beneath).
-        /// If it's not the top, silently hide and remove it without affecting other panels.
-        /// </summary>
         public void HidePanel(BasePanel panel)
         {
             if (panel == null) return;
-            int index = panelStack.IndexOf(panel);
+            int index = _panelStack.IndexOf(panel);
             if (index < 0) return;
 
-            if (index == panelStack.Count - 1)
+            if (index == _panelStack.Count - 1)
             {
                 Pop();
+                return;
             }
-            else
+
+            _panelStack.RemoveAt(index);
+            UpdateBlocker();
+            RaiseStackChanged();
+            panel.Internal_Hide(() =>
             {
-                panelStack.RemoveAt(index);
-                panel.Internal_Hide(() =>
-                {
-                    if (OnPanelHidden != null) OnPanelHidden(panel);
-                });
-            }
+                if (OnPanelHidden != null) OnPanelHidden(panel);
+            });
+        }
+
+        private void RaiseStackChanged()
+        {
+            if (StackChanged != null) StackChanged();
         }
 
         public BasePanel Peek()
         {
-            return panelStack.Count > 0 ? panelStack[panelStack.Count - 1] : null;
+            return _panelStack.Count > 0 ? _panelStack[_panelStack.Count - 1] : null;
         }
 
         public T GetPanel<T>() where T : BasePanel
         {
-            foreach (var panel in panelStack)
+            foreach (var panel in _panelStack)
             {
                 if (panel is T) return (T)panel;
             }
@@ -134,26 +134,37 @@ namespace BigWorldClient.UI.Framework
 
         public BasePanel GetPanelById(string panelId)
         {
-            foreach (var panel in panelStack)
+            foreach (var panel in _panelStack)
             {
                 if (panel.PanelId == panelId) return panel;
             }
             return null;
         }
 
-        private void ApplySorting(BasePanel panel)
+        private void UpdateBlocker()
         {
-            int priorityValue = (int)panel.Priority;
-            int insertIndex = panelStack.Count - 1;
-            for (int i = 0; i < panelStack.Count - 1; i++)
+            bool need = _dimBackground && _panelStack.Count > 0;
+            if (!need)
             {
-                if ((int)panelStack[i].Priority > priorityValue)
-                {
-                    insertIndex = i;
-                    break;
-                }
+                if (_blocker != null) _blocker.SetActive(false);
+                return;
             }
-            panel.RectTransform.SetSiblingIndex(insertIndex);
+
+            if (_blocker == null)
+            {
+                _blocker = new GameObject("Blocker");
+                var image = _blocker.AddComponent<Image>();
+                image.color = new Color(0f, 0f, 0f, _dimAlpha);
+                image.raycastTarget = true;
+                var rt = _blocker.GetComponent<RectTransform>();
+                rt.SetParent(transform, false);
+                rt.anchorMin = Vector2.zero;
+                rt.anchorMax = Vector2.one;
+                rt.offsetMin = Vector2.zero;
+                rt.offsetMax = Vector2.zero;
+            }
+            _blocker.SetActive(true);
+            _blocker.transform.SetAsFirstSibling();
         }
     }
 }

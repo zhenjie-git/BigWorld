@@ -5,10 +5,7 @@ using UnityEngine.InputSystem;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// 纯输入采集器：不判断状态、不决定切换、不发送协议。
-    /// 只把输入事件和当前移动向量放进队列，由 MovePredictor 统一消费。
-    /// </summary>
+
     public class PlayerInput : MonoBehaviour
     {
         public PlayerInputActions InputActions { get; private set; }

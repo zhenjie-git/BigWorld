@@ -4,22 +4,17 @@ using UnityEngine;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// Non-MonoBehaviour Player object created at game start.
-    /// Owns the skill list and serves as the central hub for skill operations.
-    /// </summary>
+
     public class Player
     {
         public PlayerController Controller { get; }
         public List<Skill> Skills { get; } = new();
 
-        // ── Scene binding ──
         public string SceneId { get; set; }
 
-        // ── Runtime rotation target (input/camera direction, not animation) ──
-        private Vector3 currentTargetRotation;
+        private Vector3 _currentTargetRotation;
 
-        public ref Vector3 CurrentTargetRotation => ref currentTargetRotation;
+        public ref Vector3 CurrentTargetRotation => ref _currentTargetRotation;
 
         public Player(PlayerController controller, List<SkillConfig> skillConfigs)
         {

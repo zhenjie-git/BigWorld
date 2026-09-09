@@ -7,28 +7,24 @@ namespace BigWorldClient.UI.Framework
     [RequireComponent(typeof(CanvasGroup))]
     public abstract class BasePanel : MonoBehaviour
     {
-        /// <summary>
-        /// Set by UIManager when the panel is loaded. Provides all panel metadata
-        /// (id, layer, priority, cache settings) from the PanelRegistry ScriptableObject.
-        /// </summary>
+
         internal PanelEntry RegistryEntry { get; set; }
 
         public string PanelId { get { return RegistryEntry?.panelId; } }
         public UILayer DefaultLayer { get { return RegistryEntry?.layer ?? UILayer.Normal; } }
-        public PanelPriority Priority { get { return RegistryEntry?.priority ?? PanelPriority.Medium; } }
         public bool IsCacheable { get { return RegistryEntry?.cacheable ?? false; } }
         public PanelState CurrentState { get; private set; }
         public CanvasGroup CanvasGroup { get; private set; }
         public RectTransform RectTransform { get; private set; }
 
-        private UIEffectBase effect;
-        private bool initialized;
+        private UIEffectBase _effect;
+        private bool _initialized;
 
         protected virtual void Awake()
         {
             CanvasGroup = GetComponent<CanvasGroup>();
             RectTransform = GetComponent<RectTransform>();
-            effect = GetComponent<UIEffectBase>();
+            _effect = GetComponent<UIEffectBase>();
             CurrentState = PanelState.Closed;
         }
 
@@ -39,14 +35,15 @@ namespace BigWorldClient.UI.Framework
 
             gameObject.SetActive(true);
 
-            if (!initialized)
+            if (!_initialized)
             {
                 OnInit();
-                initialized = true;
+                _initialized = true;
             }
 
             CurrentState = PanelState.Opening;
-            StartCoroutine(ShowRoutine(args));
+            OnShow(args);
+            StartCoroutine(ShowRoutine());
         }
 
         public void Internal_Hide(Action onComplete = null)
@@ -63,7 +60,7 @@ namespace BigWorldClient.UI.Framework
 
         public void Internal_Pause()
         {
-            if (CurrentState != PanelState.Opened) return;
+            if (CurrentState != PanelState.Opened && CurrentState != PanelState.Opening) return;
             CurrentState = PanelState.Paused;
             OnPause();
         }
@@ -80,22 +77,19 @@ namespace BigWorldClient.UI.Framework
             OnCleanup();
         }
 
-        private IEnumerator ShowRoutine(object args)
+        private IEnumerator ShowRoutine()
         {
-            if (effect != null)
-                yield return StartCoroutine(effect.PlayShowEffect());
+            if (_effect != null)
+                yield return StartCoroutine(_effect.PlayShowEffect());
 
             if (CurrentState == PanelState.Opening)
-            {
                 CurrentState = PanelState.Opened;
-                OnShow(args);
-            }
         }
 
         private IEnumerator HideRoutine(Action onComplete)
         {
-            if (effect != null)
-                yield return StartCoroutine(effect.PlayHideEffect());
+            if (_effect != null)
+                yield return StartCoroutine(_effect.PlayHideEffect());
 
             CurrentState = PanelState.Closed;
             OnHide();

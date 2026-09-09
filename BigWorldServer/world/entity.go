@@ -12,15 +12,13 @@ type playerEntity struct {
 	Scene          *scene
 	LastMoveTimeMs int64
 
-	// Server-authoritative move simulation state (see world/MoveState.go).
-	MoveDirX, MoveDirZ float64 // current world-space horizontal direction
-	CurveNorm          float64 // current displacement-curve progress [0,1)
-	StateStartMs       int64   // state start time, on the fixed tick grid
-	FallVelY           float64 // fallState downward velocity
+	MoveDirX, MoveDirZ float64
+	CurveNorm          float64
+	StateStartMs       int64
+	FallVelY           float64
 
-	// Fixed-tick timeline and rollback support (see world/Rollback.go).
-	SimTick   int64            // last fully simulated tick (snapshot tick)
-	Snapshots []entitySnapshot // per-tick snapshots, newest last
-	Inputs    []moveInput      // recent accepted player inputs, sorted by (Tick, Seq)
-	InputSeq  uint64           // monotonic input sequence for stable ordering
+	SimTick   int64
+	Snapshots []entitySnapshot
+	Inputs    []moveInput
+	InputSeq  uint64
 }

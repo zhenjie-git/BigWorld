@@ -7,22 +7,22 @@ namespace BigWorldClient.UI.Common
     public class GenericConfirmPopup : Framework.BasePanel
     {
         [Header("UI References")]
-        [SerializeField] private Text titleText;
-        [SerializeField] private Text messageText;
-        [SerializeField] private Button confirmButton;
-        [SerializeField] private Text confirmButtonText;
-        [SerializeField] private Button cancelButton;
-        [SerializeField] private Text cancelButtonText;
+        [SerializeField] private Text _titleText;
+        [SerializeField] private Text _messageText;
+        [SerializeField] private Button _confirmButton;
+        [SerializeField] private Text _confirmButtonText;
+        [SerializeField] private Button _cancelButton;
+        [SerializeField] private Text _cancelButtonText;
 
-        private Action onConfirm;
-        private Action onCancel;
+        private Action _onConfirm;
+        private Action _onCancel;
 
         protected override void OnInit()
         {
-            if (confirmButton != null)
-                confirmButton.onClick.AddListener(OnConfirmClicked);
-            if (cancelButton != null)
-                cancelButton.onClick.AddListener(OnCancelClicked);
+            if (_confirmButton != null)
+                _confirmButton.onClick.AddListener(OnConfirmClicked);
+            if (_cancelButton != null)
+                _cancelButton.onClick.AddListener(OnCancelClicked);
         }
 
         protected override void OnShow(object args)
@@ -30,38 +30,38 @@ namespace BigWorldClient.UI.Common
             if (args is ConfirmPopupArgs)
             {
                 var popupArgs = (ConfirmPopupArgs)args;
-                if (titleText != null) titleText.text = popupArgs.Title;
-                if (messageText != null) messageText.text = popupArgs.Message;
-                if (confirmButtonText != null) confirmButtonText.text = popupArgs.ConfirmText;
-                if (cancelButtonText != null) cancelButtonText.text = popupArgs.CancelText;
-                onConfirm = popupArgs.OnConfirm;
-                onCancel = popupArgs.OnCancel;
-                if (cancelButton != null) cancelButton.gameObject.SetActive(popupArgs.ShowCancel);
+                if (_titleText != null) _titleText.text = popupArgs.Title;
+                if (_messageText != null) _messageText.text = popupArgs.Message;
+                if (_confirmButtonText != null) _confirmButtonText.text = popupArgs.ConfirmText;
+                if (_cancelButtonText != null) _cancelButtonText.text = popupArgs.CancelText;
+                _onConfirm = popupArgs.OnConfirm;
+                _onCancel = popupArgs.OnCancel;
+                if (_cancelButton != null) _cancelButton.gameObject.SetActive(popupArgs.ShowCancel);
             }
         }
 
         protected override void OnHide()
         {
-            onConfirm = null;
-            onCancel = null;
+            _onConfirm = null;
+            _onCancel = null;
         }
 
         protected override void OnCleanup()
         {
-            if (confirmButton != null) confirmButton.onClick.RemoveListener(OnConfirmClicked);
-            if (cancelButton != null) cancelButton.onClick.RemoveListener(OnCancelClicked);
+            if (_confirmButton != null) _confirmButton.onClick.RemoveListener(OnConfirmClicked);
+            if (_cancelButton != null) _cancelButton.onClick.RemoveListener(OnCancelClicked);
         }
 
         private void OnConfirmClicked()
         {
-            if (onConfirm != null) onConfirm();
+            if (_onConfirm != null) _onConfirm();
             if (Framework.UIManager.Instance != null)
                 Framework.UIManager.Instance.HidePanel(PanelId);
         }
 
         private void OnCancelClicked()
         {
-            if (onCancel != null) onCancel();
+            if (_onCancel != null) _onCancel();
             if (Framework.UIManager.Instance != null)
                 Framework.UIManager.Instance.HidePanel(PanelId);
         }

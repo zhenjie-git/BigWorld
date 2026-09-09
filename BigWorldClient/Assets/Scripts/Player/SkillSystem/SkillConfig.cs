@@ -3,10 +3,7 @@ using BigWorldClient.Network.Protocol;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// Generic skill configuration asset. Configure target state, consecutive-use rules,
-    /// and cooldown — no need to write a new Skill subclass for each ability.
-    /// </summary>
+
     [CreateAssetMenu(menuName = "Player/Skill Config")]
     public class SkillConfig : ScriptableObject
     {

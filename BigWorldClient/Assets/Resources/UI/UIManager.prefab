@@ -49,7 +49,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac676f7f1cdc6524c83e52b26f66ee2e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelRegistry: {fileID: 11400000, guid: 226d2e61f9e926c4eb9840a19f881de4, type: 2}
   layerControllers:
   - {fileID: 5835926624742022864}
   - {fileID: 3121205835986391365}
@@ -169,8 +168,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerType: 1
-  baseSortOrder: 0
+  _layerType: 1
+  _baseSortOrder: 100
 --- !u!1 &4173935963644047241
 GameObject:
   m_ObjectHideFlags: 0
@@ -315,8 +314,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerType: 2
-  baseSortOrder: 0
+  _layerType: 2
+  _baseSortOrder: 200
+  _dimBackground: 1
 --- !u!1 &6423598772264627631
 GameObject:
   m_ObjectHideFlags: 0
@@ -430,8 +430,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerType: 3
-  baseSortOrder: 0
+  _layerType: 3
+  _baseSortOrder: 300
 --- !u!1 &7630656201793624164
 GameObject:
   m_ObjectHideFlags: 0
@@ -545,5 +545,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  layerType: 0
-  baseSortOrder: 0
+  _layerType: 0
+  _baseSortOrder: 0

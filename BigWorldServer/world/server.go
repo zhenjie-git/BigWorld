@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 	"time"
 
 	"bigworld/common"
@@ -14,48 +13,37 @@ import (
 )
 
 const (
-	loadPlayerTimeout = 8 * time.Second // must be < gateway's createEntityTimeout (10s)
+	loadPlayerTimeout = 8 * time.Second
 	autosaveInterval  = 30 * time.Second
 )
 
 type worldServer struct {
 	*common.ServerBase
-	mu            sync.Mutex
 	players       map[uint64]*playerEntity
 	sceneMgr      *sceneMgr
-	playerCounter uint64 // only used in the no-dbproxy fallback path
-	peerRouter    *common.MessageRouter
+	playerCounter uint64
 
-	// Server-authoritative movement sim: fixed tick interval and the number
-	// of ticks covered by the rollback window (maxMoveWindowMs).
 	moveTickMs    int64
 	rollbackTicks int64
 
-	// dbproxy connection (discovered via central) and its inbound router.
-	dbConn   *common.ConnWrapper
-	dbRouter *common.MessageRouter
+	dbConn *common.ConnWrapper
 
-	// In-flight LoadPlayer requests, keyed by account. The gateway arms a
-	// 10s createEntityTimeout, so a LoadPlayer reply must arrive within
-	// loadPlayerTimeout or we abandon the create (no orphan entity).
 	dbLoadPendings map[string]*dbLoadPending
 
-	// Shutdown flush correlation: FlushAllAndWait sets a req id + channel,
-	// HandleDbSavePlayerRsp closes the channel when the matching rsp arrives.
-	flushReqID uint64
-	flushDone  chan struct{}
+	shutdownFlushing bool
+	shutdownReqID    uint64
+	shutdownDeadline time.Time
+
+	lastAutosave time.Time
 }
 
-// dbLoadPending correlates a CreateEntityReq with the async LoadPlayerRsp.
 type dbLoadPending struct {
-	conn    *common.ConnWrapper // gateway world-conn to reply CreateEntityRsp on
-	account string
-	timer   *time.Timer
+	conn     *common.ConnWrapper
+	account  string
+	deadline time.Time
 }
 
-// fillMoveRspState copies a complete simulation snapshot into a MoveRsp so the
-// client can restore authoritative state and roll back deterministically.
-func fillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
+func FillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
 	rsp.SimTick = s.Tick
 	rsp.X = s.X
 	rsp.Y = s.Y
@@ -76,8 +64,6 @@ func NewWorldServer(id string) *worldServer {
 		ServerBase:     common.NewServerBase(common.ServerWorld, id),
 		players:        make(map[uint64]*playerEntity),
 		sceneMgr:       NewSceneMgr(id),
-		peerRouter:     common.NewMessageRouter(),
-		dbRouter:       common.NewMessageRouter(),
 		dbLoadPendings: make(map[string]*dbLoadPending),
 		moveTickMs:     int64(cfg.MovementTickMs),
 	}
@@ -89,39 +75,78 @@ func NewWorldServer(id string) *worldServer {
 		ss.rollbackTicks++
 	}
 
-	common.Register(ss.peerRouter, common.Cli2Wd_WalkStartReq, ss.HandleWalkStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_RunStartReq, ss.HandleRunStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_SprintStartReq, ss.HandleSprintStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_JumpStartReq, ss.HandleJumpStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_DashStartReq, ss.HandleDashStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_RollStartReq, ss.HandleRollStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_StopStartReq, ss.HandleStopStart)
-	common.Register(ss.peerRouter, common.Cli2Wd_MoveStopReq, ss.HandleMoveStop)
-	common.Register(ss.peerRouter, common.Cli2Wd_MoveDirChangeReq, ss.HandleMoveDirChange)
-	common.Register(ss.peerRouter, common.Cli2Wd_SkillReq, ss.HandleSkill)
-	common.Register(ss.peerRouter, common.Gw2Wd_DestroyEntityReq, ss.HandleDestroyEntity)
-	common.Register(ss.peerRouter, common.Gw2Wd_CreateEntityReq, ss.HandleCreateEntity)
+	if err := PlayerConfig().Load(cfg.PlayerConfigFile); err != nil {
+		log.Printf("[world %s] WARN: player config %q failed to load: %v (using builtin defaults)",
+			id, cfg.PlayerConfigFile, err)
+	}
+	if err := MoveTransitions().Load(cfg.StateTransitionTableFile); err != nil {
+		log.Printf("[world %s] WARN: state transition table %q failed to load: %v (transition validation disabled)",
+			id, cfg.StateTransitionTableFile, err)
+	}
+	if cfg.StateConfigFile != "" {
+		if err := StateConfig().Load(cfg.StateConfigFile); err != nil {
+			log.Printf("[world %s] WARN: state config %q failed to load: %v (per-state move caps disabled)",
+				id, cfg.StateConfigFile, err)
+		}
+	}
 
-	common.Register(ss.dbRouter, common.Db2Wd_LoadPlayerRsp, ss.HandleDbLoadPlayerRsp)
-	common.Register(ss.dbRouter, common.Db2Wd_SavePlayerRsp, ss.HandleDbSavePlayerRsp)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_WalkStartReq, ss.HandleWalkStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_RunStartReq, ss.HandleRunStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_SprintStartReq, ss.HandleSprintStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_JumpStartReq, ss.HandleJumpStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_DashStartReq, ss.HandleDashStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_RollStartReq, ss.HandleRollStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_StopStartReq, ss.HandleStopStart)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_MoveStopReq, ss.HandleMoveStop)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_MoveDirChangeReq, ss.HandleMoveDirChange)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_SkillReq, ss.HandleSkill)
+	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_DestroyEntityReq, ss.HandleDestroyEntity)
+	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_CreateEntityReq, ss.HandleCreateEntity)
 
-	ss.OnMessage = ss.HandleMessage
-	ss.OnCentralMessage = ss.HandleCentralMessage
+	common.Register(ss.Router(common.SrcDbProxy), common.Db2Wd_LoadPlayerRsp, ss.HandleDbLoadPlayerRsp)
+	common.Register(ss.Router(common.SrcDbProxy), common.Db2Wd_SavePlayerRsp, ss.HandleDbSavePlayerRsp)
 
-	go ss.AutosaveLoop(autosaveInterval)
-	go ss.MoveLoop()
+	cr := ss.Router(common.SrcCentral)
+	common.Register(cr, common.Ct2Srv_RegisterRsp, ss.HandleCentralRegisterRsp)
+	common.Register(cr, common.Ct2Srv_ServerListRsp, ss.HandleCentralServerListRsp)
+	common.Register(cr, common.Ct2Srv_NewDbProxyNotify, ss.HandleCentralNewDbProxy)
+	common.Register(cr, common.Ct2Srv_ShutdownNotify, ss.HandleCentralShutdownNotify)
+	common.Register(cr, common.Ct2Srv_HeartbeatRsp, ss.NoopHeartbeat)
+
+	ss.Loop.OnTick = ss.OnTick
+	ss.Loop.TickEvery = time.Duration(ss.moveTickMs) * time.Millisecond
+	ss.lastAutosave = time.Now()
 	return ss
 }
 
-func (ss *worldServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
-	ss.peerRouter.Dispatch(conn, msg)
+func (ss *worldServer) OnTick() {
+	now := time.Now()
+	nowTick := ss.MsToTick(now.UnixMilli())
+	for _, e := range ss.players {
+		ss.AdvanceEntityTo(e, nowTick)
+	}
+
+	for account, pend := range ss.dbLoadPendings {
+		if now.After(pend.deadline) {
+			delete(ss.dbLoadPendings, account)
+			log.Printf("[world %s] LoadPlayer timeout for account=%s, gateway will roll back", ss.ServerId, account)
+		}
+	}
+
+	if now.Sub(ss.lastAutosave) >= autosaveInterval {
+		ss.lastAutosave = now
+		ss.AutosaveAll()
+	}
+
+	if ss.shutdownFlushing && now.After(ss.shutdownDeadline) {
+		ss.shutdownFlushing = false
+		log.Printf("[world %s] player flush incomplete before shutdown", ss.ServerId)
+		ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
+		go ss.Stop()
+	}
 }
 
-// HandleMoveStart is the shared entry point for the per-state start protocols:
-// maps the client server_time_ms onto the fixed tick grid, validates the state
-// transition at that tick, and replays recent inputs when the event arrives late.
 func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64, to pb.MoveState, ts int64, dirX, dirZ float64) {
-	ss.mu.Lock()
 	entity, ok := ss.players[playerID]
 	var rsp *common.MoveRsp
 	var logX, logY, logZ float64
@@ -132,7 +157,7 @@ func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64
 		tick, valid := ss.NormalizeInputTick(ts, nowMs)
 		if !valid {
 			rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动时间戳非法", AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
-			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+			FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 		} else {
 			in := moveInput{
 				Seq:   entity.InputSeq,
@@ -145,11 +170,11 @@ func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64
 			accepted, msg, snap := ss.ProcessMoveInput(entity, in)
 			if !accepted {
 				rsp = &common.MoveRsp{Success: false, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
-				fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+				FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 			} else {
 				ackMs := ss.TickToMs(tick)
 				rsp = &common.MoveRsp{Success: true, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动开始", AckTimeMs: ackMs, AckTick: tick}
-				fillMoveRspState(rsp, snap)
+				FillMoveRspState(rsp, snap)
 				logAccepted = true
 				logX, logY, logZ = snap.X, snap.Y, snap.Z
 				logLayer = snap.VoxelK
@@ -158,7 +183,6 @@ func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: playerID, Message: "实体不存在"}
 	}
-	ss.mu.Unlock()
 
 	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 	if logAccepted {
@@ -201,45 +225,34 @@ func (ss *worldServer) HandleStopStart(conn *common.ConnWrapper, req *common.Sto
 	}
 }
 
-// HandleMoveStop forces the entity to IDLE at the client's stop tick. A late
-// stop is the main rollback case: the server may already have simulated a few
-// extra ticks (possibly with direction changes); the entity is rewound to the
-// stop tick snapshot and the recent input history is replayed from there.
 func (ss *worldServer) HandleMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
-	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
 	var rsp *common.MoveRsp
 	if ok {
 		nowMs := time.Now().UnixMilli()
 		tick, valid := ss.NormalizeInputTick(req.ServerTimeMs, nowMs)
 		if !valid {
-			// Preserve the old safety-net behaviour: a wildly wrong stop
-			// timestamp still stops the entity, effective at the current tick.
+
 			tick = ss.MsToTick(nowMs)
 		}
 		in := moveInput{Seq: entity.InputSeq, Tick: tick, Kind: moveInputStop}
 		accepted, msg, snap := ss.ProcessMoveInput(entity, in)
 		if !accepted {
 			rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
-			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+			FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 		} else {
 			ackMs := ss.TickToMs(tick)
 			rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "停止", AckTimeMs: ackMs, AckTick: tick}
-			fillMoveRspState(rsp, snap)
+			FillMoveRspState(rsp, snap)
 		}
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
-	ss.mu.Unlock()
 
 	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 }
 
-// HandleMoveDirChange updates the entity's world-space direction mid-move. The
-// change is recorded as an input on the tick grid so a later rollback can replay
-// it at the exact frame it belongs to.
 func (ss *worldServer) HandleMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
-	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
 	var rsp *common.MoveRsp
 	if ok {
@@ -256,27 +269,24 @@ func (ss *worldServer) HandleMoveDirChange(conn *common.ConnWrapper, req *common
 			accepted, msg, snap := ss.ProcessMoveInput(entity, in)
 			if accepted {
 				rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "方向变更", AckTimeMs: ss.TickToMs(tick), AckTick: tick}
-				fillMoveRspState(rsp, snap)
+				FillMoveRspState(rsp, snap)
 			} else {
 				rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
-				fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+				FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 			}
 		} else {
 			rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动时间戳非法", AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
-			fillMoveRspState(rsp, CaptureEntitySnapshot(entity))
+			FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
 		}
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
-	ss.mu.Unlock()
 
 	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
 }
 
 func (ss *worldServer) HandleSkill(conn *common.ConnWrapper, req *common.SkillReq) {
-	ss.mu.Lock()
 	_, ok := ss.players[req.PlayerId]
-	ss.mu.Unlock()
 
 	if !ok {
 		rsp := common.SkillRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
@@ -291,7 +301,6 @@ func (ss *worldServer) HandleSkill(conn *common.ConnWrapper, req *common.SkillRe
 
 func (ss *worldServer) HandleDestroyEntity(conn *common.ConnWrapper, req *common.DestroyEntityReq) {
 	var saved *playerEntity
-	ss.mu.Lock()
 	entity, ok := ss.players[req.PlayerId]
 	if ok {
 		saved = entity
@@ -300,9 +309,7 @@ func (ss *worldServer) HandleDestroyEntity(conn *common.ConnWrapper, req *common
 			delete(entity.Scene.Players, req.PlayerId)
 		}
 	}
-	ss.mu.Unlock()
 
-	// Persist final position to dbproxy (fire-and-forget; never blocks logout).
 	if saved != nil {
 		ss.SavePlayer(saved)
 	}
@@ -318,60 +325,34 @@ func (ss *worldServer) HandleDestroyEntity(conn *common.ConnWrapper, req *common
 	log.Printf("[world %s] player %d entity destroyed", ss.ServerId, req.PlayerId)
 }
 
-// HandleCreateEntity kicks off an async LoadPlayer from dbproxy. If dbproxy is
-// unavailable it falls back to a local random spawn so login still succeeds.
 func (ss *worldServer) HandleCreateEntity(conn *common.ConnWrapper, req *common.CreateEntityReq) {
 	log.Printf("[world %s] creating player: account=%s", ss.ServerId, req.Account)
 
-	ss.mu.Lock()
 	dbConn := ss.dbConn
-	ss.mu.Unlock()
 	if dbConn == nil {
 		ss.CreateEntityLocal(conn, req.Account)
 		return
 	}
 
-	// Register the pending BEFORE sending so a fast dbproxy reply cannot race past it.
-	pend := &dbLoadPending{conn: conn, account: req.Account}
-	pend.timer = time.AfterFunc(loadPlayerTimeout, func() {
-		ss.mu.Lock()
-		if cur, ok := ss.dbLoadPendings[req.Account]; ok && cur == pend {
-			delete(ss.dbLoadPendings, req.Account)
-		}
-		ss.mu.Unlock()
-		log.Printf("[world %s] LoadPlayer timeout for account=%s, gateway will roll back", ss.ServerId, req.Account)
-	})
-	ss.mu.Lock()
+	pend := &dbLoadPending{conn: conn, account: req.Account, deadline: time.Now().Add(loadPlayerTimeout)}
 	ss.dbLoadPendings[req.Account] = pend
-	ss.mu.Unlock()
 
 	if err := ss.ForwardMsgToDb(common.Wd2Db_LoadPlayerReq, &common.LoadPlayerReq{Account: req.Account}); err != nil {
-		ss.mu.Lock()
 		delete(ss.dbLoadPendings, req.Account)
-		ss.mu.Unlock()
-		pend.timer.Stop()
 		ss.CreateEntityLocal(conn, req.Account)
 		return
 	}
 }
 
-// HandleDbLoadPlayerRsp creates the entity at the persisted (or random, for new
-// accounts) position and replies to the gateway.
 func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.LoadPlayerRsp) {
-	ss.mu.Lock()
 	pend, ok := ss.dbLoadPendings[rsp.Account]
 	if ok {
-		if pend.timer != nil {
-			pend.timer.Stop()
-		}
 		delete(ss.dbLoadPendings, rsp.Account)
 	}
-	ss.mu.Unlock()
 	if !ok {
-		return // timed out or stale; gateway has already rolled back
+		return
 	}
 
-	// dbproxy failed to allocate an id -> degrade to local spawn.
 	if rsp.PlayerId == 0 {
 		log.Printf("[world %s] LoadPlayerRsp had no id for account=%s: %s; falling back",
 			ss.ServerId, rsp.Account, rsp.Message)
@@ -379,8 +360,7 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		return
 	}
 
-	ss.mu.Lock()
-	sc := ss.sceneMgr.GetOrCreate(ss.ServerId)
+	sc := ss.sceneMgr.GetOrCreate(rsp.SceneId)
 	x, z, k := sc.SpawnPosition(rsp.Found, rsp.X, rsp.Z)
 	entity := &playerEntity{
 		PlayerId: rsp.PlayerId,
@@ -397,7 +377,6 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 	sc.Players[rsp.PlayerId] = entity
 	ss.players[rsp.PlayerId] = entity
 	width, height := sc.Width, sc.Height
-	ss.mu.Unlock()
 
 	createRsp := common.CreateEntityRsp{
 		Success:  true,
@@ -408,21 +387,18 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		Width:    width,
 		Height:   height,
 		Message:  "实体创建成功",
+		SceneId:  sc.SceneId,
 	}
 	common.SendMsg(pend.conn, common.Wd2Gw_CreateEntityRsp, &createRsp)
 	log.Printf("[world %s] player %d (account=%s) loaded at (%.1f, %.1f) found=%v",
 		ss.ServerId, rsp.PlayerId, rsp.Account, x, z, rsp.Found)
 }
 
-// CreateEntityLocal spawns a player without persistence: local counter-based
-// player_id and random position. Used when dbproxy is unavailable so login
-// still succeeds (degraded mode; position won't be saved this session).
 func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account string) {
-	ss.mu.Lock()
 	ss.playerCounter++
 	playerID := uint64(common.Config.Servers["world"].ID)*10000 + ss.playerCounter
 
-	sc := ss.sceneMgr.GetOrCreate(ss.ServerId)
+	sc := ss.sceneMgr.GetOrCreate(ss.sceneMgr.defaultScene)
 	x, z, k := sc.SpawnPosition(false, 0, 0)
 	entity := &playerEntity{
 		PlayerId: playerID,
@@ -439,7 +415,6 @@ func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account strin
 	sc.Players[playerID] = entity
 	ss.players[playerID] = entity
 	width, height := sc.Width, sc.Height
-	ss.mu.Unlock()
 
 	rsp := common.CreateEntityRsp{
 		Success:  true,
@@ -450,6 +425,7 @@ func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account strin
 		Width:    width,
 		Height:   height,
 		Message:  "实体创建成功(本地降级)",
+		SceneId:  sc.SceneId,
 	}
 	common.SendMsg(conn, common.Wd2Gw_CreateEntityRsp, &rsp)
 	log.Printf("[world %s] player %d (account=%s) created locally at (%.1f, %.1f)",
@@ -458,142 +434,110 @@ func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account strin
 
 func (ss *worldServer) HandleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.SavePlayerRsp) {
 	if rsp.ReqId == 0 {
-		// Fire-and-forget path (logout save, autosave): only log failures.
+
 		if !rsp.Success {
 			log.Printf("[world %s] dbproxy save error: %s", ss.ServerId, rsp.Message)
 		}
 		return
 	}
-	// Correlated path: this is the reply to the shutdown flush. Wake up
-	// FlushAllAndWait so world does not stop before the save lands.
-	ss.mu.Lock()
-	if ss.flushDone != nil && rsp.ReqId == ss.flushReqID {
-		close(ss.flushDone)
-		ss.flushDone = nil
-	}
-	ss.mu.Unlock()
-}
 
-func (ss *worldServer) HandleCentralMessage(msg common.Message) {
-	switch msg.Type {
-	case common.Ct2Srv_RegisterRsp:
-		var rsp common.RegisterRsp
-		if err := proto.Unmarshal(msg.Data, &rsp); err != nil {
-			log.Printf("[world %s] bad RegisterRsp: %v", ss.ServerId, err)
-			return
-		}
-		if rsp.Success {
-			log.Printf("[world %s] registered: %s", ss.ServerId, rsp.Message)
-			// Pull the dbproxy list in case it registered before us.
-			ss.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerDbProxy})
-		}
-	case common.Ct2Srv_ServerListRsp:
-		var rsp common.ServerListRsp
-		if err := proto.Unmarshal(msg.Data, &rsp); err != nil {
-			log.Printf("[world %s] bad ServerListRsp: %v", ss.ServerId, err)
-			return
-		}
-		for _, e := range rsp.Servers {
-			ss.ConnectToDb(e.ServerId, e.ListenAddr)
-		}
-	case common.Ct2Srv_NewDbProxyNotify:
-		var entry common.ServerEntry
-		if err := proto.Unmarshal(msg.Data, &entry); err != nil {
-			log.Printf("[world %s] bad NewDbProxyNotify: %v", ss.ServerId, err)
-			return
-		}
-		ss.ConnectToDb(entry.ServerId, entry.ListenAddr)
-	case common.Ct2Srv_ShutdownNotify:
-		var notify common.ShutdownNotify
-		if err := proto.Unmarshal(msg.Data, &notify); err != nil {
-			log.Printf("[world %s] bad ShutdownNotify: %v", ss.ServerId, err)
-			return
-		}
-		ss.HandleShutdown(&notify)
-	case common.Ct2Srv_HeartbeatRsp:
+	if ss.shutdownFlushing && rsp.ReqId == ss.shutdownReqID {
+		ss.shutdownFlushing = false
+		log.Printf("[world %s] flushed players to dbproxy, shutting down", ss.ServerId)
+		ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
+		go ss.Stop()
 	}
 }
 
-// HandleShutdown flushes every online player to dbproxy and waits for the save
-// to be acknowledged (so the last ~30s of movement is not lost), then acks
-// central and stops. Runs on the central-connection read goroutine; the save
-// reply arrives on the dbproxy read goroutine, so this cannot deadlock.
+func (ss *worldServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
+
+func (ss *worldServer) HandleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+	if !rsp.Success {
+		return
+	}
+	log.Printf("[world %s] registered: %s", ss.ServerId, rsp.Message)
+
+	ss.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerDbProxy})
+}
+
+func (ss *worldServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
+	for _, e := range rsp.Servers {
+		ss.ConnectToDb(e.ServerId, e.ListenAddr)
+	}
+}
+
+func (ss *worldServer) HandleCentralNewDbProxy(_ *common.ConnWrapper, entry *common.ServerEntry) {
+	ss.ConnectToDb(entry.ServerId, entry.ListenAddr)
+}
+
+func (ss *worldServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
+	ss.HandleShutdown(notify)
+}
+
 func (ss *worldServer) HandleShutdown(notify *common.ShutdownNotify) {
 	log.Printf("[world %s] shutdown requested: %s", ss.ServerId, notify.Reason)
-	if !ss.FlushAllAndWait(5 * time.Second) {
-		log.Printf("[world %s] player flush incomplete before shutdown", ss.ServerId)
+	if ss.shutdownFlushing {
+		return
 	}
-	ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
-	go ss.Stop()
-}
 
-// FlushAllAndWait sends a final batch save of every online player and blocks
-// until dbproxy acknowledges it (or the timeout elapses). Unlike AutosaveAll,
-// this is synchronous, so world never stops before the last positions land.
-func (ss *worldServer) FlushAllAndWait(timeout time.Duration) bool {
-	ss.mu.Lock()
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
-		players = append(players, &common.PlayerData{PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z})
+		players = append(players, &common.PlayerData{PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneId(e)})
 	}
 	if len(players) == 0 {
-		ss.mu.Unlock()
-		return true
+		ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
+		go ss.Stop()
+		return
 	}
-	ss.flushReqID++
-	id := ss.flushReqID
-	done := make(chan struct{})
-	ss.flushDone = done
-	ss.mu.Unlock()
 
-	req := &common.SavePlayerReq{ReqId: id, Players: players}
+	ss.shutdownReqID++
+	req := &common.SavePlayerReq{ReqId: ss.shutdownReqID, Players: players}
 	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
-		return false
+		log.Printf("[world %s] shutdown flush send failed: %v", ss.ServerId, err)
+		ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerId})
+		go ss.Stop()
+		return
 	}
-	select {
-	case <-done:
-		log.Printf("[world %s] flushed %d players to dbproxy", ss.ServerId, len(players))
-		return true
-	case <-time.After(timeout):
-		return false
-	}
+	ss.shutdownFlushing = true
+	ss.shutdownDeadline = time.Now().Add(5 * time.Second)
+	log.Printf("[world %s] flushing %d players to dbproxy", ss.ServerId, len(players))
 }
-
-// --- dbproxy connection ---
 
 func (ss *worldServer) ForwardMsgToDb(msgType common.MessageType, m proto.Message) error {
 	data, err := common.MarshalHelper(m)
 	if err != nil {
 		return err
 	}
-	ss.mu.Lock()
-	conn := ss.dbConn
-	ss.mu.Unlock()
-	if conn == nil {
+	if ss.dbConn == nil {
 		return fmt.Errorf("dbproxy not connected")
 	}
-	return conn.Send(common.Message{Type: msgType, Data: data})
+	return ss.dbConn.Send(common.Message{Type: msgType, Data: data})
 }
 
 func (ss *worldServer) ConnectToDb(dbID, dbAddr string) {
-	ss.mu.Lock()
 	if ss.dbConn != nil {
-		ss.mu.Unlock()
 		return
 	}
-	ss.mu.Unlock()
 
-	conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
-	if err != nil {
-		log.Printf("[world %s] failed to connect to dbproxy %s at %s: %v", ss.ServerId, dbID, dbAddr, err)
-		return
-	}
-	cw := common.NewConnWrapper(conn)
-	ss.mu.Lock()
-	ss.dbConn = cw
-	ss.mu.Unlock()
-	log.Printf("[world %s] connected to dbproxy %s at %s", ss.ServerId, dbID, dbAddr)
-	go ss.DbReadLoop(cw)
+	go func() {
+		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
+		if err != nil {
+			log.Printf("[world %s] failed to connect to dbproxy %s at %s: %v", ss.ServerId, dbID, dbAddr, err)
+			return
+		}
+		ss.Loop.Defer(func() {
+			if ss.dbConn != nil {
+				conn.Close()
+				return
+			}
+			cw := common.NewConnWrapper(conn)
+			cw.PeerType = common.ServerDbProxy
+			ss.dbConn = cw
+			log.Printf("[world %s] connected to dbproxy %s at %s", ss.ServerId, dbID, dbAddr)
+			common.SendMsg(cw, common.Srv2Srv_IdentifyReq, &common.IdentifyReq{ServerType: common.ServerWorld})
+			go ss.DbReadLoop(cw)
+		})
+	}()
 }
 
 func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
@@ -605,28 +549,35 @@ func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
 	for {
 		msg, err := common.ReadMessage(cw.Conn)
 		if err != nil {
-			// Clear the conn so callers fall back to local mode and a fresh
-			// notify/list can reconnect once dbproxy is back.
-			ss.mu.Lock()
-			if ss.dbConn == cw {
-				ss.dbConn.Close()
-				ss.dbConn = nil
-			}
-			ss.mu.Unlock()
-			log.Printf("[world %s] dbproxy connection lost: %v", ss.ServerId, err)
+
+			dropped := cw
+			ss.Loop.Defer(func() {
+				if ss.dbConn == dropped {
+					ss.dbConn.Close()
+					ss.dbConn = nil
+					log.Printf("[world %s] dbproxy connection lost", ss.ServerId)
+				}
+			})
 			return
 		}
-		ss.dbRouter.Dispatch(cw, msg)
+		if !ss.Loop.Post(common.Event{Kind: common.EventMessage, Conn: cw, Msg: msg}) {
+			cw.Close()
+			return
+		}
 	}
 }
 
-// --- persistence ---
+func entitySceneId(e *playerEntity) string {
+	if e.Scene == nil {
+		return ""
+	}
+	return e.Scene.SceneId
+}
 
-// SavePlayer persists one player's position to dbproxy (fire-and-forget).
 func (ss *worldServer) SavePlayer(e *playerEntity) {
 	req := &common.SavePlayerReq{
 		Players: []*common.PlayerData{
-			{PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z},
+			{PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneId(e)},
 		},
 	}
 	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
@@ -634,23 +585,13 @@ func (ss *worldServer) SavePlayer(e *playerEntity) {
 	}
 }
 
-func (ss *worldServer) AutosaveLoop(interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	defer ticker.Stop()
-	for range ticker.C {
-		ss.AutosaveAll()
-	}
-}
-
 func (ss *worldServer) AutosaveAll() {
-	ss.mu.Lock()
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
 		players = append(players, &common.PlayerData{
-			PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z,
+			PlayerId: e.PlayerId, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneId(e),
 		})
 	}
-	ss.mu.Unlock()
 	if len(players) == 0 {
 		return
 	}

@@ -35,103 +35,106 @@ namespace BigWorldClient.Network.Protocol {
             "ZXJfaWQYAiABKAkSEwoLbGlzdGVuX2FkZHIYAyABKAkiNwoNU2VydmVyTGlz",
             "dFJzcBImCgdzZXJ2ZXJzGAEgAygLMhUuYmlnd29ybGQuU2VydmVyRW50cnki",
             "LQoITG9naW5SZXESDwoHYWNjb3VudBgBIAEoCRIQCghwYXNzd29yZBgCIAEo",
-            "CSK/AQoITG9naW5Sc3ASDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIg",
+            "CSLRAQoITG9naW5Sc3ASDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIg",
             "ASgJEg0KBXRva2VuGAMgASgJEhQKDGdhdGV3YXlfYWRkchgEIAEoCRISCgp3",
             "b3JsZF9hZGRyGAUgASgJEhAKCHdvcmxkX2lkGAYgASgJEhEKCXBsYXllcl9p",
             "ZBgHIAEoBBIJCgF4GAggASgBEgkKAXoYCSABKAESDQoFd2lkdGgYCiABKAES",
-            "DgoGaGVpZ2h0GAsgASgBIkYKEEdhdGV3YXlBc3NpZ25SZXESDgoGcmVxX2lk",
-            "GAEgASgEEhEKCXNlcnZlcl9pZBgCIAEoCRIPCgdhY2NvdW50GAMgASgJIm4K",
-            "EEdhdGV3YXlBc3NpZ25Sc3ASDgoGcmVxX2lkGAEgASgEEg8KB3N1Y2Nlc3MY",
-            "AiABKAgSFAoMZ2F0ZXdheV9hZGRyGAMgASgJEhIKCmdhdGV3YXlfaWQYBCAB",
-            "KAkSDwoHbWVzc2FnZRgFIAEoCSJUCg5Ub2tlblZlcmlmeVJlcRIOCgZyZXFf",
-            "aWQYASABKAQSDQoFdG9rZW4YAiABKAkSDwoHYWNjb3VudBgDIAEoCRISCgpn",
-            "YXRld2F5X2lkGAQgASgJIsEBCg5Ub2tlblZlcmlmeVJzcBIOCgZyZXFfaWQY",
-            "ASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdhY2NvdW50GAMgASgJEhEKCXBs",
-            "YXllcl9pZBgEIAEoBBISCgp3b3JsZF9hZGRyGAUgASgJEhAKCHdvcmxkX2lk",
-            "GAYgASgJEgkKAXgYByABKAESCQoBehgIIAEoARINCgV3aWR0aBgJIAEoARIO",
-            "CgZoZWlnaHQYCiABKAESDwoHbWVzc2FnZRgLIAEoCSIyCg9Mb2dpblByZXBh",
-            "cmVSZXESDgoGcmVxX2lkGAEgASgEEg8KB2FjY291bnQYAiABKAkiaQoPTG9n",
-            "aW5QcmVwYXJlUnNwEg4KBnJlcV9pZBgBIAEoBBIPCgdzdWNjZXNzGAIgASgI",
-            "EhAKCHdvcmxkX2lkGAMgASgJEhIKCndvcmxkX2FkZHIYBCABKAkSDwoHbWVz",
-            "c2FnZRgFIAEoCSJ8Cg5Mb2dpbkZpbmlzaFJlcRIRCglwbGF5ZXJfaWQYASAB",
-            "KAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdhY2NvdW50GAMgASgJEhAKCHdvcmxk",
-            "X2lkGAQgASgJEhIKCmdhdGV3YXlfaWQYBSABKAkSDwoHbWVzc2FnZRgGIAEo",
-            "CSJWCg5Mb2dpbkZpbmlzaFJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXll",
-            "cl9pZBgCIAEoBBIPCgdhY2NvdW50GAMgASgJEg8KB21lc3NhZ2UYBCABKAki",
-            "RwoPRm9yY2VLaWNrTm90aWZ5EhEKCXBsYXllcl9pZBgBIAEoBBIPCgdhY2Nv",
-            "dW50GAIgASgJEhAKCHdvcmxkX2lkGAMgASgJImwKEEVudGVyU2NlbmVOb3Rp",
-            "ZnkSEAoId29ybGRfaWQYASABKAkSEQoJcGxheWVyX2lkGAIgASgEEgkKAXgY",
-            "AyABKAESCQoBehgEIAEoARINCgV3aWR0aBgFIAEoARIOCgZoZWlnaHQYBiAB",
-            "KAEiHgoJTG9nb3V0UmVxEhEKCXBsYXllcl9pZBgBIAEoBCItCglMb2dvdXRS",
-            "c3ASDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiMKDkxvZ291",
-            "dEJlZ2luUmVxEhEKCXBsYXllcl9pZBgBIAEoBCJFCg5Mb2dvdXRCZWdpblJz",
-            "cBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNz",
-            "YWdlGAMgASgJIjkKEExvZ291dENsZWFudXBSZXESEQoJcGxheWVyX2lkGAEg",
-            "ASgEEhIKCmdhdGV3YXlfaWQYAiABKAkiRwoQTG9nb3V0Q2xlYW51cFJzcBIP",
-            "CgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdl",
-            "GAMgASgJIiIKD0NyZWF0ZUVudGl0eVJlcRIPCgdhY2NvdW50GAEgASgJIowB",
-            "Cg9DcmVhdGVFbnRpdHlSc3ASDwoHc3VjY2VzcxgBIAEoCBIRCglwbGF5ZXJf",
-            "aWQYAiABKAQSDwoHYWNjb3VudBgDIAEoCRIJCgF4GAQgASgBEgkKAXoYBSAB",
-            "KAESDQoFd2lkdGgYBiABKAESDgoGaGVpZ2h0GAcgASgBEg8KB21lc3NhZ2UY",
-            "CCABKAkiJQoQRGVzdHJveUVudGl0eVJlcRIRCglwbGF5ZXJfaWQYASABKAQi",
-            "RwoQRGVzdHJveUVudGl0eVJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXll",
-            "cl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIh8KB01vdmVEaXISCQoBeBgB",
-            "IAEoAhIJCgF6GAIgASgCIlkKDFdhbGtTdGFydFJlcRIRCglwbGF5ZXJfaWQY",
-            "ASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2",
-            "ZXJfdGltZV9tcxgDIAEoAyJYCgtSdW5TdGFydFJlcRIRCglwbGF5ZXJfaWQY",
-            "ASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2",
-            "ZXJfdGltZV9tcxgDIAEoAyJbCg5TcHJpbnRTdGFydFJlcRIRCglwbGF5ZXJf",
-            "aWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5z",
-            "ZXJ2ZXJfdGltZV9tcxgDIAEoAyJZCgxKdW1wU3RhcnRSZXESEQoJcGxheWVy",
-            "X2lkGAEgASgEEh4KA2RpchgCIAEoCzIRLmJpZ3dvcmxkLk1vdmVEaXISFgoO",
-            "c2VydmVyX3RpbWVfbXMYAyABKAMiWQoMRGFzaFN0YXJ0UmVxEhEKCXBsYXll",
-            "cl9pZBgBIAEoBBIeCgNkaXIYAiABKAsyES5iaWd3b3JsZC5Nb3ZlRGlyEhYK",
-            "DnNlcnZlcl90aW1lX21zGAMgASgDIlkKDFJvbGxTdGFydFJlcRIRCglwbGF5",
-            "ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIW",
-            "Cg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJhCgxTdG9wU3RhcnRSZXESEQoJcGxh",
-            "eWVyX2lkGAEgASgEEiYKCXN0b3Bfa2luZBgCIAEoDjITLmJpZ3dvcmxkLk1v",
-            "dmVTdGF0ZRIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyI4CgtNb3ZlU3RvcFJl",
-            "cRIRCglwbGF5ZXJfaWQYASABKAQSFgoOc2VydmVyX3RpbWVfbXMYAiABKAMi",
-            "XQoQTW92ZURpckNoYW5nZVJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGly",
-            "GAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgD",
-            "IAEoAyK9AgoHTW92ZVJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9p",
-            "ZBgCIAEoBBIJCgF4GAMgASgBEgkKAXoYBCABKAESCQoBeRgFIAEoARIPCgdt",
-            "ZXNzYWdlGAYgASgJEhMKC2Fja190aW1lX21zGAcgASgDEhAKCHNpbV90aWNr",
-            "GAggASgDEhAKCGFja190aWNrGAkgASgDEiIKBXN0YXRlGAogASgOMhMuYmln",
-            "d29ybGQuTW92ZVN0YXRlEg8KB3ZveGVsX2sYCyABKAUSEAoIYWlyYm9ybmUY",
-            "DCABKAgSDQoFZGlyX3gYDSABKAESDQoFZGlyX3oYDiABKAESEgoKY3VydmVf",
-            "bm9ybRgPIAEoARIWCg5zdGF0ZV9zdGFydF9tcxgQIAEoAxISCgpmYWxsX3Zl",
-            "bF95GBEgASgBIi8KCFNraWxsUmVxEhEKCXBsYXllcl9pZBgBIAEoBBIQCghz",
-            "a2lsbF9pZBgCIAEoCSI/CghTa2lsbFJzcBIPCgdzdWNjZXNzGAEgASgIEhEK",
-            "CXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiwKEkNsaWVudEhl",
-            "YXJ0YmVhdFJlcRIWCg5jbGllbnRfdGltZV9tcxgBIAEoAyJEChJDbGllbnRI",
-            "ZWFydGJlYXRSc3ASFgoOc2VydmVyX3RpbWVfbXMYASABKAMSFgoOY2xpZW50",
-            "X3RpbWVfbXMYAiABKAMiRwoSVmFsaWRhdGVBY2NvdW50UmVxEg4KBnJlcV9p",
-            "ZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHBhc3N3b3JkGAMgASgJIkQK",
-            "ElZhbGlkYXRlQWNjb3VudFJzcBIOCgZyZXFfaWQYASABKAQSDQoFdmFsaWQY",
-            "AiABKAgSDwoHbWVzc2FnZRgDIAEoCSIgCg1Mb2FkUGxheWVyUmVxEg8KB2Fj",
-            "Y291bnQYASABKAkiaQoNTG9hZFBsYXllclJzcBINCgVmb3VuZBgBIAEoCBIR",
-            "CglwbGF5ZXJfaWQYAiABKAQSDwoHYWNjb3VudBgDIAEoCRIJCgF4GAQgASgB",
-            "EgkKAXoYBSABKAESDwoHbWVzc2FnZRgGIAEoCSJGCgpQbGF5ZXJEYXRhEhEK",
-            "CXBsYXllcl9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEgkKAXgYAyABKAES",
-            "CQoBehgEIAEoASJGCg1TYXZlUGxheWVyUmVxEg4KBnJlcV9pZBgBIAEoBBIl",
+            "DgoGaGVpZ2h0GAsgASgBEhAKCHNjZW5lX2lkGAwgASgJIkYKEEdhdGV3YXlB",
+            "c3NpZ25SZXESDgoGcmVxX2lkGAEgASgEEhEKCXNlcnZlcl9pZBgCIAEoCRIP",
+            "CgdhY2NvdW50GAMgASgJIm4KEEdhdGV3YXlBc3NpZ25Sc3ASDgoGcmVxX2lk",
+            "GAEgASgEEg8KB3N1Y2Nlc3MYAiABKAgSFAoMZ2F0ZXdheV9hZGRyGAMgASgJ",
+            "EhIKCmdhdGV3YXlfaWQYBCABKAkSDwoHbWVzc2FnZRgFIAEoCSJUCg5Ub2tl",
+            "blZlcmlmeVJlcRIOCgZyZXFfaWQYASABKAQSDQoFdG9rZW4YAiABKAkSDwoH",
+            "YWNjb3VudBgDIAEoCRISCgpnYXRld2F5X2lkGAQgASgJIsEBCg5Ub2tlblZl",
+            "cmlmeVJzcBIOCgZyZXFfaWQYASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdh",
+            "Y2NvdW50GAMgASgJEhEKCXBsYXllcl9pZBgEIAEoBBISCgp3b3JsZF9hZGRy",
+            "GAUgASgJEhAKCHdvcmxkX2lkGAYgASgJEgkKAXgYByABKAESCQoBehgIIAEo",
+            "ARINCgV3aWR0aBgJIAEoARIOCgZoZWlnaHQYCiABKAESDwoHbWVzc2FnZRgL",
+            "IAEoCSIyCg9Mb2dpblByZXBhcmVSZXESDgoGcmVxX2lkGAEgASgEEg8KB2Fj",
+            "Y291bnQYAiABKAkiaQoPTG9naW5QcmVwYXJlUnNwEg4KBnJlcV9pZBgBIAEo",
+            "BBIPCgdzdWNjZXNzGAIgASgIEhAKCHdvcmxkX2lkGAMgASgJEhIKCndvcmxk",
+            "X2FkZHIYBCABKAkSDwoHbWVzc2FnZRgFIAEoCSJ8Cg5Mb2dpbkZpbmlzaFJl",
+            "cRIRCglwbGF5ZXJfaWQYASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdhY2Nv",
+            "dW50GAMgASgJEhAKCHdvcmxkX2lkGAQgASgJEhIKCmdhdGV3YXlfaWQYBSAB",
+            "KAkSDwoHbWVzc2FnZRgGIAEoCSJWCg5Mb2dpbkZpbmlzaFJzcBIPCgdzdWNj",
+            "ZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdhY2NvdW50GAMgASgJ",
+            "Eg8KB21lc3NhZ2UYBCABKAkiRwoPRm9yY2VLaWNrTm90aWZ5EhEKCXBsYXll",
+            "cl9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHdvcmxkX2lkGAMgASgJ",
+            "In4KEEVudGVyU2NlbmVOb3RpZnkSEAoId29ybGRfaWQYASABKAkSEQoJcGxh",
+            "eWVyX2lkGAIgASgEEgkKAXgYAyABKAESCQoBehgEIAEoARINCgV3aWR0aBgF",
+            "IAEoARIOCgZoZWlnaHQYBiABKAESEAoIc2NlbmVfaWQYByABKAkiHgoJTG9n",
+            "b3V0UmVxEhEKCXBsYXllcl9pZBgBIAEoBCItCglMb2dvdXRSc3ASDwoHc3Vj",
+            "Y2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiMKDkxvZ291dEJlZ2luUmVx",
+            "EhEKCXBsYXllcl9pZBgBIAEoBCJFCg5Mb2dvdXRCZWdpblJzcBIPCgdzdWNj",
+            "ZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJ",
+            "IjkKEExvZ291dENsZWFudXBSZXESEQoJcGxheWVyX2lkGAEgASgEEhIKCmdh",
+            "dGV3YXlfaWQYAiABKAkiRwoQTG9nb3V0Q2xlYW51cFJzcBIPCgdzdWNjZXNz",
+            "GAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiIK",
+            "D0NyZWF0ZUVudGl0eVJlcRIPCgdhY2NvdW50GAEgASgJIp4BCg9DcmVhdGVF",
+            "bnRpdHlSc3ASDwoHc3VjY2VzcxgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQS",
+            "DwoHYWNjb3VudBgDIAEoCRIJCgF4GAQgASgBEgkKAXoYBSABKAESDQoFd2lk",
+            "dGgYBiABKAESDgoGaGVpZ2h0GAcgASgBEg8KB21lc3NhZ2UYCCABKAkSEAoI",
+            "c2NlbmVfaWQYCSABKAkiJQoQRGVzdHJveUVudGl0eVJlcRIRCglwbGF5ZXJf",
+            "aWQYASABKAQiRwoQRGVzdHJveUVudGl0eVJzcBIPCgdzdWNjZXNzGAEgASgI",
+            "EhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIh8KB01vdmVE",
+            "aXISCQoBeBgBIAEoAhIJCgF6GAIgASgCIlkKDFdhbGtTdGFydFJlcRIRCglw",
+            "bGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURp",
+            "chIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJYCgtSdW5TdGFydFJlcRIRCglw",
+            "bGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURp",
+            "chIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJbCg5TcHJpbnRTdGFydFJlcRIR",
+            "CglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92",
+            "ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJZCgxKdW1wU3RhcnRSZXES",
+            "EQoJcGxheWVyX2lkGAEgASgEEh4KA2RpchgCIAEoCzIRLmJpZ3dvcmxkLk1v",
+            "dmVEaXISFgoOc2VydmVyX3RpbWVfbXMYAyABKAMiWQoMRGFzaFN0YXJ0UmVx",
+            "EhEKCXBsYXllcl9pZBgBIAEoBBIeCgNkaXIYAiABKAsyES5iaWd3b3JsZC5N",
+            "b3ZlRGlyEhYKDnNlcnZlcl90aW1lX21zGAMgASgDIlkKDFJvbGxTdGFydFJl",
+            "cRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQu",
+            "TW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJhCgxTdG9wU3RhcnRS",
+            "ZXESEQoJcGxheWVyX2lkGAEgASgEEiYKCXN0b3Bfa2luZBgCIAEoDjITLmJp",
+            "Z3dvcmxkLk1vdmVTdGF0ZRIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyI4CgtN",
+            "b3ZlU3RvcFJlcRIRCglwbGF5ZXJfaWQYASABKAQSFgoOc2VydmVyX3RpbWVf",
+            "bXMYAiABKAMiXQoQTW92ZURpckNoYW5nZVJlcRIRCglwbGF5ZXJfaWQYASAB",
+            "KAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJf",
+            "dGltZV9tcxgDIAEoAyK9AgoHTW92ZVJzcBIPCgdzdWNjZXNzGAEgASgIEhEK",
+            "CXBsYXllcl9pZBgCIAEoBBIJCgF4GAMgASgBEgkKAXoYBCABKAESCQoBeRgF",
+            "IAEoARIPCgdtZXNzYWdlGAYgASgJEhMKC2Fja190aW1lX21zGAcgASgDEhAK",
+            "CHNpbV90aWNrGAggASgDEhAKCGFja190aWNrGAkgASgDEiIKBXN0YXRlGAog",
+            "ASgOMhMuYmlnd29ybGQuTW92ZVN0YXRlEg8KB3ZveGVsX2sYCyABKAUSEAoI",
+            "YWlyYm9ybmUYDCABKAgSDQoFZGlyX3gYDSABKAESDQoFZGlyX3oYDiABKAES",
+            "EgoKY3VydmVfbm9ybRgPIAEoARIWCg5zdGF0ZV9zdGFydF9tcxgQIAEoAxIS",
+            "CgpmYWxsX3ZlbF95GBEgASgBIi8KCFNraWxsUmVxEhEKCXBsYXllcl9pZBgB",
+            "IAEoBBIQCghza2lsbF9pZBgCIAEoCSI/CghTa2lsbFJzcBIPCgdzdWNjZXNz",
+            "GAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiwK",
+            "EkNsaWVudEhlYXJ0YmVhdFJlcRIWCg5jbGllbnRfdGltZV9tcxgBIAEoAyJE",
+            "ChJDbGllbnRIZWFydGJlYXRSc3ASFgoOc2VydmVyX3RpbWVfbXMYASABKAMS",
+            "FgoOY2xpZW50X3RpbWVfbXMYAiABKAMiRwoSVmFsaWRhdGVBY2NvdW50UmVx",
+            "Eg4KBnJlcV9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHBhc3N3b3Jk",
+            "GAMgASgJIkQKElZhbGlkYXRlQWNjb3VudFJzcBIOCgZyZXFfaWQYASABKAQS",
+            "DQoFdmFsaWQYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIgCg1Mb2FkUGxheWVy",
+            "UmVxEg8KB2FjY291bnQYASABKAkiewoNTG9hZFBsYXllclJzcBINCgVmb3Vu",
+            "ZBgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQSDwoHYWNjb3VudBgDIAEoCRIJ",
+            "CgF4GAQgASgBEgkKAXoYBSABKAESDwoHbWVzc2FnZRgGIAEoCRIQCghzY2Vu",
+            "ZV9pZBgHIAEoCSJYCgpQbGF5ZXJEYXRhEhEKCXBsYXllcl9pZBgBIAEoBBIP",
+            "CgdhY2NvdW50GAIgASgJEgkKAXgYAyABKAESCQoBehgEIAEoARIQCghzY2Vu",
+            "ZV9pZBgFIAEoCSJGCg1TYXZlUGxheWVyUmVxEg4KBnJlcV9pZBgBIAEoBBIl",
             "CgdwbGF5ZXJzGAIgAygLMhQuYmlnd29ybGQuUGxheWVyRGF0YSJBCg1TYXZl",
             "UGxheWVyUnNwEg4KBnJlcV9pZBgBIAEoBBIPCgdzdWNjZXNzGAIgASgIEg8K",
             "B21lc3NhZ2UYAyABKAkiHQoLU2h1dGRvd25SZXESDgoGcmVhc29uGAEgASgJ",
             "Ii8KC1NodXRkb3duUnNwEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgC",
             "IAEoCSIgCg5TaHV0ZG93bk5vdGlmeRIOCgZyZWFzb24YASABKAkiIAoLU2h1",
             "dGRvd25BY2sSEQoJc2VydmVyX2lkGAEgASgJIicKFFNlcnZlclNodXRkb3du",
-            "Tm90aWZ5Eg8KB21lc3NhZ2UYASABKAkqgAEKClNlcnZlclR5cGUSEgoOU0VS",
-            "VkVSX0lOVkFMSUQQABISCg5TRVJWRVJfQ0VOVFJBTBABEhAKDFNFUlZFUl9X",
-            "T1JMRBACEhIKDlNFUlZFUl9HQVRFV0FZEAMSEAoMU0VSVkVSX0xPR0lOEAQS",
-            "EgoOU0VSVkVSX0RCUFJPWFkQBSqCAgoJTW92ZVN0YXRlEg0KCU1PVkVfSURM",
-            "RRAAEg0KCU1PVkVfV0FMSxABEgwKCE1PVkVfUlVOEAISDwoLTU9WRV9TUFJJ",
-            "TlQQAxITCg9NT1ZFX1NUT1BfTElHSFQQBBIRCg1NT1ZFX1NUT1BfTUVEEAUS",
-            "EgoOTU9WRV9TVE9QX0hBUkQQBhITCg9NT1ZFX0xBTkRfTElHSFQQBxINCglN",
-            "T1ZFX1JPTEwQCRINCglNT1ZFX0RBU0gQChIQCgxNT1ZFX0pVTVBfVVAQCxIN",
-            "CglNT1ZFX0ZBTEwQDBISCg5NT1ZFX0pVTVBfRE9XThANIgQICBAIKg5NT1ZF",
-            "X0xBTkRfSEFSREI2WhJiaWd3b3JsZC9jb21tb24vcGKqAh9CaWdXb3JsZENs",
-            "aWVudC5OZXR3b3JrLlByb3RvY29sYgZwcm90bzM="));
+            "Tm90aWZ5Eg8KB21lc3NhZ2UYASABKAkiOAoLSWRlbnRpZnlSZXESKQoLc2Vy",
+            "dmVyX3R5cGUYASABKA4yFC5iaWd3b3JsZC5TZXJ2ZXJUeXBlKoABCgpTZXJ2",
+            "ZXJUeXBlEhIKDlNFUlZFUl9JTlZBTElEEAASEgoOU0VSVkVSX0NFTlRSQUwQ",
+            "ARIQCgxTRVJWRVJfV09STEQQAhISCg5TRVJWRVJfR0FURVdBWRADEhAKDFNF",
+            "UlZFUl9MT0dJThAEEhIKDlNFUlZFUl9EQlBST1hZEAUqggIKCU1vdmVTdGF0",
+            "ZRINCglNT1ZFX0lETEUQABINCglNT1ZFX1dBTEsQARIMCghNT1ZFX1JVThAC",
+            "Eg8KC01PVkVfU1BSSU5UEAMSEwoPTU9WRV9TVE9QX0xJR0hUEAQSEQoNTU9W",
+            "RV9TVE9QX01FRBAFEhIKDk1PVkVfU1RPUF9IQVJEEAYSEwoPTU9WRV9MQU5E",
+            "X0xJR0hUEAcSDQoJTU9WRV9ST0xMEAkSDQoJTU9WRV9EQVNIEAoSEAoMTU9W",
+            "RV9KVU1QX1VQEAsSDQoJTU9WRV9GQUxMEAwSEgoOTU9WRV9KVU1QX0RPV04Q",
+            "DSIECAgQCCoOTU9WRV9MQU5EX0hBUkRCNloSYmlnd29ybGQvY29tbW9uL3Bi",
+            "qgIfQmlnV29ybGRDbGllbnQuTmV0d29yay5Qcm90b2NvbGIGcHJvdG8z"));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::BigWorldClient.Network.Protocol.ServerType), typeof(global::BigWorldClient.Network.Protocol.MoveState), }, null, new pbr::GeneratedClrTypeInfo[] {
@@ -143,7 +146,7 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerEntry), global::BigWorldClient.Network.Protocol.ServerEntry.Parser, new[]{ "ServerType", "ServerId", "ListenAddr" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerListRsp), global::BigWorldClient.Network.Protocol.ServerListRsp.Parser, new[]{ "Servers" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginReq), global::BigWorldClient.Network.Protocol.LoginReq.Parser, new[]{ "Account", "Password" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginRsp), global::BigWorldClient.Network.Protocol.LoginRsp.Parser, new[]{ "Success", "Message", "Token", "GatewayAddr", "WorldAddr", "WorldId", "PlayerId", "X", "Z", "Width", "Height" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginRsp), global::BigWorldClient.Network.Protocol.LoginRsp.Parser, new[]{ "Success", "Message", "Token", "GatewayAddr", "WorldAddr", "WorldId", "PlayerId", "X", "Z", "Width", "Height", "SceneId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.GatewayAssignReq), global::BigWorldClient.Network.Protocol.GatewayAssignReq.Parser, new[]{ "ReqId", "ServerId", "Account" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.GatewayAssignRsp), global::BigWorldClient.Network.Protocol.GatewayAssignRsp.Parser, new[]{ "ReqId", "Success", "GatewayAddr", "GatewayId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.TokenVerifyReq), global::BigWorldClient.Network.Protocol.TokenVerifyReq.Parser, new[]{ "ReqId", "Token", "Account", "GatewayId" }, null, null, null, null),
@@ -153,7 +156,7 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishReq), global::BigWorldClient.Network.Protocol.LoginFinishReq.Parser, new[]{ "PlayerId", "Success", "Account", "WorldId", "GatewayId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishRsp), global::BigWorldClient.Network.Protocol.LoginFinishRsp.Parser, new[]{ "Success", "PlayerId", "Account", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ForceKickNotify), global::BigWorldClient.Network.Protocol.ForceKickNotify.Parser, new[]{ "PlayerId", "Account", "WorldId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.EnterSceneNotify), global::BigWorldClient.Network.Protocol.EnterSceneNotify.Parser, new[]{ "WorldId", "PlayerId", "X", "Z", "Width", "Height" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.EnterSceneNotify), global::BigWorldClient.Network.Protocol.EnterSceneNotify.Parser, new[]{ "WorldId", "PlayerId", "X", "Z", "Width", "Height", "SceneId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutReq), global::BigWorldClient.Network.Protocol.LogoutReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutRsp), global::BigWorldClient.Network.Protocol.LogoutRsp.Parser, new[]{ "Success", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutBeginReq), global::BigWorldClient.Network.Protocol.LogoutBeginReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
@@ -161,7 +164,7 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupReq), global::BigWorldClient.Network.Protocol.LogoutCleanupReq.Parser, new[]{ "PlayerId", "GatewayId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupRsp), global::BigWorldClient.Network.Protocol.LogoutCleanupRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityReq), global::BigWorldClient.Network.Protocol.CreateEntityReq.Parser, new[]{ "Account" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityRsp), global::BigWorldClient.Network.Protocol.CreateEntityRsp.Parser, new[]{ "Success", "PlayerId", "Account", "X", "Z", "Width", "Height", "Message" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityRsp), global::BigWorldClient.Network.Protocol.CreateEntityRsp.Parser, new[]{ "Success", "PlayerId", "Account", "X", "Z", "Width", "Height", "Message", "SceneId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityReq), global::BigWorldClient.Network.Protocol.DestroyEntityReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityRsp), global::BigWorldClient.Network.Protocol.DestroyEntityRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveDir), global::BigWorldClient.Network.Protocol.MoveDir.Parser, new[]{ "X", "Z" }, null, null, null, null),
@@ -182,15 +185,16 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ValidateAccountReq), global::BigWorldClient.Network.Protocol.ValidateAccountReq.Parser, new[]{ "ReqId", "Account", "Password" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ValidateAccountRsp), global::BigWorldClient.Network.Protocol.ValidateAccountRsp.Parser, new[]{ "ReqId", "Valid", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoadPlayerReq), global::BigWorldClient.Network.Protocol.LoadPlayerReq.Parser, new[]{ "Account" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoadPlayerRsp), global::BigWorldClient.Network.Protocol.LoadPlayerRsp.Parser, new[]{ "Found", "PlayerId", "Account", "X", "Z", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.PlayerData), global::BigWorldClient.Network.Protocol.PlayerData.Parser, new[]{ "PlayerId", "Account", "X", "Z" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoadPlayerRsp), global::BigWorldClient.Network.Protocol.LoadPlayerRsp.Parser, new[]{ "Found", "PlayerId", "Account", "X", "Z", "Message", "SceneId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.PlayerData), global::BigWorldClient.Network.Protocol.PlayerData.Parser, new[]{ "PlayerId", "Account", "X", "Z", "SceneId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.SavePlayerReq), global::BigWorldClient.Network.Protocol.SavePlayerReq.Parser, new[]{ "ReqId", "Players" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.SavePlayerRsp), global::BigWorldClient.Network.Protocol.SavePlayerRsp.Parser, new[]{ "ReqId", "Success", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownReq), global::BigWorldClient.Network.Protocol.ShutdownReq.Parser, new[]{ "Reason" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownRsp), global::BigWorldClient.Network.Protocol.ShutdownRsp.Parser, new[]{ "Success", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownNotify), global::BigWorldClient.Network.Protocol.ShutdownNotify.Parser, new[]{ "Reason" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownAck), global::BigWorldClient.Network.Protocol.ShutdownAck.Parser, new[]{ "ServerId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerShutdownNotify), global::BigWorldClient.Network.Protocol.ServerShutdownNotify.Parser, new[]{ "Message" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerShutdownNotify), global::BigWorldClient.Network.Protocol.ServerShutdownNotify.Parser, new[]{ "Message" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.IdentifyReq), global::BigWorldClient.Network.Protocol.IdentifyReq.Parser, new[]{ "ServerType" }, null, null, null, null)
           }));
     }
     #endregion
@@ -2079,6 +2083,7 @@ namespace BigWorldClient.Network.Protocol {
       z_ = other.z_;
       width_ = other.width_;
       height_ = other.height_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -2220,6 +2225,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 12;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -2246,6 +2263,7 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Z, other.Z)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Width, other.Width)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Height, other.Height)) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -2264,6 +2282,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Z != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Z);
       if (Width != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Width);
       if (Height != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Height);
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -2326,6 +2345,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(89);
         output.WriteDouble(Height);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -2380,6 +2403,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(89);
         output.WriteDouble(Height);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(98);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -2422,6 +2449,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Height != 0D) {
         size += 1 + 8;
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -2467,6 +2497,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Height != 0D) {
         Height = other.Height;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -2531,6 +2564,10 @@ namespace BigWorldClient.Network.Protocol {
             Height = input.ReadDouble();
             break;
           }
+          case 98: {
+            SceneId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -2592,6 +2629,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 89: {
             Height = input.ReadDouble();
+            break;
+          }
+          case 98: {
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -5682,6 +5723,7 @@ namespace BigWorldClient.Network.Protocol {
       z_ = other.z_;
       width_ = other.width_;
       height_ = other.height_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -5763,6 +5805,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 7;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -5784,6 +5838,7 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Z, other.Z)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Width, other.Width)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Height, other.Height)) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -5797,6 +5852,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Z != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Z);
       if (Width != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Width);
       if (Height != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Height);
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -5839,6 +5895,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(49);
         output.WriteDouble(Height);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -5873,6 +5933,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(49);
         output.WriteDouble(Height);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -5900,6 +5964,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Height != 0D) {
         size += 1 + 8;
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -5930,6 +5997,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Height != 0D) {
         Height = other.Height;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -5974,6 +6044,10 @@ namespace BigWorldClient.Network.Protocol {
             Height = input.ReadDouble();
             break;
           }
+          case 58: {
+            SceneId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -6015,6 +6089,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 49: {
             Height = input.ReadDouble();
+            break;
+          }
+          case 58: {
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -7675,6 +7753,7 @@ namespace BigWorldClient.Network.Protocol {
       width_ = other.width_;
       height_ = other.height_;
       message_ = other.message_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -7780,6 +7859,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 9;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -7803,6 +7894,7 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Width, other.Width)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Height, other.Height)) return false;
       if (Message != other.Message) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -7818,6 +7910,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Width != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Width);
       if (Height != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Height);
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -7868,6 +7961,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(66);
         output.WriteString(Message);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(74);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -7910,6 +8007,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(66);
         output.WriteString(Message);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(74);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -7943,6 +8044,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -7979,6 +8083,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -8031,6 +8138,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 74: {
+            SceneId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -8080,6 +8191,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 66: {
             Message = input.ReadString();
+            break;
+          }
+          case 74: {
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -13819,6 +13934,7 @@ namespace BigWorldClient.Network.Protocol {
       x_ = other.x_;
       z_ = other.z_;
       message_ = other.message_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -13900,6 +14016,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 7;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -13921,6 +14049,7 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(X, other.X)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Z, other.Z)) return false;
       if (Message != other.Message) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -13934,6 +14063,7 @@ namespace BigWorldClient.Network.Protocol {
       if (X != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(X);
       if (Z != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Z);
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -13976,6 +14106,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(50);
         output.WriteString(Message);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -14010,6 +14144,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(50);
         output.WriteString(Message);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -14037,6 +14175,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -14067,6 +14208,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -14111,6 +14255,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 58: {
+            SceneId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -14152,6 +14300,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 50: {
             Message = input.ReadString();
+            break;
+          }
+          case 58: {
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -14203,6 +14355,7 @@ namespace BigWorldClient.Network.Protocol {
       account_ = other.account_;
       x_ = other.x_;
       z_ = other.z_;
+      sceneId_ = other.sceneId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -14260,6 +14413,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 5;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -14279,6 +14444,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Account != other.Account) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(X, other.X)) return false;
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Z, other.Z)) return false;
+      if (SceneId != other.SceneId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -14290,6 +14456,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Account.Length != 0) hash ^= Account.GetHashCode();
       if (X != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(X);
       if (Z != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Z);
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -14324,6 +14491,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(33);
         output.WriteDouble(Z);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -14350,6 +14521,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(33);
         output.WriteDouble(Z);
       }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SceneId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -14371,6 +14546,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Z != 0D) {
         size += 1 + 8;
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -14395,6 +14573,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Z != 0D) {
         Z = other.Z;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -14431,6 +14612,10 @@ namespace BigWorldClient.Network.Protocol {
             Z = input.ReadDouble();
             break;
           }
+          case 42: {
+            SceneId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -14464,6 +14649,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 33: {
             Z = input.ReadDouble();
+            break;
+          }
+          case 42: {
+            SceneId = input.ReadString();
             break;
           }
         }
@@ -15993,6 +16182,208 @@ namespace BigWorldClient.Network.Protocol {
             break;
           case 10: {
             Message = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  /// <summary>
+  /// IdentifyReq is the first message a server sends on any server-to-server
+  /// connection it initiates, so the accepting side knows the peer's type.
+  /// </summary>
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class IdentifyReq : pb::IMessage<IdentifyReq>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<IdentifyReq> _parser = new pb::MessageParser<IdentifyReq>(() => new IdentifyReq());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<IdentifyReq> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[56]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public IdentifyReq() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public IdentifyReq(IdentifyReq other) : this() {
+      serverType_ = other.serverType_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public IdentifyReq Clone() {
+      return new IdentifyReq(this);
+    }
+
+    /// <summary>Field number for the "server_type" field.</summary>
+    public const int ServerTypeFieldNumber = 1;
+    private global::BigWorldClient.Network.Protocol.ServerType serverType_ = global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public global::BigWorldClient.Network.Protocol.ServerType ServerType {
+      get { return serverType_; }
+      set {
+        serverType_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as IdentifyReq);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(IdentifyReq other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (ServerType != other.ServerType) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) hash ^= ServerType.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) ServerType);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
+        output.WriteRawTag(8);
+        output.WriteEnum((int) ServerType);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
+        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) ServerType);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(IdentifyReq other) {
+      if (other == null) {
+        return;
+      }
+      if (other.ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
+        ServerType = other.ServerType;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            ServerType = (global::BigWorldClient.Network.Protocol.ServerType) input.ReadEnum();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            ServerType = (global::BigWorldClient.Network.Protocol.ServerType) input.ReadEnum();
             break;
           }
         }

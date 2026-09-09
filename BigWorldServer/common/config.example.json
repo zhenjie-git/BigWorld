@@ -28,12 +28,10 @@
             "name": "world-1",
             "listen_addr": "127.0.0.1:9100",
             "central_addr": "127.0.0.1:9000",
-            "voxel_file": "../GameConfig/MainCity_voxels.bytes",
-            "displacement_curves_file": "../GameConfig/displacement_curves.json",
-            "player_config_file": "../GameConfig/Player/player_config.json",
-            "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.json",
-            "spawn_x": 0,
-            "spawn_z": 0,
+            "state_config_file": "../GameConfig/StateConfig/state_config.bytes",
+            "player_config_file": "../GameConfig/Player/player_config.bytes",
+            "scene_config_file": "../GameConfig/Scene/scene_config.bytes",
+            "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.bytes",
             "movement_tick_ms": 20
         },
         "dbproxy": {

@@ -366,9 +366,6 @@ func (g *voxelGrid) ResolveTargetLayer(curX, curZ, curK, targetX, targetZ int) i
 	}
 }
 
-// ceilingHit mirrors the client's CheckCeilingVoxel: it reports whether a voxel
-// in the column under (x,z) overlaps the character's vertical range and returns
-// the lowest such voxel's bottom surface (world Y).
 func (g *voxelGrid) CeilingHit(x, z, feetY, headTopY float64) (bool, float64) {
 	cx, cz, ok := g.WorldToColumn(x, z)
 	if !ok {
@@ -385,7 +382,7 @@ func (g *voxelGrid) CeilingHit(x, z, feetY, headTopY float64) (bool, float64) {
 		v := g.voxels[g.starts[idx]+i]
 		minY := g.origin[1] + v.minY
 		maxY := g.origin[1] + v.maxY
-		// 只有体素底面高于脚底才算天花板；脚底以下的支撑体素直接排除。
+
 		if minY > feetY+0.01 && minY < headTopY && headTopY > minY && headTopY < maxY {
 			if minY < ceiling {
 				ceiling = minY

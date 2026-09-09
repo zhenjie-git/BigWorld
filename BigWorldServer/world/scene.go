@@ -2,50 +2,26 @@ package main
 
 import "math/rand"
 
-// scene represents a single playable 2D scene hosted by the world process.
-// The world server may host many such scenes; gameplay logic (movement, skills,
-// quests, ...) lives beside them in the same process.
 type scene struct {
 	SceneId string
 	Width   float64
 	Height  float64
 	Players map[uint64]*playerEntity
 
-	voxelGrid    *voxelGrid
-	displacement *displacementTable
-	maxStep      float64
-	spawnX       float64
-	spawnZ       float64
-
-	// Server-authoritative movement simulation parameters (constant-speed states
-	// and the character collider metrics used by the per-state classes).
-	sprintSpeedMps    float64
-	sprintToRunTime   float64
-	rollSpeedMps      float64
-	fallGravityMps2   float64
-	fallSpeedLimitMps float64
-	playerHeight      float64
-	playerCenterY     float64
+	voxelGrid *voxelGrid
+	spawnX    float64
+	spawnZ    float64
 }
 
-func NewScene(id string, w, h float64, g *voxelGrid, d *displacementTable, maxStep, spawnX, spawnZ float64,
-	sprintSpeed, sprintToRunTime, rollSpeed, fallGravity, fallSpeedLimit, playerHeight, playerCenterY float64) *scene {
+func NewScene(id string, w, h float64, g *voxelGrid, spawnX, spawnZ float64) *scene {
 	return &scene{
-		SceneId:           id,
-		Width:             w,
-		Height:            h,
-		Players:           make(map[uint64]*playerEntity),
-		voxelGrid:         g,
-		displacement:      d,
-		maxStep:           maxStep,
-		spawnX:            spawnX,
-		spawnZ:            spawnZ,
-		sprintSpeedMps:    sprintSpeed,
-		rollSpeedMps:      rollSpeed,
-		fallGravityMps2:   fallGravity,
-		fallSpeedLimitMps: fallSpeedLimit,
-		playerHeight:      playerHeight,
-		playerCenterY:     playerCenterY,
+		SceneId:   id,
+		Width:     w,
+		Height:    h,
+		Players:   make(map[uint64]*playerEntity),
+		voxelGrid: g,
+		spawnX:    spawnX,
+		spawnZ:    spawnZ,
 	}
 }
 

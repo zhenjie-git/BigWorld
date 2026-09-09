@@ -14,14 +14,16 @@ namespace BigWorldClient.Network
         public readonly ulong PlayerId;
         public readonly string WorldId;
         public readonly string WorldAddr;
+        public readonly string SceneId;
         public readonly double X, Z, Width, Height;
 
-        public PlayerInfo(ulong playerId, string worldId, string worldAddr,
+        public PlayerInfo(ulong playerId, string worldId, string worldAddr, string sceneId,
             double x, double z, double width, double height)
         {
             PlayerId = playerId;
             WorldId = worldId;
             WorldAddr = worldAddr;
+            SceneId = sceneId;
             X = x;
             Z = z;
             Width = width;
@@ -84,141 +86,117 @@ namespace BigWorldClient.Network
         }
     }
 
-    /// <summary>
-    /// Pure-C# two-phase login session: connect to the login server, exchange
-    /// credentials for a token + gateway address, then connect to the gateway and
-    /// wait for the enter-scene notify. Afterwards it maintains the session
-    /// (heartbeat, logout, server-shutdown notify). Runs a background poll thread
-    /// and emits SessionEvents that a MonoBehaviour drains on the main thread.
-    /// </summary>
     public sealed class GameSession : IDisposable
     {
         private enum State { Idle, Phase1, Phase2, InGame, LoggingOut }
 
         private const long LoginTimeoutMs = 15_000;
+        private const int ConnectTimeoutMs = 5000;
+        private const int EventWaitMs = 500;
 
-        private readonly NetClient _client = new NetClient();
+        private volatile NetClient _client;
         private readonly ConcurrentQueue<SessionEvent> _events = new ConcurrentQueue<SessionEvent>();
         private readonly ConcurrentQueue<MoveRspInfo> _moveResponses = new ConcurrentQueue<MoveRspInfo>();
 
         private Thread _thread;
         private volatile bool _running;
+        private volatile int _sessionToken;
         private volatile State _state = State.Idle;
-        private volatile bool _expectingDisconnect;
+        private int _activeConnectionId;
 
-        // Phase-1 captured credentials / phase-2 captured token.
+        private string _host;
+        private int _port;
         private string _username;
         private string _password;
         private string _token;
+        private long _lastHeartbeatRspMs;
 
-        // Session data filled during phase 2.
         private ulong _playerId;
         private string _worldId;
         private string _worldAddr;
+        private string _sceneId;
         private double _x, _z, _width, _height;
         private bool _gotGwRsp;
         private bool _gotEnter;
 
         private long _phaseStartTicks;
 
-        /// <summary>Server-clock estimate, fed by each heartbeat reply while InGame.</summary>
         public ServerClock Clock { get; } = new ServerClock();
 
         public bool TryDequeue(out SessionEvent evt) => _events.TryDequeue(out evt);
 
         public bool TryDequeueMove(out MoveRspInfo info) => _moveResponses.TryDequeue(out info);
 
-        public bool SendWalkStart(float dirX, float dirZ) => SendWalkStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendWalkStartAt(float dirX, float dirZ, long tick)
+        public long HeartbeatRspAgeMs
         {
-            if (_state != State.InGame) return false;
-            var req = new WalkStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_WalkStartReq, req.ToByteArray());
-            return true;
+            get
+            {
+                long last = Interlocked.Read(ref _lastHeartbeatRspMs);
+                return last == 0 ? long.MaxValue : NowMs() - last;
+            }
         }
 
-        public bool SendRunStart(float dirX, float dirZ) => SendRunStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendRunStartAt(float dirX, float dirZ, long tick)
+        public void ResetHeartbeatWatch() => Interlocked.Exchange(ref _lastHeartbeatRspMs, NowMs());
+
+        public bool SendDirStart(int msgType, float dirX, float dirZ, long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new RunStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_RunStartReq, req.ToByteArray());
-            return true;
+            var dir = new MoveDir { X = dirX, Z = dirZ };
+            long serverTimeMs = ServerClock.TickToMs(tick);
+            IMessage req;
+            switch (msgType)
+            {
+                case MessageTypes.Cli2Wd_WalkStartReq:
+                    req = new WalkStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_RunStartReq:
+                    req = new RunStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_SprintStartReq:
+                    req = new SprintStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_JumpStartReq:
+                    req = new JumpStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_DashStartReq:
+                    req = new DashStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_RollStartReq:
+                    req = new RollStartReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                case MessageTypes.Cli2Wd_MoveDirChangeReq:
+                    req = new MoveDirChangeReq { PlayerId = _playerId, Dir = dir, ServerTimeMs = serverTimeMs };
+                    break;
+                default:
+                    return false;
+            }
+            return _client.Send(msgType, req.ToByteArray());
         }
 
-        public bool SendSprintStart(float dirX, float dirZ) => SendSprintStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendSprintStartAt(float dirX, float dirZ, long tick)
-        {
-            if (_state != State.InGame) return false;
-            var req = new SprintStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_SprintStartReq, req.ToByteArray());
-            return true;
-        }
-
-        public bool SendJumpStart(float dirX, float dirZ) => SendJumpStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendJumpStartAt(float dirX, float dirZ, long tick)
-        {
-            if (_state != State.InGame) return false;
-            var req = new JumpStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_JumpStartReq, req.ToByteArray());
-            return true;
-        }
-
-        public bool SendDashStart(float dirX, float dirZ) => SendDashStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendDashStartAt(float dirX, float dirZ, long tick)
-        {
-            if (_state != State.InGame) return false;
-            var req = new DashStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_DashStartReq, req.ToByteArray());
-            return true;
-        }
-
-        public bool SendRollStart(float dirX, float dirZ) => SendRollStartAt(dirX, dirZ, Clock.TickNow());
-        public bool SendRollStartAt(float dirX, float dirZ, long tick)
-        {
-            if (_state != State.InGame) return false;
-            var req = new RollStartReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_RollStartReq, req.ToByteArray());
-            return true;
-        }
-
-        public bool SendStopStart(MoveState stopKind) => SendStopStartAt(stopKind, Clock.TickNow());
-        public bool SendStopStartAt(MoveState stopKind, long tick)
+        public bool SendStopStart(MoveState stopKind, long tick)
         {
             if (_state != State.InGame) return false;
             var req = new StopStartReq { PlayerId = _playerId, StopKind = stopKind, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_StopStartReq, req.ToByteArray());
-            return true;
+            return _client.Send(MessageTypes.Cli2Wd_StopStartReq, req.ToByteArray());
         }
 
-        public bool SendMoveStop() => SendMoveStopAt(Clock.TickNow());
-        public bool SendMoveStopAt(long tick)
+        public bool SendMoveStop(long tick)
         {
             if (_state != State.InGame) return false;
             var req = new MoveStopReq { PlayerId = _playerId, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_MoveStopReq, req.ToByteArray());
-            return true;
+            return _client.Send(MessageTypes.Cli2Wd_MoveStopReq, req.ToByteArray());
         }
 
-        public bool SendMoveDirChange(float dirX, float dirZ) => SendMoveDirChangeAt(dirX, dirZ, Clock.TickNow());
-        public bool SendMoveDirChangeAt(float dirX, float dirZ, long tick)
-        {
-            if (_state != State.InGame) return false;
-            var req = new MoveDirChangeReq { PlayerId = _playerId, Dir = new MoveDir { X = dirX, Z = dirZ }, ServerTimeMs = ServerClock.TickToMs(tick) };
-            _client.Send(MessageTypes.Cli2Wd_MoveDirChangeReq, req.ToByteArray());
-            return true;
-        }
-
-        /// <summary>Begin the two-phase login. Result arrives as a SessionEvent.</summary>
-        public void  BeginLogin(string host, int port, string username, string password)
+        public void BeginLogin(string host, int port, string username, string password)
         {
             StopThread();
-            // Discard anything a previous session left in the queues (e.g. a stale
-            // Disconnected), so it can't be misread as a failure of this fresh login.
             DrainStaleEvents();
 
             Clock.Reset();
+            Interlocked.Exchange(ref _lastHeartbeatRspMs, 0);
             _state = State.Phase1;
+            _host = host;
+            _port = port;
             _username = username ?? "";
             _password = password ?? "";
             _token = null;
@@ -227,40 +205,52 @@ namespace BigWorldClient.Network
             _worldAddr = null;
             _gotGwRsp = false;
             _gotEnter = false;
-            _expectingDisconnect = false;
+            _activeConnectionId = 0;
             _phaseStartTicks = NowMs();
 
-            if (!_client.Connect(host, port, 5000))
-            {
-                Push(SessionEventKind.LoginFailed, "无法连接登录服务器");
-                return;
-            }
-
+            NetClient client = new NetClient();
+            _client = client;
+            int token = ++_sessionToken;
             _running = true;
-            _thread = new Thread(Loop) { IsBackground = true };
+            _thread = new Thread(() => Loop(client, token)) { IsBackground = true };
             _thread.Start();
         }
 
-        private void Loop()
+        private void Loop(NetClient client, int token)
         {
-            while (_running)
+            try
             {
-                if ((_state == State.Phase1 || _state == State.Phase2)
-                    && NowMs() - _phaseStartTicks > LoginTimeoutMs)
+                int connectionId = client.Connect(_host, _port, ConnectTimeoutMs);
+                if (connectionId == 0)
                 {
-                    Push(SessionEventKind.LoginFailed, "登录超时");
-                    Cleanup();
+                    if (token == _sessionToken)
+                        Push(SessionEventKind.LoginFailed, "无法连接登录服务器");
                     return;
                 }
+                _activeConnectionId = connectionId;
 
-                if (_client.TryDequeue(out NetClient.NetEvent evt))
-                    HandleNetEvent(evt);
-                else
-                    Thread.Sleep(10);
+                while (_running && token == _sessionToken)
+                {
+                    if ((_state == State.Phase1 || _state == State.Phase2)
+                        && NowMs() - _phaseStartTicks > LoginTimeoutMs)
+                    {
+                        Push(SessionEventKind.LoginFailed, "登录超时");
+                        return;
+                    }
+
+                    if (client.TryDequeue(out NetClient.NetEvent evt))
+                        HandleNetEvent(client, evt);
+                    else
+                        client.WaitForEvent(EventWaitMs);
+                }
+            }
+            finally
+            {
+                client.Dispose();
             }
         }
 
-        private void HandleNetEvent(NetClient.NetEvent evt)
+        private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
         {
             switch (evt.Kind)
             {
@@ -268,49 +258,38 @@ namespace BigWorldClient.Network
                     if (_state == State.Phase1)
                     {
                         var req = new LoginReq { Account = _username, Password = _password };
-                        _client.Send(MessageTypes.Cli2Lg_LoginReq, req.ToByteArray());
+                        client.Send(MessageTypes.Cli2Lg_LoginReq, req.ToByteArray());
                     }
                     else if (_state == State.Phase2)
                     {
                         var req = new LoginReq { Account = _token ?? "", Password = "" };
-                        _client.Send(MessageTypes.Cli2Gw_LoginReq, req.ToByteArray());
+                        client.Send(MessageTypes.Cli2Gw_LoginReq, req.ToByteArray());
                     }
                     break;
 
                 case NetClient.NetEventKind.Message:
-                    HandleMessage(evt.MsgType, evt.Payload);
+                    HandleMessage(client, evt.MsgType, evt.Payload);
                     break;
 
                 case NetClient.NetEventKind.Disconnected:
-                    if (_expectingDisconnect)
-                    {
-                        // We initiated this close (phase1 -> phase2 handoff). Clear and move on.
-                        _expectingDisconnect = false;
-                        break;
-                    }
+                    if (evt.ConnectionId != _activeConnectionId) break;
                     if (_state == State.Phase1 || _state == State.Phase2)
                     {
                         Push(SessionEventKind.LoginFailed, "连接断开");
-                        Cleanup();
+                        _running = false;
                     }
                     else if (_state == State.InGame)
                     {
                         Push(SessionEventKind.Disconnected, "与服务器连接断开");
-                        Cleanup();
+                        _running = false;
                     }
-                    // LoggingOut: the server closes after LogoutRsp - expected, ignore.
+
                     break;
             }
         }
 
-        private delegate void MessageHandler(byte[] payload);
+        private delegate void MessageHandler(NetClient client, byte[] payload);
 
-        /// <summary>
-        /// Per-phase inbound dispatch: the current state picks a sub-table, then
-        /// msgType picks the handler. A message not registered for the current
-        /// phase is silently ignored. To add a message: register it under the
-        /// phase(s) it is valid in and write one handler method.
-        /// </summary>
         private readonly Dictionary<State, Dictionary<int, MessageHandler>> _phaseHandlers = new();
 
         public GameSession()
@@ -330,29 +309,27 @@ namespace BigWorldClient.Network
                 [MessageTypes.Gw2Cli_HeartbeatRsp] = HandleHeartbeatRsp,
                 [MessageTypes.Wd2Cli_MoveRsp] = HandleMoveRsp,
             };
-            // LogoutRsp is accepted in both InGame and LoggingOut.
+
             _phaseHandlers[State.LoggingOut] = new Dictionary<int, MessageHandler>
             {
                 [MessageTypes.Gw2Cli_LogoutRsp] = HandleLogoutRsp,
             };
         }
 
-        private void HandleMessage(int msgType, byte[] payload)
+        private void HandleMessage(NetClient client, int msgType, byte[] payload)
         {
             if (_phaseHandlers.TryGetValue(_state, out var phase)
                 && phase.TryGetValue(msgType, out var handler))
-                handler(payload);
-            // No handler for this msgType in the current phase: ignored.
+                handler(client, payload);
         }
 
-        /// <summary>Login server's LoginRsp (Phase1): capture token, hand off to the gateway.</summary>
-        private void HandleLoginServerRsp(byte[] payload)
+        private void HandleLoginServerRsp(NetClient client, byte[] payload)
         {
             var rsp = LoginRsp.Parser.ParseFrom(payload);
             if (!rsp.Success)
             {
                 Push(SessionEventKind.LoginFailed, rsp.Message);
-                Cleanup();
+                _running = false;
                 return;
             }
             _token = rsp.Token;
@@ -361,44 +338,45 @@ namespace BigWorldClient.Network
             if (parts.Length != 2 || !int.TryParse(parts[1], out int gwPort))
             {
                 Push(SessionEventKind.LoginFailed, "服务器返回的网关地址无效");
-                Cleanup();
+                _running = false;
                 return;
             }
 
-            // Hand off to the gateway: close the login connection, then dial the gateway.
-            _expectingDisconnect = true;
             _state = State.Phase2;
             _phaseStartTicks = NowMs();
-            _client.Disconnect();
-            if (!_client.Connect(parts[0], gwPort, 5000))
+            client.Disconnect();
+            int gatewayId = client.Connect(parts[0], gwPort, ConnectTimeoutMs);
+            if (gatewayId == 0)
             {
                 Push(SessionEventKind.LoginFailed, "无法连接网关服务器");
-                Cleanup();
+                _running = false;
+                return;
             }
+            _activeConnectionId = gatewayId;
         }
 
-        /// <summary>Gateway's LoginRsp (Phase2): record player info, wait for enter-scene.</summary>
-        private void HandleGatewayLoginRsp(byte[] payload)
+        private void HandleGatewayLoginRsp(NetClient client, byte[] payload)
         {
             var rsp = LoginRsp.Parser.ParseFrom(payload);
             if (!rsp.Success)
             {
                 Push(SessionEventKind.LoginFailed, rsp.Message);
-                Cleanup();
+                _running = false;
                 return;
             }
             _playerId = rsp.PlayerId;
             _worldAddr = rsp.WorldAddr;
+            _sceneId = rsp.SceneId;
             if (string.IsNullOrEmpty(_worldId)) _worldId = rsp.WorldId;
             _gotGwRsp = true;
             MaybeEnterScene();
         }
 
-        /// <summary>Enter-scene notify (Phase2): fills scene + spawn data, completes login.</summary>
-        private void HandleEnterSceneNotify(byte[] payload)
+        private void HandleEnterSceneNotify(NetClient client, byte[] payload)
         {
             var n = EnterSceneNotify.Parser.ParseFrom(payload);
             _worldId = n.WorldId;
+            _sceneId = n.SceneId;
             _playerId = n.PlayerId;
             _x = n.X;
             _z = n.Z;
@@ -408,25 +386,21 @@ namespace BigWorldClient.Network
             MaybeEnterScene();
         }
 
-        /// <summary>Server is shutting down (InGame): notify the UI and tear down.</summary>
-        private void HandleServerShutdownNotify(byte[] payload)
+        private void HandleServerShutdownNotify(NetClient client, byte[] payload)
         {
             var n = ServerShutdownNotify.Parser.ParseFrom(payload);
             Push(SessionEventKind.ServerShutdown, n.Message);
-            Cleanup();
+            _running = false;
         }
 
-        /// <summary>Heartbeat reply (InGame): feeds the RTT-offset clock estimate.</summary>
-        private void HandleHeartbeatRsp(byte[] payload)
+        private void HandleHeartbeatRsp(NetClient client, byte[] payload)
         {
             var rsp = ClientHeartbeatRsp.Parser.ParseFrom(payload);
-            // rsp.ClientTimeMs is the gateway's echo of our send time, so the
-            // reply alone provides both timestamps for the RTT-offset estimate.
+            Interlocked.Exchange(ref _lastHeartbeatRspMs, NowMs());
             Clock.Sync(rsp.ServerTimeMs, rsp.ClientTimeMs, NowMs());
         }
 
-        /// <summary>Move reply (InGame): carries the authoritative snapshot used for rollback/replay.</summary>
-        private void HandleMoveRsp(byte[] payload)
+        private void HandleMoveRsp(NetClient client, byte[] payload)
         {
             var rsp = MoveRsp.Parser.ParseFrom(payload);
             _moveResponses.Enqueue(new MoveRspInfo(
@@ -439,12 +413,11 @@ namespace BigWorldClient.Network
                 rsp.StateStartMs, rsp.FallVelY));
         }
 
-        /// <summary>Logout reply (InGame or LoggingOut): the server closes after this.</summary>
-        private void HandleLogoutRsp(byte[] payload)
+        private void HandleLogoutRsp(NetClient client, byte[] payload)
         {
             var rsp = LogoutRsp.Parser.ParseFrom(payload);
             Push(SessionEventKind.LoggedOut, rsp.Message);
-            Cleanup();
+            _running = false;
         }
 
         private void MaybeEnterScene()
@@ -452,7 +425,7 @@ namespace BigWorldClient.Network
             if (!_gotGwRsp || !_gotEnter) return;
             _state = State.InGame;
             Push(SessionEventKind.LoginSucceeded, "",
-                new PlayerInfo(_playerId, _worldId, _worldAddr, _x, _z, _width, _height));
+                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z, _width, _height));
         }
 
         public void SendHeartbeat()
@@ -474,30 +447,32 @@ namespace BigWorldClient.Network
             }
         }
 
-        // netstandard2.1 has no Environment.TickCount64; DateTime ticks work everywhere.
+        public void Abort(string reason)
+        {
+            if (_state == State.InGame)
+            {
+                _state = State.Idle;
+                Push(SessionEventKind.Disconnected, reason);
+            }
+            _running = false;
+        }
+
         private static long NowMs() => DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
 
         private void Push(SessionEventKind kind, string message = "", PlayerInfo player = default)
             => _events.Enqueue(new SessionEvent(kind, message, player));
 
-        private void Cleanup()
-        {
-            _running = false;
-            _expectingDisconnect = false;
-            _client.Disconnect();
-        }
-
         private void DrainStaleEvents()
         {
-            while (_client.TryDequeue(out NetClient.NetEvent ne)) { }
-            while (_events.TryDequeue(out SessionEvent se)) { }
+            _client?.Drain();
+            while (_events.TryDequeue(out _)) { }
+            while (_moveResponses.TryDequeue(out _)) { }
         }
 
         private void StopThread()
         {
             _running = false;
-            _client.Disconnect();
-            if (_thread != null && _thread.IsAlive) _thread.Join(200);
+            _sessionToken++;
             _thread = null;
         }
 

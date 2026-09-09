@@ -7,45 +7,34 @@ using BigWorldClient.Network;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// Application entry point. Coordinates the full startup flow:
-    /// Show login → Validate password → Load MainCity → Spawn character.
-    /// </summary>
+
     public class Game : MonoBehaviour
     {
         public static Game Instance { get; private set; }
 
-        [Header("Config")]
-        [SerializeField] private PlayerConfig playerConfig;
-
         [Header("Server")]
         [SerializeField, Tooltip("BigWorld login server host (phase 1)")]
-        private string loginServerHost = "127.0.0.1";
+        private string _loginServerHost = "127.0.0.1";
         [SerializeField, Tooltip("BigWorld login server port (phase 1)")]
-        private int loginServerPort = 9200;
+        private int _loginServerPort = 9200;
 
         [Header("Scene & UI")]
         [SerializeField, Tooltip("Login scene. Loaded when the session ends (the persistent UI lives in the Main scene).")]
-        private string entrySceneName = "Login";
-        [SerializeField, Tooltip("Scene name for the main city")]
-        private string mainCitySceneName = "MainCity";
-        [SerializeField, Tooltip("Login panel ID registered in UIPanelRegistry")]
-        private string loginPanelId = "login";
+        private string _entrySceneName = "Login";
 
         [Header("Player Spawning")]
         [SerializeField, Tooltip("Player prefab path under Resources/ (used if no player in scene)")]
-        private string playerPrefabPath = "Models/Robot";
+        private string _playerPrefabPath = "Models/Robot";
         [SerializeField, Tooltip("If non-empty, spawn the player at this named GameObject's position")]
-        private string spawnPointName = "SpawnPoint";
+        private string _spawnPointName = "SpawnPoint";
 
-        // Single source of truth for the app state: null = at the login screen,
-        // set = in a game scene (loading or loaded). Re-login is only valid when null.
-        private string currentSceneId;
+        private string _currentSceneId;
+        private string _currentTemplateId;
+        private const string DefaultTemplateId = "MainCity";
 
         private void Awake()
         {
-            // Game persists across scenes (DontDestroyOnLoad). Reloading the entry
-            // scene on logout would otherwise spawn a duplicate instance.
+
             if (Instance != null)
             {
                 Destroy(gameObject);
@@ -55,7 +44,7 @@ namespace BigWorldClient
             DontDestroyOnLoad(gameObject);
             SceneMgr.Instance.Initialize(this);
             GameNetworkManager.EnsureInstance();
-            CjkFontFallback.Ensure(); // CJK font fallback before any Chinese UI renders
+            CjkFontFallback.Ensure();
             SubscribeEvents();
         }
 
@@ -73,86 +62,71 @@ namespace BigWorldClient
             }
         }
 
-        // ===== Event wiring =====
-
         private void SubscribeEvents()
         {
-            UIEventBus.Subscribe<LoginAttemptEvent>(this, OnLoginAttempt);
-            UIEventBus.Subscribe<LoginResultEvent>(this, OnLoginResult);
-            UIEventBus.Subscribe<SceneLoadCompleteEvent>(this, OnSceneLoadComplete);
-            UIEventBus.Subscribe<SessionEndedEvent>(this, OnSessionEnded);
+            UIEventBus.Subscribe<LoginAttemptEvent>(OnLoginAttempt);
+            UIEventBus.Subscribe<LoginResultEvent>(OnLoginResult);
+            UIEventBus.Subscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
+            UIEventBus.Subscribe<SessionEndedEvent>(OnSessionEnded);
         }
 
         private void UnsubscribeEvents()
         {
-            UIEventBus.Unsubscribe<LoginAttemptEvent>(this);
-            UIEventBus.Unsubscribe<LoginResultEvent>(this);
-            UIEventBus.Unsubscribe<SceneLoadCompleteEvent>(this);
-            UIEventBus.Unsubscribe<SessionEndedEvent>(this);
+            UIEventBus.Unsubscribe<LoginAttemptEvent>(OnLoginAttempt);
+            UIEventBus.Unsubscribe<LoginResultEvent>(OnLoginResult);
+            UIEventBus.Unsubscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
+            UIEventBus.Unsubscribe<SessionEndedEvent>(OnSessionEnded);
         }
-
-        // ===== Login flow =====
 
         private void ShowLoginPanel()
         {
             if (UIManager.Instance != null)
-            {
-                UIManager.Instance.OpenPanel(loginPanelId);
-                {}
-            }
-            else
-            {
-                {}
-            }
+                UIManager.Instance.OpenPanel(PanelIds.Login);
         }
 
         private void OnLoginAttempt(LoginAttemptEvent evt)
         {
-            // Already in (or loading) a scene — ignore; login is only valid at the login screen.
-            if (currentSceneId != null) return;
 
-            // Delegate to the real two-phase network login (login server -> token
-            // -> gateway). The result arrives as a LoginResultEvent.
+            if (_currentSceneId != null) return;
+
             GameNetworkManager.EnsureInstance().StartLogin(
-                loginServerHost, loginServerPort, evt.Username, evt.Password);
+                _loginServerHost, _loginServerPort, evt.Username, evt.Password);
         }
 
         private void OnLoginResult(LoginResultEvent evt)
         {
-            // Failures are shown by the LoginViewModel and leave us at the login
-            // screen (currentSceneId stays null) — nothing to do here.
+
             if (!evt.Success) return;
 
-            if (currentSceneId != null) return; // ignore duplicate success events
+            if (_currentSceneId != null) return;
 
-            UIManager.Instance.HidePanel(loginPanelId);
+            UIManager.Instance.HidePanel(PanelIds.Login);
             CreateGameScene();
         }
 
         private void CreateGameScene()
         {
-            float maxStep = playerConfig != null ? playerConfig.VoxelMaxStepHeight : 0.5f;
+            float maxStep = PlayerConfigTable.Instance.VoxelMaxStepHeight;
 
-            var scene = SceneMgr.Instance.CreateScene(mainCitySceneName, maxStep);
-            currentSceneId = scene.SceneId;
+            string templateId = DefaultTemplateId;
+            if (GameNetworkManager.Instance != null
+                && GameNetworkManager.Instance.TryGetServerScene(out string serverScene))
+                templateId = serverScene;
 
-            // GameScene loads voxel binary + Unity scene async
+            _currentTemplateId = templateId;
+            var scene = SceneMgr.Instance.CreateScene(templateId, maxStep);
+            _currentSceneId = scene.SceneId;
+
             scene.LoadAsync();
-            {}
         }
-
-        // ===== Scene load complete =====
 
         private void OnSceneLoadComplete(SceneLoadCompleteEvent evt)
         {
-            if (evt.SceneName != mainCitySceneName) return;
-            if (currentSceneId == null) return; // session ended before this scene finished loading
+            if (evt.SceneName != _currentTemplateId) return;
+            if (_currentSceneId == null) return;
 
-            {}
             SpawnPlayer();
         }
-
-        // ===== Session end (return to entry) =====
 
         private void OnSessionEnded(SessionEndedEvent evt)
         {
@@ -162,21 +136,19 @@ namespace BigWorldClient
 
         private void ReturnToEntry()
         {
-            if (!string.IsNullOrEmpty(currentSceneId))
+            if (!string.IsNullOrEmpty(_currentSceneId))
             {
-                SceneMgr.Instance.RemoveScene(currentSceneId);
-                currentSceneId = null;
+                SceneMgr.Instance.RemoveScene(_currentSceneId);
+                _currentSceneId = null;
+                _currentTemplateId = null;
             }
 
-            SceneManager.LoadScene(entrySceneName, LoadSceneMode.Single);
-            {}
+            SceneManager.LoadScene(_entrySceneName, LoadSceneMode.Single);
         }
-
-        // ===== Player spawning =====
 
         private void SpawnPlayer()
         {
-            // Prefer an existing PlayerController already placed in the scene
+
             var existing = FindObjectOfType<PlayerController>();
             if (existing != null)
             {
@@ -185,8 +157,7 @@ namespace BigWorldClient
                 return;
             }
 
-            // Otherwise, instantiate from Resources prefab
-            var prefab = Resources.Load<GameObject>(playerPrefabPath);
+            var prefab = Resources.Load<GameObject>(_playerPrefabPath);
             if (prefab == null)
             {
                 {}
@@ -196,7 +167,6 @@ namespace BigWorldClient
             Vector3 spawnPos = Vector3.zero;
             Quaternion spawnRot = Quaternion.identity;
 
-            // Server-authoritative spawn position (world X/Z); Y is corrected by voxel snap.
             if (GameNetworkManager.Instance != null
                 && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
             {
@@ -205,8 +175,8 @@ namespace BigWorldClient
             }
             else
             {
-                // Fallback: use a named SpawnPoint if one exists in the scene
-                var spawnPoint = GameObject.Find(spawnPointName);
+
+                var spawnPoint = GameObject.Find(_spawnPointName);
                 if (spawnPoint != null)
                 {
                     spawnPos = spawnPoint.transform.position;
@@ -230,16 +200,11 @@ namespace BigWorldClient
             }
         }
 
-        /// <summary>
-        /// Called after the player is ready (either existing in scene or freshly spawned).
-        /// Hook for any post-spawn initialization (camera setup, UI, etc.).
-        /// </summary>
         private void OnPlayerReady(PlayerController controller)
         {
-            // Bind the player to the current scene (voxel data lookup by sceneId)
-            controller.Player.SceneId = currentSceneId;
 
-            // Initialise the tick predictor with the server-authoritative spawn.
+            controller.Player.SceneId = _currentSceneId;
+
             if (GameNetworkManager.Instance != null
                 && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
             {
@@ -250,7 +215,6 @@ namespace BigWorldClient
                 {}
             }
 
-            // Assign the player's CameraLookPoint as the camera follow target
             var cameraController = FindObjectOfType<CameraController>();
             if (cameraController != null)
             {

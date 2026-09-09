@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using BigWorldClient.Network.Protocol;
 using UnityEngine;
 
@@ -9,16 +8,15 @@ namespace BigWorldClient
     public enum MoveTransitionReason
     {
         None = 0,
-        StateCompleted = 1,   // 曲线/动画自然结束
-        SprintTimeout = 2,    // Sprint 超时自动转 Run
-        RollCompleted = 3,    // Roll 曲线结束自动转 Idle
-        HardStopCompleted = 4, // HardStop 曲线结束自动转 Idle
-        DashCompleted = 5,    // Dash 曲线结束自动转 Idle
-        AirborneLanded = 6,   // JumpDown/Fall 落地自动转 Idle
-        Ledged = 7,           // 地面走出悬崖自动转 Fall
+        StateCompleted = 1,
+        SprintTimeout = 2,
+        RollCompleted = 3,
+        HardStopCompleted = 4,
+        DashCompleted = 5,
+        AirborneLanded = 6,
+        Ledged = 7,
     }
 
-    /// <summary>状态类在 tick 更新结束后提交的迁移请求。状态类不直接切换状态。</summary>
     public struct MoveTransitionRequest
     {
         public MoveState To { get; }
@@ -35,10 +33,6 @@ namespace BigWorldClient
         public static readonly MoveTransitionRequest None = default;
     }
 
-    /// <summary>
-    /// 单个移动状态。所有运行进度都保存在 SimEntity 里；
-    /// 状态类实例自身不保存任何影响模拟的数据，因此回滚无需恢复状态类。
-    /// </summary>
     public abstract class MoveStateBase
     {
         public abstract MoveState Type { get; }
@@ -46,109 +40,9 @@ namespace BigWorldClient
         public virtual void Enter(ref MoveSimEntity entity, long startTick) { }
         public virtual void Exit(ref MoveSimEntity entity) { }
 
-        /// <summary>
-        /// 推进一个 tick。需要切换时返回 TransitionRequest，由状态机在 tick 末统一切换。
-        /// </summary>
         public abstract MoveTransitionRequest TickUpdate(ref MoveSimEntity entity, SimContext ctx, long tick, long dtMs);
     }
 
-    // ── 共享状态迁移表。服务器是权威；客户端加载同一份 JSON 只做本地预判。 ──
-
-    [Serializable]
-    public class StateTransitionEntryJson
-    {
-        public string source;
-        public string[] allowed_targets;
-    }
-
-    [Serializable]
-    public class StateTransitionTableJson
-    {
-        public StateTransitionEntryJson[] entries;
-    }
-
-    public sealed class MoveTransitionTable
-    {
-        private readonly Dictionary<MoveState, HashSet<MoveState>> _allowed = new();
-
-        /// <summary>状态迁移表里允许出现的状态名（顺序即导出的规范顺序）。</summary>
-        public static readonly (string Name, MoveState State)[] StateMappings =
-        {
-            ("Idling", MoveState.MoveIdle),
-            ("Walking", MoveState.MoveWalk),
-            ("Running", MoveState.MoveRun),
-            ("Sprinting", MoveState.MoveSprint),
-            ("LightStopping", MoveState.MoveStopLight),
-            ("MediumStopping", MoveState.MoveStopMed),
-            ("HardStopping", MoveState.MoveStopHard),
-            ("LightLanding", MoveState.MoveLandLight),
-            ("Rolling", MoveState.MoveRoll),
-            ("Dashing", MoveState.MoveDash),
-            ("JumpUp", MoveState.MoveJumpUp),
-            ("Falling", MoveState.MoveFall),
-            ("JumpDown", MoveState.MoveJumpDown),
-        };
-
-        public static readonly string[] StateNames = StateMappings.Select(m => m.Name).ToArray();
-
-        public static MoveTransitionTable Load()
-        {
-            var table = new MoveTransitionTable();
-            TextAsset asset = Resources.Load<TextAsset>("Config/StateTransitionTable");
-            if (asset == null) return table;
-
-            StateTransitionTableJson json = JsonUtility.FromJson<StateTransitionTableJson>(asset.text);
-            if (json?.entries == null) return table;
-
-            foreach (StateTransitionEntryJson entry in json.entries)
-            {
-                if (!TryParseStateName(entry.source, out MoveState from)) continue;
-
-                HashSet<MoveState> targets = new();
-                if (entry.allowed_targets != null)
-                {
-                    foreach (string name in entry.allowed_targets)
-                    {
-                        if (TryParseStateName(name, out MoveState to))
-                            targets.Add(to);
-                    }
-                }
-                table._allowed[from] = targets;
-            }
-            return table;
-        }
-
-        public bool CanTransition(MoveState from, MoveState to)
-        {
-            if (from == to) return true;
-            if (_allowed.Count == 0) return true; // 配置缺失时降级为允许，服务器仍会权威校验
-            return _allowed.TryGetValue(from, out HashSet<MoveState> targets) && targets.Contains(to);
-        }
-
-        private static bool TryParseStateName(string name, out MoveState state)
-        {
-            for (int i = 0; i < StateMappings.Length; i++)
-            {
-                if (StateMappings[i].Name == name)
-                {
-                    state = StateMappings[i].State;
-                    return true;
-                }
-            }
-
-            state = MoveState.MoveIdle;
-            return false;
-        }
-    }
-
-    /// <summary>
-    /// tick 驱动的移动状态机。
-    /// 职责：
-    ///   1. 每个 tick 调用当前状态类的 TickUpdate；
-    ///   2. 收集状态类提交的 TransitionRequest，在 tick 末统一切换；
-    ///   3. 外部输入切换（Start/Stop）通过 TryChangeState 检查迁移表后进入；
-    ///   4. 向表现层广播 StateApplied（状态 + 应从哪段动画进度开始）。
-    /// </summary>
     public sealed class MoveStateMachine
     {
         public MoveState CurrentState => _current?.Type ?? MoveState.MoveIdle;
@@ -187,7 +81,6 @@ namespace BigWorldClient
             return true;
         }
 
-        /// <summary>MoveStop 与服务器一致：不查迁移表，直接进入目标状态。</summary>
         public void ForceChangeState(ref MoveSimEntity entity, MoveState to, long tick)
         {
             if (_current == null)
@@ -197,7 +90,6 @@ namespace BigWorldClient
             ChangeState(ref entity, to, tick, MoveTransitionReason.None);
         }
 
-        /// <summary>服务器权威快照恢复：只同步当前状态对象，不修改 SimEntity。</summary>
         public void ApplyAuthoritative(MoveState state, double normalizedTime)
         {
             if (_current == null || _current.Type != state)
@@ -221,7 +113,6 @@ namespace BigWorldClient
             {
             }
 
-            // 本地切换从 0 开始；回滚恢复时由 ApplyAuthoritative 传入实际进度。
             TransitionOccurred(prev, to, reason);
             StateApplied(to, 0.0);
         }

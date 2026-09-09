@@ -4,51 +4,95 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
+	"log"
 	"net"
 	"sync"
 
 	"google.golang.org/protobuf/proto"
 )
 
-// ConnWrapper wraps net.Conn with a thread-safe Send method.
+const sendQueueSize = 1024
+
 type ConnWrapper struct {
 	net.Conn
-	mu sync.Mutex
+	sendCh    chan []byte
+	closed    chan struct{}
+	closeOnce sync.Once
+
+	PeerType ServerType
 }
 
-// NewConnWrapper creates a ConnWrapper from a raw connection.
 func NewConnWrapper(conn net.Conn) *ConnWrapper {
-	return &ConnWrapper{Conn: conn}
-}
-
-// Send serialises and writes a message in a thread-safe manner.
-func (cw *ConnWrapper) Send(msg Message) error {
-	cw.mu.Lock()
-	defer cw.mu.Unlock()
-	return SendMessage(cw.Conn, msg)
-}
-
-// CloseAfterSend closes the connection, waiting for pending data to be sent.
-// Uses SO_LINGER to tell the kernel to block until the send buffer is flushed,
-// preventing data loss that would occur with an immediate Close() after Send().
-func (cw *ConnWrapper) CloseAfterSend() error {
-	if tcpConn, ok := cw.Conn.(*net.TCPConn); ok {
-		tcpConn.SetLinger(5) // wait up to 5 seconds for data to be sent
+	cw := &ConnWrapper{
+		Conn:   conn,
+		sendCh: make(chan []byte, sendQueueSize),
+		closed: make(chan struct{}),
 	}
-	return cw.Conn.Close()
+	go cw.WriteLoop()
+	return cw
 }
 
-// Message is the wire envelope: a type tag plus an opaque protobuf payload.
+func (cw *ConnWrapper) Send(msg Message) error {
+	data, err := Encode(msg)
+	if err != nil {
+		return err
+	}
+	select {
+	case <-cw.closed:
+		return net.ErrClosed
+	default:
+	}
+	select {
+	case cw.sendCh <- data:
+		return nil
+	case <-cw.closed:
+		return net.ErrClosed
+	default:
+		log.Printf("[conn] send queue full, closing slow connection %v", cw.RemoteAddr())
+		cw.Close()
+		return fmt.Errorf("send queue full")
+	}
+}
+
+func (cw *ConnWrapper) WriteLoop() {
+	defer cw.Conn.Close()
+	for {
+		select {
+		case data := <-cw.sendCh:
+			if _, err := cw.Conn.Write(data); err != nil {
+				return
+			}
+		case <-cw.closed:
+			for {
+				select {
+				case data := <-cw.sendCh:
+					if _, err := cw.Conn.Write(data); err != nil {
+						return
+					}
+				default:
+					return
+				}
+			}
+		}
+	}
+}
+
+func (cw *ConnWrapper) Close() error {
+	cw.closeOnce.Do(func() {
+		close(cw.closed)
+	})
+	return nil
+}
+
+func (cw *ConnWrapper) CloseAfterSend() error {
+	return cw.Close()
+}
+
 type Message struct {
 	Type MessageType
 	Data []byte
 }
 
-// Encode serialises a Message to a length-prefixed binary frame:
-//
-//	[4B big-endian length][2B big-endian MessageType][N bytes payload]
-//
-// where length = 2 + len(Data).
 func Encode(msg Message) ([]byte, error) {
 	buf := make([]byte, 4+2+len(msg.Data))
 	binary.BigEndian.PutUint32(buf[:4], uint32(2+len(msg.Data)))
@@ -57,7 +101,6 @@ func Encode(msg Message) ([]byte, error) {
 	return buf, nil
 }
 
-// SendMessage encodes and writes a message to a connection.
 func SendMessage(conn net.Conn, msg Message) error {
 	data, err := Encode(msg)
 	if err != nil {
@@ -67,17 +110,16 @@ func SendMessage(conn net.Conn, msg Message) error {
 	return err
 }
 
-// ReadMessage reads one length-prefixed binary-framed message from a connection.
 func ReadMessage(conn net.Conn) (Message, error) {
 	header := make([]byte, 4)
 	if _, err := io.ReadFull(conn, header); err != nil {
 		return Message{}, fmt.Errorf("read header: %w", err)
 	}
 	length := binary.BigEndian.Uint32(header)
-	if length < 2 { // must at least carry the 2-byte type tag
+	if length < 2 {
 		return Message{}, fmt.Errorf("invalid message length: %d", length)
 	}
-	if length > 1024*1024 { // 1 MB sanity limit
+	if length > 1024*1024 {
 		return Message{}, fmt.Errorf("message too large: %d", length)
 	}
 	body := make([]byte, length)
@@ -90,12 +132,10 @@ func ReadMessage(conn net.Conn) (Message, error) {
 	}, nil
 }
 
-// MarshalHelper marshals a protobuf message into bytes.
 func MarshalHelper(m proto.Message) ([]byte, error) {
 	return proto.Marshal(m)
 }
 
-// SendMsg marshals m and sends it as a typed message on conn.
 func SendMsg(conn *ConnWrapper, msgType MessageType, m proto.Message) error {
 	data, err := MarshalHelper(m)
 	if err != nil {

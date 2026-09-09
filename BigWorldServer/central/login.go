@@ -11,9 +11,6 @@ import (
 const loginGatewayTimeout = 30 * time.Second
 const forceKickTimeout = 10 * time.Second
 
-// assignGatewayLocked picks a gateway, creates the account login state, and starts
-// the gateway timeout. Returns the response to send to the login server.
-// Must be called with cs.mu held. Caller sends the returned response outside the lock.
 func (cs *centralServer) AssignGatewayLocked(reqID uint64, account string) common.GatewayAssignRsp {
 	var gatewayID, gatewayAddr string
 	for id, rec := range cs.servers {
@@ -38,9 +35,7 @@ func (cs *centralServer) AssignGatewayLocked(reqID uint64, account string) commo
 		Status:    AccountLoggingIn,
 	}
 
-	cs.loginTimers[account] = time.AfterFunc(loginGatewayTimeout, func() {
-		cs.HandleLoginTimeout(account)
-	})
+	cs.loginDeadlines[account] = time.Now().Add(loginGatewayTimeout)
 
 	log.Printf("[central] assigned gateway %s: account=%s status=logging-in (timer %v)",
 		gatewayID, account, loginGatewayTimeout)
@@ -76,7 +71,6 @@ func (cs *centralServer) HandleGatewayAssign(conn *common.ConnWrapper, req *comm
 		return
 	}
 
-	// 锁内只改状态、收集要发的消息;锁外再 Send,避免 conn.Send 阻塞卡住 cs.mu。
 	var (
 		kickConn   *common.ConnWrapper
 		kickNotify common.ForceKickNotify
@@ -85,15 +79,14 @@ func (cs *centralServer) HandleGatewayAssign(conn *common.ConnWrapper, req *comm
 		needAssign bool
 	)
 
-	cs.mu.Lock()
 	if state, exists := cs.accountStates[req.Account]; exists {
 		switch state.Status {
 		case AccountOnline:
-			// 顶号: force-kick old player, then WAIT for cleanup before assigning a new gateway.
+
 			oldPlayerId := state.PlayerId
 			oldPlayer, oldExists := cs.onlinePlayers[oldPlayerId]
 			if !oldExists {
-				// Stale accountState without onlinePlayers entry - clean up and proceed directly.
+
 				delete(cs.accountStates, req.Account)
 				log.Printf("[central] stale accountState for %s (player %d not found), cleaned up", req.Account, oldPlayerId)
 				assignRsp = cs.AssignGatewayLocked(req.ReqId, req.Account)
@@ -110,18 +103,18 @@ func (cs *centralServer) HandleGatewayAssign(conn *common.ConnWrapper, req *comm
 					}
 					kickConn = rec.conn
 					needKick = true
-					oldGatewayId := oldPlayer.GatewayId
-					cs.forceKickTimers[oldPlayerId] = time.AfterFunc(forceKickTimeout, func() {
-						cs.HandleForceKickTimeout(oldPlayerId, oldGatewayId)
-					})
-					// Store the pending assign in the accountState itself.
+					cs.forceKickDeadlines[oldPlayerId] = forceKickDeadline{
+						gatewayId: oldPlayer.GatewayId,
+						deadline:  time.Now().Add(forceKickTimeout),
+					}
+
 					state.Status = AccountWaitingKick
 					state.PendingReqId = req.ReqId
 					state.PendingLoginConn = conn
 					log.Printf("[central] pending assign stored in accountState for %s (waiting for player %d cleanup)",
 						req.Account, oldPlayerId)
 				} else {
-					// Old gateway gone - clean up directly and continue immediately.
+
 					delete(cs.onlinePlayers, oldPlayerId)
 					delete(cs.accountStates, req.Account)
 					log.Printf("[central] old gateway %s not found, cleaned up player %d directly", oldPlayer.GatewayId, oldPlayerId)
@@ -145,13 +138,11 @@ func (cs *centralServer) HandleGatewayAssign(conn *common.ConnWrapper, req *comm
 			needAssign = true
 		}
 	} else {
-		// No existing account state - assign gateway directly.
+
 		assignRsp = cs.AssignGatewayLocked(req.ReqId, req.Account)
 		needAssign = true
 	}
-	cs.mu.Unlock()
 
-	// 锁外发送,慢对端最多阻塞自己这条连接,不卡 central 主锁。
 	if needKick {
 		common.SendMsg(kickConn, common.Ct2Gw_ForceKickNotify, &kickNotify)
 		log.Printf("[central] sent ForceKickNotify for player %d", kickNotify.PlayerId)
@@ -161,10 +152,6 @@ func (cs *centralServer) HandleGatewayAssign(conn *common.ConnWrapper, req *comm
 	}
 }
 
-// tryContinuePendingAssign is called after an old player is cleaned up during 顶号.
-// If the accountState is in AccountWaitingKick, it picks up the pending request
-// and assigns a new gateway. Returns the response and target connection.
-// Must be called with cs.mu held. Caller sends outside the lock.
 func (cs *centralServer) TryContinuePendingAssign(account string) (common.GatewayAssignRsp, *common.ConnWrapper, bool) {
 	state, exists := cs.accountStates[account]
 	if !exists || state.Status != AccountWaitingKick {
@@ -174,26 +161,21 @@ func (cs *centralServer) TryContinuePendingAssign(account string) (common.Gatewa
 	reqID := state.PendingReqId
 	loginConn := state.PendingLoginConn
 
-	// Clear old accountState - assignGatewayLocked will create a fresh one.
 	delete(cs.accountStates, account)
 
 	log.Printf("[central] continuing pending assign for account %s after cleanup", account)
 	return cs.AssignGatewayLocked(reqID, account), loginConn, true
 }
 
-// handleLoginTimeout cleans up the logging-in account state when the client fails
-// to connect to the assigned gateway within the timeout window.
 func (cs *centralServer) HandleLoginTimeout(account string) {
-	cs.mu.Lock()
-	defer cs.mu.Unlock()
 
 	state, exists := cs.accountStates[account]
 	if !exists || state.Status != AccountLoggingIn {
-		return // already handled or status changed
+		return
 	}
 
 	delete(cs.accountStates, account)
-	delete(cs.loginTimers, account)
+	delete(cs.loginDeadlines, account)
 
 	log.Printf("[central] login gateway timeout for account=%s, state cleaned up", account)
 }

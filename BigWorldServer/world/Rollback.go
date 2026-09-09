@@ -6,8 +6,6 @@ import (
 	pb "bigworld/common/pb"
 )
 
-// entitySnapshot is a complete copy of the per-entity movement simulation state
-// at the end of one fixed tick. It is the restore point for frame-based rollback.
 type entitySnapshot struct {
 	Tick         int64
 	X, Y, Z      float64
@@ -21,7 +19,6 @@ type entitySnapshot struct {
 	FallVelY     float64
 }
 
-// moveInputKind enumerates the recent player operations recorded for replay.
 type moveInputKind uint8
 
 const (
@@ -30,8 +27,6 @@ const (
 	moveInputDirChange
 )
 
-// moveInput is one accepted player movement operation stamped onto the fixed
-// tick grid. Inputs with the same tick are ordered by Seq (arrival order).
 type moveInput struct {
 	Seq   uint64
 	Tick  int64
@@ -40,8 +35,6 @@ type moveInput struct {
 	DirX  float64
 	DirZ  float64
 }
-
-// --- fixed tick timeline ---
 
 func (ss *worldServer) TickToMs(tick int64) int64 { return tick * ss.moveTickMs }
 
@@ -54,10 +47,6 @@ func (ss *worldServer) MsToTick(ms int64) int64 {
 
 func (ss *worldServer) NowTick() int64 { return ss.MsToTick(time.Now().UnixMilli()) }
 
-// NormalizeInputTick maps a client server_time_ms onto the server tick grid:
-// <=0 falls back to the current tick, future timestamps beyond the accept
-// window are rejected, and timestamps older than the rollback window are
-// clamped to the oldest replayable tick.
 func (ss *worldServer) NormalizeInputTick(ts, nowMs int64) (int64, bool) {
 	nowTick := ss.MsToTick(nowMs)
 	if ts <= 0 {
@@ -77,8 +66,6 @@ func (ss *worldServer) NormalizeInputTick(ts, nowMs int64) (int64, bool) {
 	return tick, true
 }
 
-// InitEntityTimeline puts a freshly created entity onto the tick grid and
-// records its first authoritative snapshot.
 func (ss *worldServer) InitEntityTimeline(e *playerEntity) {
 	tick := ss.NowTick()
 	e.SimTick = tick
@@ -86,8 +73,6 @@ func (ss *worldServer) InitEntityTimeline(e *playerEntity) {
 	e.LastMoveTimeMs = e.StateStartMs
 	e.Snapshots = []entitySnapshot{CaptureEntitySnapshot(e)}
 }
-
-// --- snapshots ---
 
 func CaptureEntitySnapshot(e *playerEntity) entitySnapshot {
 	return entitySnapshot{
@@ -121,8 +106,6 @@ func RestoreEntitySnapshot(e *playerEntity, s entitySnapshot) {
 	e.FallVelY = s.FallVelY
 }
 
-// RecordEntitySnapshot appends the end-of-tick snapshot and prunes snapshots
-// and inputs older than the rollback window.
 func (ss *worldServer) RecordEntitySnapshot(e *playerEntity) {
 	e.Snapshots = append(e.Snapshots, CaptureEntitySnapshot(e))
 	cutoff := e.SimTick - ss.rollbackTicks
@@ -144,9 +127,6 @@ func (ss *worldServer) RecordEntitySnapshot(e *playerEntity) {
 	e.Inputs = kept
 }
 
-// AdvanceEntityTo simulates one fixed tick at a time until toTick is reached.
-// Every tick boundary gets a snapshot, so a late input can rewind exactly to
-// its own tick and replay frame by frame.
 func (ss *worldServer) AdvanceEntityTo(e *playerEntity, toTick int64) {
 	if toTick <= e.SimTick {
 		return
@@ -161,7 +141,6 @@ func (ss *worldServer) AdvanceEntityTo(e *playerEntity, toTick int64) {
 	}
 }
 
-// LatestSnapshotAtOrBefore returns the newest snapshot whose tick is <= tick.
 func LatestSnapshotAtOrBefore(e *playerEntity, tick int64) (entitySnapshot, bool) {
 	for i := len(e.Snapshots) - 1; i >= 0; i-- {
 		if e.Snapshots[i].Tick <= tick {
@@ -171,10 +150,6 @@ func LatestSnapshotAtOrBefore(e *playerEntity, tick int64) (entitySnapshot, bool
 	return entitySnapshot{}, false
 }
 
-// SnapshotAfterEventsAt reconstructs the authoritative state at the end of tick
-// after every input stamped on that tick has been applied. Snapshot history
-// stores the pre-input state of a tick, so MoveRsp needs this helper to report
-// a snapshot that already contains the acknowledged input.
 func (ss *worldServer) SnapshotAfterEventsAt(e *playerEntity, tick int64) (entitySnapshot, bool) {
 	base, ok := LatestSnapshotAtOrBefore(e, tick)
 	if !ok {
@@ -195,8 +170,6 @@ func (ss *worldServer) SnapshotAfterEventsAt(e *playerEntity, tick int64) (entit
 	return CaptureEntitySnapshot(tmp), true
 }
 
-// --- input history ---
-
 func InsertMoveInput(inputs []moveInput, in moveInput) []moveInput {
 	idx := len(inputs)
 	for i, cur := range inputs {
@@ -211,15 +184,11 @@ func InsertMoveInput(inputs []moveInput, in moveInput) []moveInput {
 	return inputs
 }
 
-// ApplyMoveInputToEntity applies one input at the state reconstructed for its
-// tick. It mirrors the original handlers: same-state starts only update the
-// direction, stops only reset non-idle states, and invalid transitions are
-// rejected.
 func (ss *worldServer) ApplyMoveInputToEntity(e *playerEntity, in moveInput) (bool, string) {
 	stateMs := ss.TickToMs(in.Tick)
 	switch in.Kind {
 	case moveInputStart:
-		if !CanTransition(e.State, in.State) {
+		if !MoveTransitions().CanTransition(e.State, in.State) {
 			return false, "非法状态转换"
 		}
 		if in.DirX != 0 || in.DirZ != 0 {
@@ -238,15 +207,6 @@ func (ss *worldServer) ApplyMoveInputToEntity(e *playerEntity, in moveInput) (bo
 	return true, ""
 }
 
-// ProcessMoveInput accepts one player movement input and makes the entity
-// authoritative for that input:
-//   - tick > sim tick: fast-forward to the input tick, apply, then catch up to now;
-//   - tick <= sim tick: rollback to the snapshot at that tick and replay the
-//     whole recent input history frame by frame, which is what fixes a late
-//     MoveStop arriving after the server already simulated extra frames.
-//
-// On success it also returns the authoritative snapshot at the input tick
-// (after that tick's inputs were applied) for the MoveRsp payload.
 func (ss *worldServer) ProcessMoveInput(e *playerEntity, in moveInput) (bool, string, entitySnapshot) {
 	nowTick := ss.NowTick()
 
@@ -267,17 +227,12 @@ func (ss *worldServer) ProcessMoveInput(e *playerEntity, in moveInput) (bool, st
 	return ss.RebuildEntityWithInput(e, in, nowTick)
 }
 
-// RebuildEntityWithInput rewinds to the tick of a late input, applies it, and
-// replays every more recent recorded input up to the current tick. The rebuild
-// is transactional: if the new input is rejected, the entity, snapshots and
-// input history are restored exactly as they were.
 func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, nowTick int64) (bool, string, entitySnapshot) {
 	restore, ok := LatestSnapshotAtOrBefore(e, in.Tick)
 	if !ok {
 		return false, "回滚快照不存在", entitySnapshot{}
 	}
 
-	// Transactional undo data.
 	undoEntity := CaptureEntitySnapshot(e)
 	undoSnapshots := append([]entitySnapshot(nil), e.Snapshots...)
 	undoInputs := append([]moveInput(nil), e.Inputs...)
@@ -293,10 +248,6 @@ func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, now
 	e.Inputs = InsertMoveInput(e.Inputs, in)
 	events := append([]moveInput(nil), e.Inputs...)
 
-	// Rewind to the tick boundary the input belongs to. The snapshot stores the
-	// state before any inputs stamped on that tick (inputs are applied after the
-	// tick step), so every event with Tick >= restore.Tick is replayed in
-	// (Tick, Seq) order - including events that share the candidate's tick.
 	RestoreEntitySnapshot(e, restore)
 	e.SimTick = restore.Tick
 	e.Snapshots = append(e.Snapshots[:0], restore)
@@ -304,7 +255,7 @@ func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, now
 	skipped := make(map[uint64]bool)
 	for _, ev := range events {
 		if ev.Tick < restore.Tick {
-			continue // already reflected in the restore snapshot
+			continue
 		}
 		ss.AdvanceEntityTo(e, ev.Tick)
 		if ok, msg := ss.ApplyMoveInputToEntity(e, ev); !ok {
@@ -312,8 +263,7 @@ func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, now
 				undo()
 				return false, msg, entitySnapshot{}
 			}
-			// A previously accepted input may no longer be legal after the
-			// late input changed the reconstructed state; drop it.
+
 			skipped[ev.Seq] = true
 		}
 	}
@@ -344,23 +294,9 @@ func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, now
 	return true, "", snap
 }
 
-// TickMoves advances every player on the fixed tick timeline up to the current
-// wall-clock tick. Ticks are frame-based: each step advances exactly one tick,
-// never a variable "elapsed time since last loop".
 func (ss *worldServer) TickMoves() {
 	nowTick := ss.NowTick()
-	ss.mu.Lock()
-	defer ss.mu.Unlock()
 	for _, e := range ss.players {
 		ss.AdvanceEntityTo(e, nowTick)
-	}
-}
-
-// MoveLoop drives the fixed-tick movement timeline.
-func (ss *worldServer) MoveLoop() {
-	ticker := time.NewTicker(time.Duration(ss.moveTickMs) * time.Millisecond)
-	defer ticker.Stop()
-	for range ticker.C {
-		ss.TickMoves()
 	}
 }

@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"sync"
 	"time"
 
 	"bigworld/common"
@@ -18,35 +17,27 @@ const (
 )
 
 type gatewayPending struct {
-	conn  *common.ConnWrapper
-	req   *common.LoginReq
-	reqID uint64
-	timer *time.Timer
+	conn     *common.ConnWrapper
+	req      *common.LoginReq
+	reqID    uint64
+	deadline time.Time
 }
 
-// validatePending correlates a client LoginReq with the async
-// ValidateAccountRsp from dbproxy.
 type validatePending struct {
-	conn  *common.ConnWrapper
-	req   *common.LoginReq
-	reqID uint64
-	timer *time.Timer
+	conn     *common.ConnWrapper
+	req      *common.LoginReq
+	reqID    uint64
+	deadline time.Time
 }
 
 type loginServer struct {
 	*common.ServerBase
-	mu sync.Mutex
 
 	reqCounter       uint64
-	pendings         map[uint64]*gatewayPending  // gateway-assign stage
-	validatePendings map[uint64]*validatePending // account-validation stage
+	pendings         map[uint64]*gatewayPending
+	validatePendings map[uint64]*validatePending
 
-	// dbproxy connection (discovered via central) and its inbound router.
-	dbConn   *common.ConnWrapper
-	dbRouter *common.MessageRouter
-
-	clientRouter  *common.MessageRouter
-	centralRouter *common.MessageRouter
+	dbConn *common.ConnWrapper
 }
 
 func NewLoginServer(id string) *loginServer {
@@ -54,69 +45,58 @@ func NewLoginServer(id string) *loginServer {
 		ServerBase:       common.NewServerBase(common.ServerLogin, id),
 		pendings:         make(map[uint64]*gatewayPending),
 		validatePendings: make(map[uint64]*validatePending),
-		dbRouter:         common.NewMessageRouter(),
-		clientRouter:     common.NewMessageRouter(),
-		centralRouter:    common.NewMessageRouter(),
 	}
 
-	common.Register(ls.clientRouter, common.Cli2Lg_LoginReq, ls.HandleAccountLogin)
+	common.Register(ls.Router(common.SrcClient), common.Cli2Lg_LoginReq, ls.HandleAccountLogin)
 
-	// Central -> Login
-	common.Register(ls.centralRouter, common.Ct2Lg_GatewayAssignRsp, ls.HandleGatewayAssignRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_RegisterRsp, ls.HandleRegisterRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_ServerListRsp, ls.HandleCentralServerListRsp)
-	common.Register(ls.centralRouter, common.Ct2Srv_NewDbProxyNotify, ls.HandleCentralNewDbProxy)
-	common.Register(ls.centralRouter, common.Ct2Srv_ShutdownNotify, ls.HandleCentralShutdownNotify)
-	common.Register(ls.centralRouter, common.Ct2Srv_HeartbeatRsp, ls.NoopHeartbeat)
+	cr := ls.Router(common.SrcCentral)
+	common.Register(cr, common.Ct2Lg_GatewayAssignRsp, ls.HandleGatewayAssignRsp)
+	common.Register(cr, common.Ct2Srv_RegisterRsp, ls.HandleRegisterRsp)
+	common.Register(cr, common.Ct2Srv_ServerListRsp, ls.HandleCentralServerListRsp)
+	common.Register(cr, common.Ct2Srv_NewDbProxyNotify, ls.HandleCentralNewDbProxy)
+	common.Register(cr, common.Ct2Srv_ShutdownNotify, ls.HandleCentralShutdownNotify)
+	common.Register(cr, common.Ct2Srv_HeartbeatRsp, ls.NoopHeartbeat)
 
-	// dbproxy -> Login
-	common.Register(ls.dbRouter, common.Db2Lg_ValidateAccountRsp, ls.HandleValidateAccountRsp)
+	common.Register(ls.Router(common.SrcDbProxy), common.Db2Lg_ValidateAccountRsp, ls.HandleValidateAccountRsp)
 
-	ls.OnMessage = ls.HandleMessage
-	ls.OnCentralMessage = ls.HandleCentralMessage
+	ls.Loop.OnTick = ls.OnTick
+	ls.Loop.TickEvery = time.Second
 	return ls
+}
+
+func (ls *loginServer) OnTick() {
+	now := time.Now()
+	for reqID, pending := range ls.validatePendings {
+		if now.After(pending.deadline) {
+			ls.HandleValidateTimeout(reqID)
+		}
+	}
+	for reqID, pending := range ls.pendings {
+		if now.After(pending.deadline) {
+			ls.HandleGatewayAssignTimeout(reqID)
+		}
+	}
 }
 
 func (ls *loginServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (ls *loginServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
-	ls.clientRouter.Dispatch(conn, msg)
-}
-
-func (ls *loginServer) HandleCentralMessage(msg common.Message) {
-	ls.centralRouter.Dispatch(nil, msg)
-}
-
-// handleAccountLogin asks dbproxy to validate the credentials. Account data
-// now lives in MySQL (via dbproxy), replacing the old hardcoded table.
 func (ls *loginServer) HandleAccountLogin(conn *common.ConnWrapper, req *common.LoginReq) {
 	log.Printf("[login] login attempt: account=%s", req.Account)
 
-	ls.mu.Lock()
-	dbConn := ls.dbConn
-	ls.mu.Unlock()
-	if dbConn == nil {
+	if ls.dbConn == nil {
 		rsp := common.LoginRsp{Success: false, Message: "登录服务不可用，请稍后重试"}
 		common.SendMsg(conn, common.Lg2Cli_LoginRsp, &rsp)
 		return
 	}
 
-	ls.mu.Lock()
 	ls.reqCounter++
 	reqID := ls.reqCounter
-	pending := &validatePending{conn: conn, req: req, reqID: reqID}
-	pending.timer = time.AfterFunc(validateTimeout, func() {
-		ls.HandleValidateTimeout(reqID)
-	})
+	pending := &validatePending{conn: conn, req: req, reqID: reqID, deadline: time.Now().Add(validateTimeout)}
 	ls.validatePendings[reqID] = pending
-	ls.mu.Unlock()
 
 	vReq := common.ValidateAccountReq{ReqId: reqID, Account: req.Account, Password: req.Password}
 	if err := ls.ForwardMsgToDb(common.Lg2Db_ValidateAccountReq, &vReq); err != nil {
-		ls.mu.Lock()
 		delete(ls.validatePendings, reqID)
-		ls.mu.Unlock()
-		pending.timer.Stop()
 		rsp := common.LoginRsp{Success: false, Message: "登录服务不可用，请稍后重试"}
 		common.SendMsg(conn, common.Lg2Cli_LoginRsp, &rsp)
 		return
@@ -125,15 +105,10 @@ func (ls *loginServer) HandleAccountLogin(conn *common.ConnWrapper, req *common.
 }
 
 func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *common.ValidateAccountRsp) {
-	ls.mu.Lock()
 	pending, ok := ls.validatePendings[rsp.ReqId]
 	if ok {
-		if pending.timer != nil {
-			pending.timer.Stop()
-		}
 		delete(ls.validatePendings, rsp.ReqId)
 	}
-	ls.mu.Unlock()
 	if !ok {
 		return
 	}
@@ -147,16 +122,15 @@ func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 		return
 	}
 
-	// Credentials valid: proceed to gateway assignment (existing flow).
-	ls.mu.Lock()
 	ls.reqCounter++
 	gwReqID := ls.reqCounter
-	gwPending := &gatewayPending{conn: pending.conn, req: pending.req, reqID: gwReqID}
-	gwPending.timer = time.AfterFunc(gatewayAssignTimeout, func() {
-		ls.HandleGatewayAssignTimeout(gwReqID)
-	})
+	gwPending := &gatewayPending{
+		conn:     pending.conn,
+		req:      pending.req,
+		reqID:    gwReqID,
+		deadline: time.Now().Add(gatewayAssignTimeout),
+	}
 	ls.pendings[gwReqID] = gwPending
-	ls.mu.Unlock()
 
 	assignReq := common.GatewayAssignReq{ReqId: gwReqID, ServerId: ls.ServerId, Account: pending.req.Account}
 	ls.SendToCentralMsg(common.Lg2Ct_GatewayAssignReq, &assignReq)
@@ -164,12 +138,10 @@ func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 }
 
 func (ls *loginServer) HandleValidateTimeout(reqID uint64) {
-	ls.mu.Lock()
 	pending, ok := ls.validatePendings[reqID]
 	if ok {
 		delete(ls.validatePendings, reqID)
 	}
-	ls.mu.Unlock()
 	if !ok {
 		return
 	}
@@ -179,17 +151,14 @@ func (ls *loginServer) HandleValidateTimeout(reqID uint64) {
 }
 
 func (ls *loginServer) HandleGatewayAssignRsp(_ *common.ConnWrapper, rsp *common.GatewayAssignRsp) {
-	ls.mu.Lock()
 	pending, ok := ls.pendings[rsp.ReqId]
 	if ok {
 		delete(ls.pendings, rsp.ReqId)
 	}
-	ls.mu.Unlock()
 
 	if !ok {
 		return
 	}
-	pending.timer.Stop()
 
 	if !rsp.Success {
 		loginRsp := common.LoginRsp{Success: false, Message: rsp.Message}
@@ -214,12 +183,10 @@ func (ls *loginServer) HandleGatewayAssignRsp(_ *common.ConnWrapper, rsp *common
 }
 
 func (ls *loginServer) HandleGatewayAssignTimeout(reqID uint64) {
-	ls.mu.Lock()
 	pending, ok := ls.pendings[reqID]
 	if ok {
 		delete(ls.pendings, reqID)
 	}
-	ls.mu.Unlock()
 
 	if !ok {
 		return
@@ -227,18 +194,15 @@ func (ls *loginServer) HandleGatewayAssignTimeout(reqID uint64) {
 	log.Printf("[login] gateway assign timeout (reqID=%d) for account=%s", reqID, pending.req.Account)
 	rsp := common.LoginRsp{Success: false, Message: "登录超时，请重试"}
 	common.SendMsg(pending.conn, common.Lg2Cli_LoginRsp, &rsp)
-	// pending.conn.CloseAfterSend()
 }
 
 func (ls *loginServer) HandleRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
 	if rsp.Success {
 		log.Printf("[login %s] registered: %s", ls.ServerId, rsp.Message)
-		// Pull the dbproxy list in case it registered before us.
+
 		ls.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerDbProxy})
 	}
 }
-
-// --- dbproxy connection ---
 
 func (ls *loginServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
 	for _, e := range rsp.Servers {
@@ -250,9 +214,6 @@ func (ls *loginServer) HandleCentralNewDbProxy(_ *common.ConnWrapper, entry *com
 	ls.ConnectToDb(entry.ServerId, entry.ListenAddr)
 }
 
-// HandleCentralShutdownNotify stops accepting new logins, acks central, and
-// exits. Login has nothing to flush - accounts are validated against dbproxy in
-// real time - so it is torn down early in the shutdown sequence.
 func (ls *loginServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
 	log.Printf("[login %s] shutdown requested: %s", ls.ServerId, notify.Reason)
 	ls.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ls.ServerId})
@@ -264,34 +225,36 @@ func (ls *loginServer) ForwardMsgToDb(msgType common.MessageType, m proto.Messag
 	if err != nil {
 		return err
 	}
-	ls.mu.Lock()
-	conn := ls.dbConn
-	ls.mu.Unlock()
-	if conn == nil {
+	if ls.dbConn == nil {
 		return fmt.Errorf("dbproxy not connected")
 	}
-	return conn.Send(common.Message{Type: msgType, Data: data})
+	return ls.dbConn.Send(common.Message{Type: msgType, Data: data})
 }
 
 func (ls *loginServer) ConnectToDb(dbID, dbAddr string) {
-	ls.mu.Lock()
 	if ls.dbConn != nil {
-		ls.mu.Unlock()
 		return
 	}
-	ls.mu.Unlock()
 
-	conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
-	if err != nil {
-		log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v", ls.ServerId, dbID, dbAddr, err)
-		return
-	}
-	cw := common.NewConnWrapper(conn)
-	ls.mu.Lock()
-	ls.dbConn = cw
-	ls.mu.Unlock()
-	log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerId, dbID, dbAddr)
-	go ls.DbReadLoop(cw)
+	go func() {
+		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
+		if err != nil {
+			log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v", ls.ServerId, dbID, dbAddr, err)
+			return
+		}
+		ls.Loop.Defer(func() {
+			if ls.dbConn != nil {
+				conn.Close()
+				return
+			}
+			cw := common.NewConnWrapper(conn)
+			cw.PeerType = common.ServerDbProxy
+			ls.dbConn = cw
+			log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerId, dbID, dbAddr)
+			common.SendMsg(cw, common.Srv2Srv_IdentifyReq, &common.IdentifyReq{ServerType: common.ServerLogin})
+			go ls.DbReadLoop(cw)
+		})
+	}()
 }
 
 func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
@@ -303,15 +266,19 @@ func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 	for {
 		msg, err := common.ReadMessage(cw.Conn)
 		if err != nil {
-			ls.mu.Lock()
-			if ls.dbConn == cw {
-				ls.dbConn.Close()
-				ls.dbConn = nil
-			}
-			ls.mu.Unlock()
-			log.Printf("[login %s] dbproxy connection lost: %v", ls.ServerId, err)
+			dropped := cw
+			ls.Loop.Defer(func() {
+				if ls.dbConn == dropped {
+					ls.dbConn.Close()
+					ls.dbConn = nil
+					log.Printf("[login %s] dbproxy connection lost: %v", ls.ServerId, err)
+				}
+			})
 			return
 		}
-		ls.dbRouter.Dispatch(cw, msg)
+		if !ls.Loop.Post(common.Event{Kind: common.EventMessage, Conn: cw, Msg: msg}) {
+			cw.Close()
+			return
+		}
 	}
 }

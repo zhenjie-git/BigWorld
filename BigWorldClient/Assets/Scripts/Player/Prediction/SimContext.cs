@@ -3,10 +3,7 @@ using UnityEngine;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// 纯数据模拟上下文：体素网格 + 移动参数 + 位移状态表。
-    /// 所有体素查询算法与服务器 voxelgrid.go / movestate.go 逐行对应。
-    /// </summary>
+
     public sealed class SimContext
     {
         public const double MaxMoveDelta = 0.6;
@@ -15,22 +12,20 @@ namespace BigWorldClient
 
         public VoxelGridData VoxelGrid;
         public double MaxStep;
-        public double SprintSpeedMps;
         public double SprintToRunTime;
-        public double RollSpeedMps;
         public double FallGravityMps2;
         public double FallSpeedLimitMps;
         public double PlayerHeight;
         public double PlayerCenterY;
-        public SimDisplacementTable Displacement;
+        public StateConfigTable Displacement;
 
-        public static SimContext Build(GameScene scene, PlayerConfig cfg, SimDisplacementTable displacement)
+        public static SimContext Build(GameScene scene, PlayerConfigTable cfg)
         {
             var ctx = new SimContext
             {
                 VoxelGrid = scene?.VoxelGridData,
                 MaxStep = scene != null ? scene.MaxStepHeight : 0.5,
-                Displacement = displacement ?? new SimDisplacementTable(),
+                Displacement = StateConfigTable.Instance,
                 FallGravityMps2 = 10.0,
                 FallSpeedLimitMps = 15.0,
                 PlayerHeight = 1.8,
@@ -39,30 +34,14 @@ namespace BigWorldClient
 
             if (cfg == null) return ctx;
 
-            if (cfg.GroundedData != null)
-            {
-                double baseSpeed = cfg.GroundedData.BaseSpeed;
-                ctx.SprintSpeedMps = baseSpeed * (cfg.GroundedData.SprintData?.SpeedModifier ?? 1.7f);
-                ctx.SprintToRunTime = cfg.GroundedData.SprintData?.SprintToRunTime ?? 1f;
-                ctx.RollSpeedMps = baseSpeed * (cfg.GroundedData.RolllData?.SpeedModifier ?? 1f);
-            }
-            if (cfg.AirborneData?.FallData != null)
-            {
-                ctx.FallGravityMps2 = cfg.AirborneData.FallData.Gravity;
-                ctx.FallSpeedLimitMps = cfg.AirborneData.FallData.FallSpeedLimit;
-            }
-            if (cfg.DefaultColliderData != null)
-            {
-                ctx.PlayerHeight = cfg.DefaultColliderData.Height;
-                ctx.PlayerCenterY = cfg.DefaultColliderData.CenterY;
-            }
+            ctx.SprintToRunTime = cfg.SprintToRunTime;
+            ctx.FallGravityMps2 = cfg.Gravity;
+            ctx.FallSpeedLimitMps = cfg.FallSpeedLimit;
+            ctx.PlayerHeight = cfg.ColliderHeight;
+            ctx.PlayerCenterY = cfg.ColliderCenterY;
             return ctx;
         }
 
-        /// <summary>
-        /// 出生点初始化：取该列最顶层体素（与服务器 spawnPosition 的 topLayerAt 一致）。
-        /// 旧实现用 Y=0 就近找层，角色站在悬空屋顶下方时会错误地吸附到屋顶。
-        /// </summary>
         public void InitSpawnState(double x, double z, out int voxelK, out double y)
         {
             voxelK = -1;
@@ -211,7 +190,7 @@ namespace BigWorldClient
             if (Math.Sqrt(dx * dx + dz * dz) > maxDelta) return false;
             if (VoxelGrid == null)
             {
-                newY = 0; // 调用方在无体素网格时直接应用位移，不使用该值。
+                newY = 0;
                 return true;
             }
 
@@ -283,7 +262,7 @@ namespace BigWorldClient
                 VoxelData v = VoxelGrid.voxels[start + i];
                 double minY = originY + v.minY;
                 double maxY = originY + v.maxY;
-                // 只有体素底面高于脚底才算天花板；脚底以下的支撑体素直接排除。
+
                 if (minY > feetY + 0.01
                     && minY < headTopY
                     && headTopY > minY

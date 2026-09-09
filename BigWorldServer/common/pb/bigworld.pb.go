@@ -574,6 +574,7 @@ type LoginRsp struct {
 	Z             float64                `protobuf:"fixed64,9,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,10,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,11,opt,name=height,proto3" json:"height,omitempty"`
+	SceneId       string                 `protobuf:"bytes,12,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -683,6 +684,13 @@ func (x *LoginRsp) GetHeight() float64 {
 		return x.Height
 	}
 	return 0
+}
+
+func (x *LoginRsp) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
+	}
+	return ""
 }
 
 type GatewayAssignReq struct {
@@ -1361,6 +1369,7 @@ type EnterSceneNotify struct {
 	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,5,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,6,opt,name=height,proto3" json:"height,omitempty"`
+	SceneId       string                 `protobuf:"bytes,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1435,6 +1444,13 @@ func (x *EnterSceneNotify) GetHeight() float64 {
 		return x.Height
 	}
 	return 0
+}
+
+func (x *EnterSceneNotify) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
+	}
+	return ""
 }
 
 type LogoutReq struct {
@@ -1803,6 +1819,7 @@ type CreateEntityRsp struct {
 	Width         float64                `protobuf:"fixed64,6,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,7,opt,name=height,proto3" json:"height,omitempty"`
 	Message       string                 `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
+	SceneId       string                 `protobuf:"bytes,9,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1889,6 +1906,13 @@ func (x *CreateEntityRsp) GetHeight() float64 {
 func (x *CreateEntityRsp) GetMessage() string {
 	if x != nil {
 		return x.Message
+	}
+	return ""
+}
+
+func (x *CreateEntityRsp) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
 	}
 	return ""
 }
@@ -3142,6 +3166,7 @@ type LoadPlayerRsp struct {
 	X             float64                `protobuf:"fixed64,4,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,5,opt,name=z,proto3" json:"z,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	SceneId       string                 `protobuf:"bytes,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3218,6 +3243,13 @@ func (x *LoadPlayerRsp) GetMessage() string {
 	return ""
 }
 
+func (x *LoadPlayerRsp) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
+	}
+	return ""
+}
+
 // 玩家保存（world -> dbproxy）。players 为批量，destroy 存单条、autosave 存全量。
 type PlayerData struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
@@ -3225,6 +3257,7 @@ type PlayerData struct {
 	Account       string                 `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
 	X             float64                `protobuf:"fixed64,3,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
+	SceneId       string                 `protobuf:"bytes,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3285,6 +3318,13 @@ func (x *PlayerData) GetZ() float64 {
 		return x.Z
 	}
 	return 0
+}
+
+func (x *PlayerData) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
+	}
+	return ""
 }
 
 type SavePlayerReq struct {
@@ -3627,6 +3667,52 @@ func (x *ServerShutdownNotify) GetMessage() string {
 	return ""
 }
 
+// IdentifyReq is the first message a server sends on any server-to-server
+// connection it initiates, so the accepting side knows the peer's type.
+type IdentifyReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	ServerType    ServerType             `protobuf:"varint,1,opt,name=server_type,json=serverType,proto3,enum=bigworld.ServerType" json:"server_type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *IdentifyReq) Reset() {
+	*x = IdentifyReq{}
+	mi := &file_bigworld_proto_msgTypes[56]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *IdentifyReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*IdentifyReq) ProtoMessage() {}
+
+func (x *IdentifyReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[56]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use IdentifyReq.ProtoReflect.Descriptor instead.
+func (*IdentifyReq) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{56}
+}
+
+func (x *IdentifyReq) GetServerType() ServerType {
+	if x != nil {
+		return x.ServerType
+	}
+	return ServerType_SERVER_INVALID
+}
+
 var File_bigworld_proto protoreflect.FileDescriptor
 
 const file_bigworld_proto_rawDesc = "" +
@@ -3657,7 +3743,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\aservers\x18\x01 \x03(\v2\x15.bigworld.ServerEntryR\aservers\"@\n" +
 	"\bLoginReq\x12\x18\n" +
 	"\aaccount\x18\x01 \x01(\tR\aaccount\x12\x1a\n" +
-	"\bpassword\x18\x02 \x01(\tR\bpassword\"\x98\x02\n" +
+	"\bpassword\x18\x02 \x01(\tR\bpassword\"\xb3\x02\n" +
 	"\bLoginRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
 	"\amessage\x18\x02 \x01(\tR\amessage\x12\x14\n" +
@@ -3671,7 +3757,8 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01z\x18\t \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\n" +
 	" \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\v \x01(\x01R\x06height\"`\n" +
+	"\x06height\x18\v \x01(\x01R\x06height\x12\x19\n" +
+	"\bscene_id\x18\f \x01(\tR\asceneId\"`\n" +
 	"\x10GatewayAssignReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12\x18\n" +
@@ -3729,14 +3816,15 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x0fForceKickNotify\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\x19\n" +
-	"\bworld_id\x18\x03 \x01(\tR\aworldId\"\x94\x01\n" +
+	"\bworld_id\x18\x03 \x01(\tR\aworldId\"\xaf\x01\n" +
 	"\x10EnterSceneNotify\x12\x19\n" +
 	"\bworld_id\x18\x01 \x01(\tR\aworldId\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\f\n" +
 	"\x01x\x18\x03 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\x04 \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\x05 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\x06 \x01(\x01R\x06height\"(\n" +
+	"\x06height\x18\x06 \x01(\x01R\x06height\x12\x19\n" +
+	"\bscene_id\x18\a \x01(\tR\asceneId\"(\n" +
 	"\tLogoutReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"?\n" +
 	"\tLogoutRsp\x12\x18\n" +
@@ -3757,7 +3845,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\"+\n" +
 	"\x0fCreateEntityReq\x12\x18\n" +
-	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xc6\x01\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xe1\x01\n" +
 	"\x0fCreateEntityRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
@@ -3766,7 +3854,8 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01z\x18\x05 \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\x06 \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\a \x01(\x01R\x06height\x12\x18\n" +
-	"\amessage\x18\b \x01(\tR\amessage\"/\n" +
+	"\amessage\x18\b \x01(\tR\amessage\x12\x19\n" +
+	"\bscene_id\x18\t \x01(\tR\asceneId\"/\n" +
 	"\x10DestroyEntityReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"c\n" +
 	"\x10DestroyEntityRsp\x12\x18\n" +
@@ -3853,20 +3942,22 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x05valid\x18\x02 \x01(\bR\x05valid\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\")\n" +
 	"\rLoadPlayerReq\x12\x18\n" +
-	"\aaccount\x18\x01 \x01(\tR\aaccount\"\x92\x01\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xad\x01\n" +
 	"\rLoadPlayerRsp\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x03 \x01(\tR\aaccount\x12\f\n" +
 	"\x01x\x18\x04 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\x05 \x01(\x01R\x01z\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage\"_\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x12\x19\n" +
+	"\bscene_id\x18\a \x01(\tR\asceneId\"z\n" +
 	"\n" +
 	"PlayerData\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\f\n" +
 	"\x01x\x18\x03 \x01(\x01R\x01x\x12\f\n" +
-	"\x01z\x18\x04 \x01(\x01R\x01z\"V\n" +
+	"\x01z\x18\x04 \x01(\x01R\x01z\x12\x19\n" +
+	"\bscene_id\x18\x05 \x01(\tR\asceneId\"V\n" +
 	"\rSavePlayerReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12.\n" +
 	"\aplayers\x18\x02 \x03(\v2\x14.bigworld.PlayerDataR\aplayers\"Z\n" +
@@ -3884,7 +3975,10 @@ const file_bigworld_proto_rawDesc = "" +
 	"\vShutdownAck\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\"0\n" +
 	"\x14ServerShutdownNotify\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage*\x80\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"D\n" +
+	"\vIdentifyReq\x125\n" +
+	"\vserver_type\x18\x01 \x01(\x0e2\x14.bigworld.ServerTypeR\n" +
+	"serverType*\x80\x01\n" +
 	"\n" +
 	"ServerType\x12\x12\n" +
 	"\x0eSERVER_INVALID\x10\x00\x12\x12\n" +
@@ -3922,7 +4016,7 @@ func file_bigworld_proto_rawDescGZIP() []byte {
 }
 
 var file_bigworld_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 56)
+var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
 var file_bigworld_proto_goTypes = []any{
 	(ServerType)(0),              // 0: bigworld.ServerType
 	(MoveState)(0),               // 1: bigworld.MoveState
@@ -3982,6 +4076,7 @@ var file_bigworld_proto_goTypes = []any{
 	(*ShutdownNotify)(nil),       // 55: bigworld.ShutdownNotify
 	(*ShutdownAck)(nil),          // 56: bigworld.ShutdownAck
 	(*ServerShutdownNotify)(nil), // 57: bigworld.ServerShutdownNotify
+	(*IdentifyReq)(nil),          // 58: bigworld.IdentifyReq
 }
 var file_bigworld_proto_depIdxs = []int32{
 	0,  // 0: bigworld.RegisterReq.server_type:type_name -> bigworld.ServerType
@@ -3998,11 +4093,12 @@ var file_bigworld_proto_depIdxs = []int32{
 	31, // 11: bigworld.MoveDirChangeReq.dir:type_name -> bigworld.MoveDir
 	1,  // 12: bigworld.MoveRsp.state:type_name -> bigworld.MoveState
 	50, // 13: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	0,  // 14: bigworld.IdentifyReq.server_type:type_name -> bigworld.ServerType
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_bigworld_proto_init() }
@@ -4016,7 +4112,7 @@ func file_bigworld_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bigworld_proto_rawDesc), len(file_bigworld_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   56,
+			NumMessages:   57,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

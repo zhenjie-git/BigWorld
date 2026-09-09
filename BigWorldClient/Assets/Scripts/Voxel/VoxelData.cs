@@ -5,22 +5,15 @@ using UnityEngine;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// 单个合并后的体素数据
-    /// </summary>
+
     [Serializable]
     public struct VoxelData
     {
-        /// <summary>底面Y坐标（相对原点偏移后）</summary>
+
         public float minY;
-        /// <summary>顶面Y坐标（相对原点偏移后）</summary>
+
         public float maxY;
 
-        /// <summary>
-        /// 8方向连通性信息，每个方向2 bit，共16 bit。
-        /// 00=同k层可通行, 01=k+1层可通行, 10=k-1层可通行, 11=需遍历相邻列全部体素。
-        /// 未计算时默认为 0xFFFF（全部阻塞）。
-        /// </summary>
         public ushort connectivity;
 
         public float Height => maxY - minY;
@@ -35,55 +28,39 @@ namespace BigWorldClient
         public override string ToString() => $"[{minY:F2}, {maxY:F2}] h={Height:F2} conn=0x{connectivity:X4}";
     }
 
-    /// <summary>
-    /// 体素连通性编码/解码工具
-    /// 8个方向（上下左右 + 四对角），每方向2 bit，共16 bit 打包为一个 ushort。
-    ///
-    /// 方向顺序：上(+Z) 下(-Z) 左(-X) 右(+X) 左上(-X,+Z) 左下(-X,-Z) 右上(+X,+Z) 右下(+X,-Z)
-    ///
-    /// 每方向2 bit含义：
-    ///   00 (SameLayer)  — 可走到相邻列同一k层（索引相同）的体素
-    ///   01 (LayerAbove) — 可走到相邻列k+1层的体素
-    ///   10 (LayerBelow) — 可走到相邻列k-1层的体素
-    ///   11 (Blocked)    — 相邻列k/k+1/k-1均不可达，需遍历该列全部体素
-    /// </summary>
     public static class VoxelConnectivity
     {
-        // ── 方向索引 ──
-        public const int DirUp         = 0; // +Z
-        public const int DirDown       = 1; // -Z
-        public const int DirLeft       = 2; // -X
-        public const int DirRight      = 3; // +X
-        public const int DirUpperLeft  = 4; // -X, +Z
-        public const int DirLowerLeft  = 5; // -X, -Z
-        public const int DirUpperRight = 6; // +X, +Z
-        public const int DirLowerRight = 7; // +X, -Z
+
+        public const int DirUp         = 0;
+        public const int DirDown       = 1;
+        public const int DirLeft       = 2;
+        public const int DirRight      = 3;
+        public const int DirUpperLeft  = 4;
+        public const int DirLowerLeft  = 5;
+        public const int DirUpperRight = 6;
+        public const int DirLowerRight = 7;
 
         public const int DirectionCount = 8;
 
-        // ── 2 bit 标志值 ──
-        public const byte FlagSameLayer  = 0; // 00
-        public const byte FlagLayerAbove = 1; // 01
-        public const byte FlagLayerBelow = 2; // 10
-        public const byte FlagBlocked    = 3; // 11
+        public const byte FlagSameLayer  = 0;
+        public const byte FlagLayerAbove = 1;
+        public const byte FlagLayerBelow = 2;
+        public const byte FlagBlocked    = 3;
 
-        /// <summary>所有方向均为阻塞的默认值</summary>
         public const ushort ALL_BLOCKED = 0xFFFF;
 
-        // ── 各方向在XZ网格上的偏移 ──
         public static readonly (int dx, int dz)[] Offsets = new (int, int)[]
         {
-            ( 0,  1), // Up          (+Z)
-            ( 0, -1), // Down        (-Z)
-            (-1,  0), // Left        (-X)
-            ( 1,  0), // Right       (+X)
-            (-1,  1), // UpperLeft   (-X, +Z)
-            (-1, -1), // LowerLeft   (-X, -Z)
-            ( 1,  1), // UpperRight  (+X, +Z)
-            ( 1, -1), // LowerRight  (+X, -Z)
+            ( 0,  1),
+            ( 0, -1),
+            (-1,  0),
+            ( 1,  0),
+            (-1,  1),
+            (-1, -1),
+            ( 1,  1),
+            ( 1, -1),
         };
 
-        /// <summary>设置某个方向的连通性标志</summary>
         public static void SetFlag(ref ushort connectivity, int dirIndex, byte flag)
         {
             int shift = dirIndex * 2;
@@ -91,19 +68,16 @@ namespace BigWorldClient
             connectivity |= (ushort)((flag & 3) << shift);
         }
 
-        /// <summary>获取某个方向的连通性标志</summary>
         public static byte GetFlag(ushort connectivity, int dirIndex)
         {
             return (byte)((connectivity >> (dirIndex * 2)) & 3);
         }
 
-        /// <summary>某个方向是否被阻塞（需全遍历相邻列）</summary>
         public static bool IsBlocked(ushort connectivity, int dirIndex)
         {
             return GetFlag(connectivity, dirIndex) == FlagBlocked;
         }
 
-        /// <summary>获取某个方向对应的目标层偏移量（-1/0/+1），阻塞时返回0</summary>
         public static int GetLayerOffset(ushort connectivity, int dirIndex)
         {
             byte flag = GetFlag(connectivity, dirIndex);
@@ -117,35 +91,26 @@ namespace BigWorldClient
         }
     }
 
-    /// <summary>
-    /// 完整的体素网格数据
-    /// </summary>
     [Serializable]
     public class VoxelGridData
     {
-        /// <summary>最小体素尺寸（世界单位）</summary>
+
         public Vector3 voxelSize;
-        /// <summary>原点偏移量（世界空间中所有mesh光栅化后xyz最小的体素坐标）</summary>
+
         public Vector3 originOffset;
-        /// <summary>X方向格子数量</summary>
+
         public int gridDimX;
-        /// <summary>Z方向格子数量</summary>
+
         public int gridDimZ;
 
-        /// <summary>
-        /// 扁平化2D数组: [x + z * dimX] = 该(x,z)列在voxels数组中的起始索引
-        /// 与voxelCounts配合使用：给定(gridX, gridZ)，该列的体素为
-        /// voxels[startIndices[idx] .. startIndices[idx] + voxelCounts[idx] - 1]
-        /// </summary>
         public int[] startIndices;
-        /// <summary>扁平化2D数组: [x + z * dimX] = 该(x,z)列的体素数量</summary>
+
         public int[] voxelCounts;
-        /// <summary>一维数组：所有体素，按列连续存储，每列内按minY升序排列</summary>
+
         public VoxelData[] voxels;
 
         public int GridIndex(int x, int z) => x + z * gridDimX;
 
-        /// <summary>获取指定(x,z)格子的所有体素</summary>
         public IEnumerable<VoxelData> GetVoxelsAt(int x, int z)
         {
             int idx = GridIndex(x, z);
@@ -156,10 +121,8 @@ namespace BigWorldClient
                 yield return voxels[start + i];
         }
 
-        /// <summary>体素总数</summary>
         public int TotalVoxelCount => voxels?.Length ?? 0;
 
-        /// <summary>有体素的列数</summary>
         public int OccupiedColumnCount
         {
             get
@@ -172,27 +135,22 @@ namespace BigWorldClient
             }
         }
 
-        // ==================== 二进制序列化 ====================
-
-        private const uint BINARY_MAGIC = 0x4C584F56; // "VOXL" (little-endian)
+        private const uint BINARY_MAGIC = 0x4C584F56;
         private const int BINARY_VERSION = 2;
-        private const int HEADER_SIZE = 48; // 字节
+        private const int HEADER_SIZE = 48;
 
-        /// <summary>保存为二进制文件</summary>
         public void SaveToBinary(string filePath)
         {
             byte[] data = ToBytes();
             File.WriteAllBytes(filePath, data);
         }
 
-        /// <summary>从二进制文件加载</summary>
         public static VoxelGridData LoadFromBinary(string filePath)
         {
             byte[] data = File.ReadAllBytes(filePath);
             return FromBytes(data);
         }
 
-        /// <summary>从Resources中的TextAsset加载</summary>
         public static VoxelGridData LoadFromResources(string resourcePath)
         {
             TextAsset asset = Resources.Load<TextAsset>(resourcePath);
@@ -203,7 +161,6 @@ namespace BigWorldClient
             return FromBytes(asset.bytes);
         }
 
-        /// <summary>序列化为字节数组</summary>
         public byte[] ToBytes()
         {
             int totalColumns = gridDimX * gridDimZ;
@@ -212,7 +169,7 @@ namespace BigWorldClient
             using (var ms = new MemoryStream(HEADER_SIZE + totalColumns * 4 + totalVoxels * 10))
             using (var bw = new BinaryWriter(ms))
             {
-                // --- Header: 48 bytes ---
+
                 bw.Write(BINARY_MAGIC);
                 bw.Write(BINARY_VERSION);
                 bw.Write(gridDimX);
@@ -224,14 +181,12 @@ namespace BigWorldClient
                 bw.Write(originOffset.y);
                 bw.Write(originOffset.z);
                 bw.Write(totalVoxels);
-                bw.Write(0); // reserved
-                bw.Write(0); // reserved
+                bw.Write(0);
+                bw.Write(0);
 
-                // --- voxelCounts ---
                 for (int i = 0; i < totalColumns; i++)
                     bw.Write(voxelCounts?[i] ?? 0);
 
-                // --- voxels ---
                 if (voxels != null)
                 {
                     for (int i = 0; i < voxels.Length; i++)
@@ -246,19 +201,18 @@ namespace BigWorldClient
             }
         }
 
-        /// <summary>从字节数组反序列化</summary>
         public static VoxelGridData FromBytes(byte[] data)
         {
             using (var ms = new MemoryStream(data))
             using (var br = new BinaryReader(ms))
             {
-                // --- Header ---
+
                 uint magic = br.ReadUInt32();
                 if (magic != BINARY_MAGIC)
                     throw new InvalidDataException($"无效的体素文件格式 (Magic: 0x{magic:X8}, 期望: 0x{BINARY_MAGIC:X8})");
 
                 int version = br.ReadInt32();
-                
+
                 var gridData = new VoxelGridData
                 {
                     gridDimX = br.ReadInt32(),
@@ -268,12 +222,11 @@ namespace BigWorldClient
                 };
 
                 int totalVoxels = br.ReadInt32();
-                br.ReadInt32(); // reserved
-                br.ReadInt32(); // reserved
+                br.ReadInt32();
+                br.ReadInt32();
 
                 int totalColumns = gridData.gridDimX * gridData.gridDimZ;
 
-                // --- voxelCounts + 重建 startIndices ---
                 gridData.voxelCounts = new int[totalColumns];
                 gridData.startIndices = new int[totalColumns];
                 int runningIndex = 0;
@@ -284,8 +237,6 @@ namespace BigWorldClient
                     runningIndex += gridData.voxelCounts[i];
                 }
 
-                
-                // --- voxels ---
                 gridData.voxels = new VoxelData[totalVoxels];
                 for (int i = 0; i < totalVoxels; i++)
                 {
@@ -299,9 +250,6 @@ namespace BigWorldClient
         }
     }
 
-    /// <summary>
-    /// 体素生成器配置
-    /// </summary>
     [Serializable]
     public class VoxelGeneratorConfig
     {
@@ -335,7 +283,6 @@ namespace BigWorldClient
         [Tooltip("是否包含MeshRenderer（静态网格）")]
         public bool includeMeshRenderers = true;
 
-        /// <summary>获取最终使用的世界空间包围盒</summary>
         public Bounds GetWorldBounds(Bounds? sceneBounds = null)
         {
             if (autoComputeBounds && sceneBounds.HasValue)

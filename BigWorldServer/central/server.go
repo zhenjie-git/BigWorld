@@ -1,7 +1,6 @@
 package main
 
 import (
-	"sync"
 	"time"
 
 	"bigworld/common"
@@ -10,35 +9,28 @@ import (
 type serverRecord struct {
 	info   common.ServerEntry
 	conn   *common.ConnWrapper
-	lastHB int64 // unix timestamp
+	lastHB int64
 }
 
-// AccountStatus represents the login state of an account in central.
 type AccountStatus int
 
 const (
-	AccountLoggingIn   AccountStatus = iota // login in progress (gateway assigned, waiting for world entity)
-	AccountOnline                           // login complete, player entity exists
-	AccountWaitingKick                      // waiting for old player to be force-kicked before continuing login
+	AccountLoggingIn AccountStatus = iota
+	AccountOnline
+	AccountWaitingKick
 )
 
-// accountState tracks an account's login state.
-// Created at GatewayAssign, transitions to AccountOnline at LoginFinish (success).
-// During AccountWaitingKick, PendingReqId and PendingLoginConn hold the pending
-// gateway assign request that will be continued after the old player is cleaned up.
 type accountState struct {
 	Account   string
 	GatewayId string
-	WorldId   string // assigned at LoginPrepare
-	PlayerId  uint64 // set by world, reported at LoginFinish
+	WorldId   string
+	PlayerId  uint64
 	Status    AccountStatus
 
-	// Only meaningful during AccountWaitingKick.
 	PendingReqId     uint64
 	PendingLoginConn *common.ConnWrapper
 }
 
-// onlinePlayer tracks a player's online session. Only created on successful login.
 type onlinePlayer struct {
 	PlayerId  uint64
 	Account   string
@@ -46,62 +38,79 @@ type onlinePlayer struct {
 	GatewayId string
 }
 
+type forceKickDeadline struct {
+	gatewayId string
+	deadline  time.Time
+}
+
 type centralServer struct {
 	*common.ServerBase
-	mu      sync.RWMutex
-	servers map[string]*serverRecord
-
-	// Reverse lookup: connection -> server ID
-	connToID map[*common.ConnWrapper]string
-
-	// Online player tracking (playerID -> info). Only populated on successful login.
+	servers       map[string]*serverRecord
+	connToID      map[*common.ConnWrapper]string
 	onlinePlayers map[uint64]*onlinePlayer
-
-	// Account login state (account -> state). Created at GatewayAssign, cleaned up on logout/timeout.
 	accountStates map[string]*accountState
 
-	// Login gateway timeout timers: account -> timer
-	loginTimers map[string]*time.Timer
+	loginDeadlines map[string]time.Time
 
-	// Force-kick timeout timers: oldPlayerId -> timer
-	forceKickTimers map[uint64]*time.Timer
+	forceKickDeadlines map[uint64]forceKickDeadline
 
-	// Graceful shutdown state.
-	shuttingDown bool
-	shutdownAcks map[string]chan struct{} // serverId -> done channel (see shutdown.go)
-
-	// Message router for peer (server) connections.
-	peerRouter *common.MessageRouter
+	shuttingDown     bool
+	shutdownStage    int
+	shutdownPending  map[string]bool
+	shutdownDeadline time.Time
 }
 
 func NewCentralServer(id string) *centralServer {
 	cs := &centralServer{
-		ServerBase:      common.NewServerBase(common.ServerCentral, id),
-		servers:         make(map[string]*serverRecord),
-		connToID:        make(map[*common.ConnWrapper]string),
-		onlinePlayers:   make(map[uint64]*onlinePlayer),
-		accountStates:   make(map[string]*accountState),
-		loginTimers:     make(map[string]*time.Timer),
-		forceKickTimers: make(map[uint64]*time.Timer),
-		shutdownAcks:    make(map[string]chan struct{}),
-		peerRouter:      common.NewMessageRouter(),
+		ServerBase:         common.NewServerBase(common.ServerCentral, id),
+		servers:            make(map[string]*serverRecord),
+		connToID:           make(map[*common.ConnWrapper]string),
+		onlinePlayers:      make(map[uint64]*onlinePlayer),
+		accountStates:      make(map[string]*accountState),
+		loginDeadlines:     make(map[string]time.Time),
+		forceKickDeadlines: make(map[uint64]forceKickDeadline),
+		shutdownPending:    make(map[string]bool),
 	}
 
-	common.Register(cs.peerRouter, common.Srv2Ct_RegisterReq, cs.HandleRegister)
-	common.Register(cs.peerRouter, common.Srv2Ct_HeartbeatReq, cs.HandleHeartbeat)
-	common.Register(cs.peerRouter, common.Srv2Ct_ServerListReq, cs.HandleServerList)
-	common.Register(cs.peerRouter, common.Srv2Ct_ShutdownReq, cs.HandleShutdown)
-	common.Register(cs.peerRouter, common.Srv2Ct_ShutdownAck, cs.HandleShutdownAck)
-	common.Register(cs.peerRouter, common.Lg2Ct_GatewayAssignReq, cs.HandleGatewayAssign)
-	common.Register(cs.peerRouter, common.Gw2Ct_LoginPrepareReq, cs.HandleLoginPrepareReq)
-	common.Register(cs.peerRouter, common.Gw2Ct_LoginFinishReq, cs.HandleLoginFinishReq)
-	common.Register(cs.peerRouter, common.Gw2Ct_LogoutBeginReq, cs.HandleLogoutBeginReq)
-	common.Register(cs.peerRouter, common.Gw2Ct_LogoutCleanupReq, cs.HandleLogoutCleanupReq)
+	for _, src := range common.ServerSrcs {
+		r := cs.Router(src)
+		common.Register(r, common.Srv2Ct_RegisterReq, cs.HandleRegister)
+		common.Register(r, common.Srv2Ct_HeartbeatReq, cs.HandleHeartbeat)
+		common.Register(r, common.Srv2Ct_ServerListReq, cs.HandleServerList)
+		common.Register(r, common.Srv2Ct_ShutdownReq, cs.HandleShutdown)
+		common.Register(r, common.Srv2Ct_ShutdownAck, cs.HandleShutdownAck)
+	}
 
-	cs.OnMessage = cs.HandleMessage
+	common.Register(cs.Router(common.SrcLogin), common.Lg2Ct_GatewayAssignReq, cs.HandleGatewayAssign)
+	gr := cs.Router(common.SrcGateway)
+	common.Register(gr, common.Gw2Ct_LoginPrepareReq, cs.HandleLoginPrepareReq)
+	common.Register(gr, common.Gw2Ct_LoginFinishReq, cs.HandleLoginFinishReq)
+	common.Register(gr, common.Gw2Ct_LogoutBeginReq, cs.HandleLogoutBeginReq)
+	common.Register(gr, common.Gw2Ct_LogoutCleanupReq, cs.HandleLogoutCleanupReq)
+
+	cs.Loop.OnTick = cs.OnTick
+	cs.Loop.TickEvery = time.Second
 	return cs
 }
 
-func (cs *centralServer) HandleMessage(conn *common.ConnWrapper, msg common.Message) {
-	cs.peerRouter.Dispatch(conn, msg)
+func (cs *centralServer) OnTick() {
+	now := time.Now()
+
+	for account, deadline := range cs.loginDeadlines {
+		if now.After(deadline) {
+			cs.HandleLoginTimeout(account)
+		}
+	}
+
+	for playerID, fk := range cs.forceKickDeadlines {
+		if now.After(fk.deadline) {
+			cs.HandleForceKickTimeout(playerID, fk.gatewayId)
+		}
+	}
+
+	cs.ReapStale(25 * time.Second)
+
+	if cs.shuttingDown && len(cs.shutdownPending) > 0 && now.After(cs.shutdownDeadline) {
+		cs.AdvanceShutdownStage(len(cs.shutdownPending))
+	}
 }

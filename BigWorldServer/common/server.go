@@ -13,11 +13,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// ServerBase provides common lifecycle logic for all servers.
 type ServerBase struct {
 	ServerType ServerType
 	ServerId   string
 	ListenAddr string
+
+	Loop *EventLoop
 
 	listener net.Listener
 	quit     chan struct{}
@@ -27,31 +28,69 @@ type ServerBase struct {
 
 	mu          sync.RWMutex
 	centralConn *ConnWrapper
-	conns       map[*ConnWrapper]struct{} // 活跃 peer 连接,优雅关闭时统一断开
+	conns       map[*ConnWrapper]struct{}
 
-	// OnMessage is called when a message arrives on a peer connection.
-	// The handler may reply via conn.Send().
-	OnMessage func(conn *ConnWrapper, msg Message)
+	routers map[EventSrc]*MessageRouter
 
-	// OnCentralMessage is called for messages arriving from the central controller.
-	OnCentralMessage func(msg Message)
-
-	// OnDisconnect is called when a peer connection's read loop exits
-	// (connection closed or read error), with the connection that closed.
 	OnDisconnect func(conn *ConnWrapper)
 }
 
-// NewServerBase creates a ServerBase with initialised fields.
 func NewServerBase(st ServerType, id string) *ServerBase {
-	return &ServerBase{
+	s := &ServerBase{
 		ServerType: st,
 		ServerId:   id,
 		quit:       make(chan struct{}),
 		conns:      make(map[*ConnWrapper]struct{}),
+		routers:    make(map[EventSrc]*MessageRouter),
+	}
+	s.Loop = NewEventLoop(4096)
+	s.Loop.Handler = s.DefaultDispatch
+	return s
+}
+
+func (s *ServerBase) Router(src EventSrc) *MessageRouter {
+	r, ok := s.routers[src]
+	if !ok {
+		r = NewMessageRouter()
+		s.routers[src] = r
+	}
+	return r
+}
+
+func (s *ServerBase) DefaultDispatch(ev Event) {
+	switch ev.Kind {
+	case EventMessage:
+		if ev.Conn == nil {
+			return
+		}
+		if r, ok := s.routers[SrcForServerType(ev.Conn.PeerType)]; ok {
+			r.Dispatch(ev.Conn, ev.Msg)
+		}
+	case EventIdentify:
+		if ev.Conn != nil {
+			s.HandleIdentify(ev.Conn, ev.Msg)
+		}
+	case EventDisconnect:
+		if s.OnDisconnect != nil {
+			s.OnDisconnect(ev.Conn)
+		}
+	case EventDefer:
+		if ev.Fn != nil {
+			ev.Fn()
+		}
 	}
 }
 
-// Listen starts the TCP listener.
+func (s *ServerBase) HandleIdentify(conn *ConnWrapper, msg Message) {
+	var req IdentifyReq
+	if err := proto.Unmarshal(msg.Data, &req); err != nil {
+		log.Printf("[%s] bad IdentifyReq from %s: %v", s.ServerId, conn.RemoteAddr(), err)
+		return
+	}
+	conn.PeerType = req.ServerType
+	log.Printf("[%s] peer identified as %s from %s", s.ServerId, req.ServerType, conn.RemoteAddr())
+}
+
 func (s *ServerBase) Listen(addr string) error {
 	var err error
 	s.ListenAddr = addr
@@ -63,7 +102,6 @@ func (s *ServerBase) Listen(addr string) error {
 	return nil
 }
 
-// AcceptLoop accepts peer connections and dispatches messages.
 func (s *ServerBase) AcceptLoop() {
 	s.wg.Add(1)
 	go func() {
@@ -98,30 +136,33 @@ func (s *ServerBase) AcceptLoop() {
 	}()
 }
 
-// ReadLoop reads messages from a single connection and dispatches them.
 func (s *ServerBase) ReadLoop(cw *ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Printf("[%s] ReadLoop panic recovered: %v", s.ServerId, r)
-			return
 		}
-		if s.OnDisconnect != nil {
-			s.OnDisconnect(cw)
-		}
+		s.Loop.Post(Event{Kind: EventDisconnect, Conn: cw})
 	}()
 	for {
 		msg, err := ReadMessage(cw.Conn)
 		if err != nil {
-			return // connection closed or error
+			return
 		}
-		if s.OnMessage != nil {
-			s.OnMessage(cw, msg)
+		if msg.Type == Srv2Srv_IdentifyReq {
+			if !s.Loop.Post(Event{Kind: EventIdentify, Conn: cw, Msg: msg}) {
+				cw.Close()
+				return
+			}
+			continue
+		}
+		if !s.Loop.Post(Event{Kind: EventMessage, Conn: cw, Msg: msg}) {
+
+			cw.Close()
+			return
 		}
 	}
 }
 
-// ConnectToCentral connects to the central controller and starts the central
-// message loop with automatic reconnect on disconnect.
 func (s *ServerBase) ConnectToCentral(addr string) error {
 	if err := s.DialCentral(addr); err != nil {
 		return err
@@ -131,23 +172,28 @@ func (s *ServerBase) ConnectToCentral(addr string) error {
 	return nil
 }
 
-// DialCentral dials central and stores the connection. Does not reconnect.
 func (s *ServerBase) DialCentral(addr string) error {
 	conn, err := net.DialTimeout("tcp", addr, 5*time.Second)
 	if err != nil {
 		return err
 	}
 	cw := NewConnWrapper(conn)
+	cw.PeerType = ServerCentral
 	s.mu.Lock()
 	s.centralConn = cw
 	s.mu.Unlock()
 	log.Printf("[%s %s] connected to central at %s", s.ServerType, s.ServerId, addr)
+	s.SendIdentify(cw)
 	return nil
 }
 
-// CentralConnectionLoop reads messages from central. On disconnect it clears
-// centralConn and reconnects with exponential backoff (1s..30s) until quit.
-// After a successful reconnect it re-registers so central recognises this server again.
+func (s *ServerBase) SendIdentify(cw *ConnWrapper) {
+	if s.ServerType == ServerCentral {
+		return
+	}
+	_ = SendMsg(cw, Srv2Srv_IdentifyReq, &IdentifyReq{ServerType: s.ServerType})
+}
+
 func (s *ServerBase) CentralConnectionLoop(addr string) {
 	defer s.wg.Done()
 	backoff := time.Second
@@ -163,7 +209,7 @@ func (s *ServerBase) CentralConnectionLoop(addr string) {
 		s.mu.RUnlock()
 
 		if cw == nil {
-			// 断连后重连
+
 			if err := s.DialCentral(addr); err != nil {
 				log.Printf("[%s %s] reconnect to central failed: %v, retry in %v", s.ServerType, s.ServerId, err, backoff)
 				select {
@@ -194,20 +240,10 @@ func (s *ServerBase) CentralConnectionLoop(addr string) {
 			s.mu.Unlock()
 			continue
 		}
-		if s.OnCentralMessage != nil {
-			func() {
-				defer func() {
-					if r := recover(); r != nil {
-						log.Printf("[%s %s] central connection loop panic recovered: %v", s.ServerType, s.ServerId, r)
-					}
-				}()
-				s.OnCentralMessage(msg)
-			}()
-		}
+		s.Loop.Post(Event{Kind: EventMessage, Conn: cw, Msg: msg})
 	}
 }
 
-// SendToCentral sends a message to the central controller.
 func (s *ServerBase) SendToCentral(msg Message) error {
 	s.mu.RLock()
 	cw := s.centralConn
@@ -218,7 +254,6 @@ func (s *ServerBase) SendToCentral(msg Message) error {
 	return cw.Send(msg)
 }
 
-// SendToCentralMsg marshals m and sends it as a typed message to the central controller.
 func (s *ServerBase) SendToCentralMsg(msgType MessageType, m proto.Message) error {
 	data, err := MarshalHelper(m)
 	if err != nil {
@@ -227,7 +262,6 @@ func (s *ServerBase) SendToCentralMsg(msgType MessageType, m proto.Message) erro
 	return s.SendToCentral(Message{Type: msgType, Data: data})
 }
 
-// Register sends a registration request to the central controller.
 func (s *ServerBase) Register() error {
 	req := RegisterReq{
 		ServerType: s.ServerType,
@@ -241,7 +275,6 @@ func (s *ServerBase) Register() error {
 	return s.SendToCentral(Message{Type: Srv2Ct_RegisterReq, Data: data})
 }
 
-// StartHeartbeat sends heartbeats to the central controller on the given interval.
 func (s *ServerBase) StartHeartbeat(ctx context.Context, interval time.Duration) {
 	s.wg.Add(1)
 	go func() {
@@ -262,14 +295,13 @@ func (s *ServerBase) StartHeartbeat(ctx context.Context, interval time.Duration)
 	}()
 }
 
-// Start runs the server: listener, optional central connection, and blocks until signal.
 func (s *ServerBase) Start(centralAddr string) error {
 	s.centralAddr = centralAddr
 
-	// Start accepting peer connections.
+	s.Loop.Start()
+
 	s.AcceptLoop()
 
-	// Connect to central (skip for central itself).
 	if centralAddr != "" {
 		if err := s.ConnectToCentral(centralAddr); err != nil {
 			return err
@@ -283,9 +315,6 @@ func (s *ServerBase) Start(centralAddr string) error {
 		s.StartHeartbeat(ctx, 10*time.Second)
 	}
 
-	// Wait for shutdown: either an OS signal (Ctrl+C / SIGTERM) or a message-
-	// triggered Stop() from a peer (graceful shutdown). Stop() closes s.quit,
-	// which also unblocks the Wait here so the process actually exits.
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 	select {
@@ -296,7 +325,6 @@ func (s *ServerBase) Start(centralAddr string) error {
 	}
 	s.Stop()
 
-	// Wait for all goroutines to finish (with timeout).
 	done := make(chan struct{})
 	go func() {
 		s.wg.Wait()
@@ -311,13 +339,17 @@ func (s *ServerBase) Start(centralAddr string) error {
 	return nil
 }
 
-// Stop signals the server to shut down.
 func (s *ServerBase) Stop() {
-	// Close listener to unblock Accept.
+	select {
+	case <-s.quit:
+	default:
+		close(s.quit)
+	}
+
 	if s.listener != nil {
 		s.listener.Close()
 	}
-	// Close central connection and active peer connections to unblock read loops.
+
 	s.mu.Lock()
 	if s.centralConn != nil {
 		s.centralConn.Close()
@@ -327,10 +359,6 @@ func (s *ServerBase) Stop() {
 		cw.Close()
 	}
 	s.mu.Unlock()
-	// Signal quit.
-	select {
-	case <-s.quit:
-	default:
-		close(s.quit)
-	}
+
+	s.Loop.Stop()
 }

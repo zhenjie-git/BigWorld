@@ -6,25 +6,22 @@ import (
 	"os"
 )
 
-// ServerConfig defines the identity and connectivity of a server instance.
 type ServerConfig struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	ListenAddr  string `json:"listen_addr"`
 	CentralAddr string `json:"central_addr"`
 
-	VoxelFile        string  `json:"voxel_file,omitempty"`
-	DisplacementFile string  `json:"displacement_curves_file,omitempty"`
-	SpawnX           float64 `json:"spawn_x,omitempty"`
-	SpawnZ           float64 `json:"spawn_z,omitempty"`
+	StateConfigFile string `json:"state_config_file,omitempty"`
 
 	// Shared GameConfig files (relative to the BigWorldServer working dir).
 	// The single source of truth for movement params + state transition table;
-	// movement params are derived from Player/player_config.json, never
+	// movement params are derived from Player/player_config.bytes, never
 	// duplicated here. The nine server-read scalars are authored in
 	// GameConfig/Player/player_config.xlsx.
 	PlayerConfigFile         string `json:"player_config_file,omitempty"`
 	StateTransitionTableFile string `json:"state_transition_table_file,omitempty"`
+	SceneConfigFile          string `json:"scene_config_file,omitempty"`
 
 	// Server-authoritative movement simulation tick interval (world process).
 	MovementTickMs int `json:"movement_tick_ms,omitempty"`

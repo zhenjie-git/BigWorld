@@ -4,99 +4,85 @@ using UnityEngine.UI;
 
 namespace BigWorldClient.UI.Panels
 {
-    /// <summary>
-    /// Thin View layer for the login panel. All data and logic live in LoginViewModel.
-    /// This class only handles UI widget wiring and ViewModel→UI refresh.
-    /// </summary>
+
     public class LoginPanel : Framework.BasePanel
     {
         [Header("UI References")]
-        [SerializeField] private TMP_InputField usernameInput;
-        [SerializeField] private TMP_InputField passwordInput;
-        [SerializeField] private Button loginButton;
-        [SerializeField] private TMP_Text statusText;
+        [SerializeField] private TMP_InputField _usernameInput;
+        [SerializeField] private TMP_InputField _passwordInput;
+        [SerializeField] private Button _loginButton;
+        [SerializeField] private TMP_Text _statusText;
 
         [Header("Settings")]
-        [SerializeField] private int minUsernameLength = 3;
-        [SerializeField] private int minPasswordLength = 6;
+        [SerializeField] private int _minUsernameLength = 3;
+        [SerializeField] private int _minPasswordLength = 6;
 
-        // The ViewModel is created per-panel-instance. If you want a globally
-        // shared ViewModel, inject it via OnShow(args) instead.
-        private LoginViewModel vm;
+        private LoginViewModel _vm;
 
         protected override void OnInit()
         {
-            vm = new LoginViewModel();
-            vm.MinUsernameLength = minUsernameLength;
-            vm.MinPasswordLength = minPasswordLength;
+            _vm = new LoginViewModel();
+            _vm.MinUsernameLength = _minUsernameLength;
+            _vm.MinPasswordLength = _minPasswordLength;
 
-            // VM → View binding
-            vm.PropertyChanged += OnVMPropertyChanged;
+            _vm.PropertyChanged += OnVMPropertyChanged;
 
-            // View → VM binding
-            usernameInput.onValueChanged.AddListener(v => vm.Username = v);
-            passwordInput.onValueChanged.AddListener(v => vm.Password = v);
-            loginButton.onClick.AddListener(() => vm.Login());
+            _usernameInput.onValueChanged.AddListener(v => _vm.Username = v);
+            _passwordInput.onValueChanged.AddListener(v => _vm.Password = v);
+            _loginButton.onClick.AddListener(() => _vm.Login());
         }
 
         protected override void OnShow(object args)
         {
-            vm.ClearInputs();
+            _vm.ClearInputs();
+            if (args is string message && message.Length > 0)
+                _vm.ShowFailure(message);
             RefreshAll();
-            vm.SubscribeToEvents();
+            _vm.SubscribeToEvents();
         }
 
         protected override void OnHide()
         {
-            // No-op. ViewModel state is preserved for cache/re-open scenarios.
+
         }
 
         protected override void OnCleanup()
         {
-            vm.UnsubscribeFromEvents();
-            vm.PropertyChanged -= OnVMPropertyChanged;
+            _vm.UnsubscribeFromEvents();
+            _vm.PropertyChanged -= OnVMPropertyChanged;
 
-            loginButton.onClick.RemoveAllListeners();
-            usernameInput.onValueChanged.RemoveAllListeners();
-            passwordInput.onValueChanged.RemoveAllListeners();
+            _loginButton.onClick.RemoveAllListeners();
+            _usernameInput.onValueChanged.RemoveAllListeners();
+            _passwordInput.onValueChanged.RemoveAllListeners();
         }
 
-        // ===== VM → View refresh =====
-
-        /// <summary>
-        /// Called whenever any ViewModel property changes.
-        /// Maps property names to individual UI updates.
-        /// </summary>
         private void OnVMPropertyChanged(string propertyName)
         {
             switch (propertyName)
             {
-                case nameof(vm.StatusText):
-                case nameof(vm.HasError):
-                    statusText.text = vm.StatusText;
-                    statusText.color = vm.HasError
+                case nameof(_vm.StatusText):
+                case nameof(_vm.HasError):
+                    _statusText.text = _vm.StatusText;
+                    _statusText.color = _vm.HasError
                         ? new Color(1f, 0.4f, 0.4f)
                         : new Color(0.4f, 1f, 0.4f);
                     break;
 
-                case nameof(vm.IsSubmitting):
+                case nameof(_vm.IsSubmitting):
                     ApplyInteractable();
                     break;
 
-                case nameof(vm.Username):
-                case nameof(vm.Password):
-                    // Could update CanSubmit visual here if desired
+                case nameof(_vm.Username):
+                case nameof(_vm.Password):
+
                     break;
             }
         }
 
-        /// <summary>
-        /// Full UI refresh (called once on OnShow to sync everything).
-        /// </summary>
         private void RefreshAll()
         {
-            statusText.text = vm.StatusText;
-            statusText.color = vm.HasError
+            _statusText.text = _vm.StatusText;
+            _statusText.color = _vm.HasError
                 ? new Color(1f, 0.4f, 0.4f)
                 : new Color(0.4f, 1f, 0.4f);
             ApplyInteractable();
@@ -104,10 +90,10 @@ namespace BigWorldClient.UI.Panels
 
         private void ApplyInteractable()
         {
-            bool interactable = !vm.IsSubmitting;
-            usernameInput.interactable = interactable;
-            passwordInput.interactable = interactable;
-            loginButton.interactable = interactable;
+            bool interactable = !_vm.IsSubmitting;
+            _usernameInput.interactable = interactable;
+            _passwordInput.interactable = interactable;
+            _loginButton.interactable = interactable;
         }
     }
 }

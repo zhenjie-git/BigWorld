@@ -2,95 +2,76 @@ using UnityEngine;
 
 namespace BigWorldClient.UI.Panels
 {
-    /// <summary>
-    /// Pure C# ViewModel for the login panel. Contains all data, validation, and
-    /// event publishing — no Unity UI dependencies. Can be unit tested independently.
-    /// </summary>
+
     public class LoginViewModel : Framework.BindableObject
     {
-        // ===== Backing fields =====
-        private string username = "";
-        private string password = "";
-        private string statusText = "";
-        private bool hasError;
-        private bool isSubmitting;
 
-        // ===== Config =====
+        private string _username = "";
+        private string _password = "";
+        private string _statusText = "";
+        private bool _hasError;
+        private bool _isSubmitting;
+
         public int MinUsernameLength { get; set; } = 3;
         public int MinPasswordLength { get; set; } = 6;
 
-        // ===== Observable properties =====
-
         public string Username
         {
-            get { return username; }
+            get { return _username; }
             set
             {
-                SetProperty(ref username, value);
-                // When either input changes, clear any stale error
-                if (hasError) ClearStatus();
+                SetProperty(ref _username, value);
+
+                if (_hasError) ClearStatus();
             }
         }
 
         public string Password
         {
-            get { return password; }
+            get { return _password; }
             set
             {
-                SetProperty(ref password, value);
-                if (hasError) ClearStatus();
+                SetProperty(ref _password, value);
+                if (_hasError) ClearStatus();
             }
         }
 
         public string StatusText
         {
-            get { return statusText; }
-            set { SetProperty(ref statusText, value); }
+            get { return _statusText; }
+            set { SetProperty(ref _statusText, value); }
         }
 
         public bool HasError
         {
-            get { return hasError; }
-            set { SetProperty(ref hasError, value); }
+            get { return _hasError; }
+            set { SetProperty(ref _hasError, value); }
         }
 
         public bool IsSubmitting
         {
-            get { return isSubmitting; }
-            set { SetProperty(ref isSubmitting, value); }
+            get { return _isSubmitting; }
+            set { SetProperty(ref _isSubmitting, value); }
         }
 
-        // ===== Computed properties =====
-
-        /// <summary>
-        /// Whether the login button should be clickable right now.
-        /// True when all inputs are non-empty and not currently submitting.
-        /// </summary>
         public bool CanSubmit
         {
             get
             {
-                return !isSubmitting
-                    && !string.IsNullOrWhiteSpace(username);
+                return !_isSubmitting
+                    && !string.IsNullOrWhiteSpace(_username);
             }
         }
 
-        // ===== Event subscription state =====
-        private bool subscribedToEvents;
+        private bool _subscribedToEvents;
 
-        // ===== Commands =====
-
-        /// <summary>
-        /// Validates input and publishes a LoginAttemptEvent if valid.
-        /// Call this from the View's login button click handler.
-        /// </summary>
         public void Login()
         {
-            string usernameTrimmed = username.Trim();
+            string usernameTrimmed = _username.Trim();
 
-            if (string.IsNullOrWhiteSpace(username))
+            if (string.IsNullOrWhiteSpace(_username))
             {
-                ShowError("Please enter a username");
+                ShowError("Please enter a _username");
                 return;
             }
             if (usernameTrimmed.Length < MinUsernameLength)
@@ -104,33 +85,32 @@ namespace BigWorldClient.UI.Panels
             Events.UIEventBus.Publish(new Events.LoginAttemptEvent
             {
                 Username = usernameTrimmed,
-                Password = password
+                Password = _password
             });
 
             {}
         }
 
-        // ===== Event subscription =====
-
         public void SubscribeToEvents()
         {
-            if (subscribedToEvents) return;
-            Events.UIEventBus.Subscribe<Events.LoginResultEvent>(this, OnLoginResult);
-            subscribedToEvents = true;
+            if (_subscribedToEvents) return;
+            Events.UIEventBus.Subscribe<Events.LoginResultEvent>(OnLoginResult);
+            _subscribedToEvents = true;
         }
 
         public void UnsubscribeFromEvents()
         {
-            if (!subscribedToEvents) return;
-            Events.UIEventBus.Unsubscribe<Events.LoginResultEvent>(this);
-            subscribedToEvents = false;
+            if (!_subscribedToEvents) return;
+            Events.UIEventBus.Unsubscribe<Events.LoginResultEvent>(OnLoginResult);
+            _subscribedToEvents = false;
         }
 
-        // ===== Reset =====
+        public void ShowFailure(string message)
+        {
+            StatusText = message;
+            HasError = true;
+        }
 
-        /// <summary>
-        /// Reset all fields for a fresh show of the panel.
-        /// </summary>
         public void ClearInputs()
         {
             Username = "";
@@ -138,8 +118,6 @@ namespace BigWorldClient.UI.Panels
             ClearStatus();
             IsSubmitting = false;
         }
-
-        // ===== Private helpers =====
 
         private void OnLoginResult(Events.LoginResultEvent evt)
         {

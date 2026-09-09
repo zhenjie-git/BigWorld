@@ -3,10 +3,7 @@ using BigWorldClient.Network.Protocol;
 
 namespace BigWorldClient
 {
-    /// <summary>
-    /// 确定性位移/落地辅助函数。状态类在 TickUpdate 里调用这些函数推进 SimEntity，
-    /// 函数只返回“需要切换到哪个状态”，不直接改状态机。
-    /// </summary>
+
     public static class MovementSim
     {
         private const int MoveApplied = 0;
@@ -162,7 +159,7 @@ namespace BigWorldClient
         public static MoveTransitionRequest StopUpdate(ref MoveSimEntity e, SimContext ctx, long dtMs, long nowMs)
         {
             if (!ctx.Displacement.TryGetState(e.State, out SimMoveState entry) || entry.Curves.Count == 0)
-                return MoveTransitionRequest.None; // HardStop 等待客户端后续协议
+                return MoveTransitionRequest.None;
 
             double norm = OneShotNorm(e, entry.DurationSeconds, nowMs);
             double a = e.CurveNorm;
@@ -193,7 +190,6 @@ namespace BigWorldClient
             }
 
             double norm = OneShotNorm(e, entry.DurationSeconds, nowMs);
-            if (norm < 0.02 || norm > 0.98)
             double a = e.CurveNorm;
             SimCurve curveX = GetCurve(entry, "x");
             SimCurve curveZ = GetCurve(entry, "z");
@@ -225,7 +221,6 @@ namespace BigWorldClient
 
             e.Y = newY;
             e.Airborne = true;
-            if (norm >= 1)
             return norm >= 1
                 ? new MoveTransitionRequest(MoveState.MoveJumpDown, MoveTransitionReason.StateCompleted)
                 : MoveTransitionRequest.None;
@@ -239,7 +234,6 @@ namespace BigWorldClient
             }
 
             double norm = OneShotNorm(e, entry.DurationSeconds, nowMs);
-            if (norm < 0.02 || norm > 0.98)
             double a = e.CurveNorm;
             if (norm < a)
                 return new MoveTransitionRequest(MoveState.MoveFall, MoveTransitionReason.StateCompleted);

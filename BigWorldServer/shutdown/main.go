@@ -1,6 +1,3 @@
-// shutdown is a tiny CLI that tells central to start a graceful shutdown.
-// It reuses the common codec, so the protocol framing lives in exactly one
-// place (common) rather than being hand-encoded in stop.bat.
 package main
 
 import (
@@ -35,7 +32,6 @@ func main() {
 		log.Fatalf("failed to send ShutdownReq: %v", err)
 	}
 
-	// Read the one-shot confirmation. Central replies before it starts draining.
 	_ = conn.SetReadDeadline(time.Now().Add(5 * time.Second))
 	msg, err := common.ReadMessage(conn)
 	if err != nil {

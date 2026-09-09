@@ -70,6 +70,7 @@ message LoginRsp {
   double z            = 9;
   double width        = 10;
   double height       = 11;
+  string scene_id     = 12;
 }
 
 message GatewayAssignReq {
@@ -149,6 +150,7 @@ message EnterSceneNotify {
   double z         = 4;
   double width     = 5;
   double height    = 6;
+  string scene_id  = 7;
 }
 
 // --- Session / logout ---
@@ -198,6 +200,7 @@ message CreateEntityRsp {
   double width     = 6;
   double height    = 7;
   string message   = 8;
+  string scene_id  = 9;
 }
 
 message DestroyEntityReq {
@@ -369,6 +372,7 @@ message LoadPlayerRsp {
   double x         = 4;
   double z         = 5;
   string message   = 6;
+  string scene_id  = 7;
 }
 
 // 玩家保存（world -> dbproxy）。players 为批量，destroy 存单条、autosave 存全量。
@@ -377,6 +381,7 @@ message PlayerData {
   string account   = 2;
   double x         = 3;
   double z         = 4;
+  string scene_id  = 5;
 }
 
 message SavePlayerReq {
@@ -411,4 +416,10 @@ message ShutdownAck {
 
 message ServerShutdownNotify {
   string message = 1;
+}
+
+// IdentifyReq is the first message a server sends on any server-to-server
+// connection it initiates, so the accepting side knows the peer's type.
+message IdentifyReq {
+  ServerType server_type = 1;
 }

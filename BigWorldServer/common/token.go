@@ -18,7 +18,6 @@ var (
 	tokenVerifyKey *ecdsa.PublicKey
 )
 
-// InitTokenVerifier parses an ECDSA public key PEM string for token verification.
 func InitTokenVerifier(pemStr string) error {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
@@ -36,8 +35,6 @@ func InitTokenVerifier(pemStr string) error {
 	return nil
 }
 
-// InitTokenSigner parses an ECDSA private key PEM string for token signing.
-// Only the login server should call this.
 func InitTokenSigner(pemStr string) error {
 	block, _ := pem.Decode([]byte(pemStr))
 	if block == nil {
@@ -51,7 +48,6 @@ func InitTokenSigner(pemStr string) error {
 	return nil
 }
 
-// GenerateToken creates an ECDSA-signed token: nonce:account:timestamp:sig.
 func GenerateToken(account string) (string, error) {
 	if tokenSignKey == nil {
 		return "", fmt.Errorf("token sign key not initialized")
@@ -76,7 +72,6 @@ func GenerateToken(account string) (string, error) {
 	return payload + ":" + hex.EncodeToString(sig), nil
 }
 
-// VerifyToken parses and validates an ECDSA-signed token, returning the account name.
 func VerifyToken(token string) (string, error) {
 	if tokenVerifyKey == nil {
 		return "", fmt.Errorf("token verify key not initialized")

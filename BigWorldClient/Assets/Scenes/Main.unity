@@ -123,6 +123,17 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!114 &145791374 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5943693575078928851, guid: 9734ed0c259300942835664554b47112, type: 3}
+  m_PrefabInstance: {fileID: 3091457314069591096}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -217,6 +228,22 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 50, y: -30, z: 0}
+--- !u!114 &723645301 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 3121205835986391365, guid: 9734ed0c259300942835664554b47112, type: 3}
+  m_PrefabInstance: {fileID: 3091457314069591096}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!4 &878495730 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4934897831512089448, guid: 9734ed0c259300942835664554b47112, type: 3}
+  m_PrefabInstance: {fileID: 3091457314069591096}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &963194225
 GameObject:
   m_ObjectHideFlags: 0
@@ -351,45 +378,19 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   <DefaultHorizontalWaitTime>k__BackingField: 0
   <DefaultHorizontalRecenteringTime>k__BackingField: 4
-  backwardsRecenteringData:
-  - <MinimumAnge>k__BackingField: 0
-    <MaximumAnge>k__BackingField: 25
-    <WaitTime>k__BackingField: 0.5
-    <RecenteringTime>k__BackingField: 4
-  - <MinimumAnge>k__BackingField: 25
-    <MaximumAnge>k__BackingField: 60
-    <WaitTime>k__BackingField: 0.3
-    <RecenteringTime>k__BackingField: 2.5
-  - <MinimumAnge>k__BackingField: 60
-    <MaximumAnge>k__BackingField: 90
-    <WaitTime>k__BackingField: 0
-    <RecenteringTime>k__BackingField: 1.5
-  sidewaysRecenteringData:
-  - <MinimumAnge>k__BackingField: 0
-    <MaximumAnge>k__BackingField: 20
-    <WaitTime>k__BackingField: -1
-    <RecenteringTime>k__BackingField: -1
-  - <MinimumAnge>k__BackingField: 20
-    <MaximumAnge>k__BackingField: 50
-    <WaitTime>k__BackingField: 0.5
-    <RecenteringTime>k__BackingField: 3
-  - <MinimumAnge>k__BackingField: 50
-    <MaximumAnge>k__BackingField: 90
-    <WaitTime>k__BackingField: 0.3
-    <RecenteringTime>k__BackingField: 2
-  target: {fileID: 0}
-  orbitSensitivity: 2
-  minPitch: -30
-  maxPitch: 80
-  defaultDistance: 6
-  minDistance: 1
-  maxDistance: 10
-  zoomSensitivity: 0.1
-  zoomSmoothing: 4
-  obstacleMask:
+  _target: {fileID: 0}
+  _orbitSensitivity: 2
+  _minPitch: -30
+  _maxPitch: 80
+  _defaultDistance: 6
+  _minDistance: 1
+  _maxDistance: 10
+  _zoomSensitivity: 0.1
+  _zoomSmoothing: 4
+  _obstacleMask:
     serializedVersion: 2
     m_Bits: 0
-  obstacleCameraRadius: 0.2
+  _obstacleCameraRadius: 0.2
 --- !u!1 &1077644839
 GameObject:
   m_ObjectHideFlags: 0
@@ -419,14 +420,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dd83d1773d5162547a20a21d721cc582, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  playerConfig: {fileID: 11400000, guid: 13617ac39b7d91b41a96abf076efcd9a, type: 2}
-  loginServerHost: 127.0.0.1
-  loginServerPort: 9200
-  entrySceneName: Login
-  mainCitySceneName: MainCity
-  loginPanelId: login
-  playerPrefabPath: Models/Robot
-  spawnPointName: SpawnPoint
+  _loginServerHost: 127.0.0.1
+  _loginServerPort: 9200
+  _entrySceneName: Login
+  _playerPrefabPath: Models/Robot
+  _spawnPointName: SpawnPoint
 --- !u!4 &1077644841
 Transform:
   m_ObjectHideFlags: 0
@@ -447,6 +445,28 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4615224336690038502, guid: 9734ed0c259300942835664554b47112, type: 3}
   m_PrefabInstance: {fileID: 3091457314069591096}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1144748855 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5835926624742022864, guid: 9734ed0c259300942835664554b47112, type: 3}
+  m_PrefabInstance: {fileID: 3091457314069591096}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1423438113 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4882170243816030646, guid: 9734ed0c259300942835664554b47112, type: 3}
+  m_PrefabInstance: {fileID: 3091457314069591096}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d40a3eca5ecaf49a0eb77a9ffc90f2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!850595691 &1620645330
 LightingSettings:
   m_ObjectHideFlags: 0
@@ -767,8 +787,32 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _cacheRoot
+      value: 
+      objectReference: {fileID: 878495730}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
       propertyPath: panelRegistry
       value: 
       objectReference: {fileID: 11400000, guid: 226d2e61f9e926c4eb9840a19f881de4, type: 2}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _layerControllers.Array.size
+      value: 4
+      objectReference: {fileID: 0}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _layerControllers.Array.data[0]
+      value: 
+      objectReference: {fileID: 723645301}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _layerControllers.Array.data[1]
+      value: 
+      objectReference: {fileID: 145791374}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _layerControllers.Array.data[2]
+      value: 
+      objectReference: {fileID: 1423438113}
+    - target: {fileID: 9131269145899594040, guid: 9734ed0c259300942835664554b47112, type: 3}
+      propertyPath: _layerControllers.Array.data[3]
+      value: 
+      objectReference: {fileID: 1144748855}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 9734ed0c259300942835664554b47112, type: 3}

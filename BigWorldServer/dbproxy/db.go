@@ -11,9 +11,6 @@ import (
 	"github.com/go-sql-driver/mysql"
 )
 
-// playerDB wraps a *sql.DB connection pool to the MySQL backend.
-// dbproxy is the only process that touches MySQL; world and login reach it
-// over TCP via the messages defined in common/pb.
 type playerDB struct {
 	db *sql.DB
 }
@@ -24,6 +21,7 @@ const (
   account     VARCHAR(64)  NOT NULL UNIQUE,
   x           DOUBLE       NOT NULL DEFAULT 0,
   z           DOUBLE       NOT NULL DEFAULT 0,
+  scene       VARCHAR(64)  NOT NULL DEFAULT '',
   updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
@@ -34,7 +32,7 @@ const (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 )
 
-// openDB parses the DSN, creates the database if it does not yet exist,
+// OpenDB parses the DSN, creates the database if it does not yet exist,
 // opens a pool, verifies connectivity, and ensures the schema + seed accounts
 // are present. This lets dbproxy start cleanly on a fresh MySQL instance
 // without any manual SQL setup.
@@ -98,6 +96,11 @@ func EnsureSchema(db *sql.DB) error {
 			return fmt.Errorf("migrate players.y -> z: %w", err)
 		}
 	}
+	if _, err := db.Exec(`ALTER TABLE players ADD COLUMN scene VARCHAR(64) NOT NULL DEFAULT ''`); err != nil {
+		if !IsColumnExists(err) {
+			return fmt.Errorf("migrate players add scene: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -107,26 +110,31 @@ func IsColumnGone(err error) bool {
 		strings.Contains(err.Error(), "check that column/key exists")
 }
 
+func IsColumnExists(err error) bool {
+	return strings.Contains(err.Error(), "1060") ||
+		strings.Contains(err.Error(), "Duplicate column")
+}
+
 // LoadPlayer returns the saved player for an account. If the account has no
 // row yet, a new one is inserted (allocating a stable AUTO_INCREMENT player_id)
 // and found is false so the caller spawns at a random position.
-func (p *playerDB) LoadPlayer(account string) (found bool, playerID uint64, x, z float64, err error) {
-	row := p.db.QueryRow("SELECT player_id, x, z FROM players WHERE account = ?", account)
-	switch e := row.Scan(&playerID, &x, &z); e {
+func (p *playerDB) LoadPlayer(account string) (found bool, playerID uint64, x, z float64, scene string, err error) {
+	row := p.db.QueryRow("SELECT player_id, x, z, scene FROM players WHERE account = ?", account)
+	switch e := row.Scan(&playerID, &x, &z, &scene); e {
 	case nil:
-		return true, playerID, x, z, nil
+		return true, playerID, x, z, scene, nil
 	case sql.ErrNoRows:
-		res, e := p.db.Exec("INSERT INTO players (account, x, z) VALUES (?, 0, 0)", account)
+		res, e := p.db.Exec("INSERT INTO players (account, x, z, scene) VALUES (?, 0, 0, '')", account)
 		if e != nil {
-			return false, 0, 0, 0, fmt.Errorf("insert new player: %w", e)
+			return false, 0, 0, 0, "", fmt.Errorf("insert new player: %w", e)
 		}
 		id, e := res.LastInsertId()
 		if e != nil {
-			return false, 0, 0, 0, fmt.Errorf("last insert id: %w", e)
+			return false, 0, 0, 0, "", fmt.Errorf("last insert id: %w", e)
 		}
-		return false, uint64(id), 0, 0, nil
+		return false, uint64(id), 0, 0, "", nil
 	default:
-		return false, 0, 0, 0, fmt.Errorf("load player: %w", e)
+		return false, 0, 0, 0, "", fmt.Errorf("load player: %w", e)
 	}
 }
 
@@ -140,10 +148,10 @@ func (p *playerDB) SavePlayers(players []*common.PlayerData) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	const stmt = "INSERT INTO players (player_id, account, x, z) VALUES (?, ?, ?, ?) " +
-		"ON DUPLICATE KEY UPDATE x = VALUES(x), z = VALUES(z)"
+	const stmt = "INSERT INTO players (player_id, account, x, z, scene) VALUES (?, ?, ?, ?, ?) " +
+		"ON DUPLICATE KEY UPDATE x = VALUES(x), z = VALUES(z), scene = VALUES(scene)"
 	for _, pl := range players {
-		if _, err := tx.Exec(stmt, pl.PlayerId, pl.Account, pl.X, pl.Z); err != nil {
+		if _, err := tx.Exec(stmt, pl.PlayerId, pl.Account, pl.X, pl.Z, pl.SceneId); err != nil {
 			tx.Rollback()
 			return fmt.Errorf("upsert player %d: %w", pl.PlayerId, err)
 		}
