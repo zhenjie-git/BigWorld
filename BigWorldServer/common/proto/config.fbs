@@ -1,0 +1,76 @@
+namespace BigWorldClient.Network.Protocol;
+
+table CameraRecenteringEntry {
+  minimum_angle: float;
+  maximum_angle: float;
+  wait_time: float;
+  recentering_time: float;
+}
+
+table PlayerConfigMsg {
+  sprint_to_run_time: float;
+  fall_speed_limit: float;
+  gravity: float;
+  collider_height: float;
+  collider_center_y: float;
+  collider_radius: float;
+  step_height_percentage: float;
+  voxel_max_step_height: float;
+  camera_backwards: [CameraRecenteringEntry];
+  camera_sideways: [CameraRecenteringEntry];
+}
+root_type PlayerConfigMsg;
+
+table StateConfigEntry {
+  state: string;
+  animation_name: string;
+  curve_x: string;
+  curve_y: string;
+  curve_z: string;
+  duration_seconds: float;
+  total_ticks: long;
+  loop: long;
+  max_per_frame: float;
+}
+table StateConfigMsg {
+  entries: [StateConfigEntry];
+}
+root_type StateConfigMsg;
+
+table TransitionEntry {
+  source: string (required);
+  allowed_targets: [string];
+}
+table TransitionTableMsg {
+  entries: [TransitionEntry];
+}
+root_type TransitionTableMsg;
+
+table PanelConfigEntry {
+  panel_id: string;
+  layer: string;
+  cacheable: bool;
+  max_cache_count: long;
+  close_by_back: bool;
+}
+table PanelConfigMsg {
+  entries: [PanelConfigEntry];
+}
+root_type PanelConfigMsg;
+
+table SceneConfigEntry {
+  scene_id: string;
+  spawn_x: float;
+  spawn_z: float;
+  is_default: bool;
+}
+table SceneConfigMsg {
+  entries: [SceneConfigEntry];
+}
+root_type SceneConfigMsg;
+
+table CurveMsg {
+  t: [double];
+  v: [double];
+}
+root_type CurveMsg;

@@ -3,64 +3,85 @@
 客户端与服务器的移动手感参数、状态迁移表、位移曲线、体素数据统一从本目录读取。
 本目录里既有“录入源”，也有“生成产物”：
 
-- **状态迁移表**：录入源是 `StateTransitionTable/state_transition_table.xlsx`，同目录的 `state_transition_table.json` 是导表生成物。
-- **玩家移动参数**：`Player/player_config.xlsx` 管理服务器读取的 9 个数值字段，曲线/旋转/动画名等 Unity 字段仍由 `Player.asset` 维护，合并生成 `Player/player_config.json`。
-- **位移曲线、体素数据**：由 Unity 工具生成。
+- **状态迁移表**：录入源是 `StateTransitionTable/state_transition_table.xlsx`，同目录的 `state_transition_table.bytes` 是导表生成物（FlatBuffers 二进制）。
+- **状态配置表**：录入源是 `StateConfig/state_config.xlsx`（动画名/曲线/时长/每帧上限），按端生成 `state_config.bytes`（FlatBuffers 二进制，服务器字段）与客户端 Resources 副本。
+- **曲线数据**：`Curves/` 下每条曲线一个 JSON（关键点数组），由导表管线从客户端动画剪辑烘焙，双端按 state_config 里的路径读取。
+- **玩家移动参数**：录入源是 `Player/player_config.xlsx`（服务器 6 个数值字段 + 客户端数值 + 相机回正，共 32 个），生成 `Player/player_config.bytes`（服务器读）与客户端 `Resources/Config/PlayerConfig.bytes`。
+- **体素数据**：由 Unity 工具生成。
 
-不要手改 `StateTransitionTable/state_transition_table.json` 和 `Player/player_config.json`，也不要直接改客户端 `.asset` 或服务器 `config.json` 里的移动参数。
+不要手改任何 `.bytes` 生成物与两端协议生成代码，它们由 Excel + 管线产出。
 
 ## 目录结构
 
 | 文件 | 内容 |
 |---|---|
 | `StateTransitionTable/state_transition_table.xlsx` | 状态迁移表 Excel 录入源（矩阵：行=源状态，列=目标状态，交叉格填 `1` 表示允许） |
-| `StateTransitionTable/state_transition_table.json` | 状态迁移表（由 Excel 导表生成，服务器读） |
-| `Player/player_config.xlsx` | 玩家配置 Excel 录入源（仅服务器实际读取的 9 个数值字段） |
-| `Player/player_config.json` | 完整玩家配置（Excel 服务器字段 + Unity 曲线/旋转/动画字段合并生成） |
-| `displacement_curves.json` | 位移曲线导出（服务器端逐帧位移上限，`tools/export_displacement` 生成） |
+| `StateTransitionTable/state_transition_table.bytes` | 状态迁移表（由 Excel 导表生成，服务器读） |
+| `StateConfig/state_config.xlsx` | 状态配置表 Excel 录入源（每行=状态：动画名 + 三轴位移曲线路径） |
+| `StateConfig/state_config.bytes` | 状态配置表 server 字段（FlatBuffers，含曲线路径 + 时长 + max_per_frame，Go 读取） |
+| `Curves/` | 位移曲线 FlatBuffers 二进制（每条曲线一个 .bytes，双端按 state_config 路径读取；客户端副本在 `Assets/Resources/Curves/`） |
+| `Player/player_config.xlsx` | 玩家配置 Excel 录入源（仅服务器实际读取的 6 个数值字段） |
+| `Player/player_config.bytes` | 数值玩家配置（由 Excel 导表生成，服务器读） |
 | `MainCity_voxels.bytes` | 体素地形数据（Unity `Tools > Voxel Generator` 生成，服务器读取） |
 | `README.md` | 本文档 |
+
+## 通用导表管线（表头驱动）
+
+三张表统一为 3 行表头格式：第 1 行=字段名、第 2 行=数据类型（`float/int/string/bool/string_array/recentering`）、第 3 行=端（`server/client/both`）。导出时按端把字段分流到服务器与客户端两份 FlatBuffers 二进制（`.bytes`，零拷贝读取）；`recentering` 是自定义复合类型（紧凑数组 `0,25,0.5,4;...`）。公共管线（`Assets/Config/Editor/`）：`ConfigTableParser`（按类型逐列解析）+ `ConfigTableExporter`（反射填充 → FlatBufferBuilder 打包）+ `ConfigTableDefinitions`（三张表的声明式定义与校验钩子）。新增配置表 = 在 Definitions 加一份定义 + 执行一次“生成配置协议代码”。
+
+入口：Unity 菜单 `BigWorld/Config/配置导出中心`（打开Excel / 导出指定表 / 一键导出全部；状态配置卡片可勾选“生成位移曲线”）。
+
+**协议代码生成**：配置二进制为 FlatBuffers 格式（`Common/proto/config.fbs`，由三张表表头自动生成）。改了表头（加列/改类型/调列序）后执行 Unity 菜单 `BigWorld/Config/生成配置协议代码`：重新生成 config.fbs 并调用 `.tools/flatc/flatc.exe` 产出两端访问代码（C# `Assets/Scripts/Network/Generated/` + Go `Common/pb/`），随后重新导出全部表。列序即字段布局，调列序必须重新生成协议并重导。
 
 ## 状态迁移表读写流程（Excel 源）
 
 ```
 编辑 GameConfig/StateTransitionTable/state_transition_table.xlsx   (唯一录入源)
         │
-        └─ Unity 菜单 BigWorld/Config/从Excel导出状态迁移表
-           ├─ 生成 GameConfig/StateTransitionTable/state_transition_table.json（服务器读）
-           └─ 生成 Assets/Resources/Config/StateTransitionTable.json（客户端读）
+        └─ Unity 菜单 BigWorld/Config/配置导出中心 → 导出"状态迁移表"
+           ├─ 生成 GameConfig/StateTransitionTable/state_transition_table.bytes（服务器读）
+           └─ 生成 Assets/Resources/Config/StateTransitionTable.bytes（客户端读）
 ```
 
-导表工具会强校验：工作表名必须为 `state_transition_table`；行/列的 13 个状态名必须与客户端
-`MoveTransitionTable.StateNames`（并与服务器 `StateNameToMoveState` 同步维护）完全一致，缺一个或多一个都会失败；
-交叉格只接受 `1 / x / X / y / Y / √ / 是 / true / yes`（允许）或留空、`0 / false / no / 否 / - / ×`（禁止）；
-矩阵内不要使用公式，也不要在矩阵外随意填写内容。
+矩阵格式：行=源状态（A 列），列=目标状态（B1 起的列名即目标状态名），交叉格标记允许迁移——
+在通用管线里它就是“每行一个源状态、13 个以目标状态命名的 bool 列”的行式表。
+允许标记：`1 / x / X / y / Y / √ / 是 / true / yes`；禁止：留空、`0 / - / × / 否 / false / no`。
+导表工具会强校验：行列的 13 个状态名与客户端 `MoveTransitionTable.StateNames`（并与服务器
+`StateNameToMoveState` 同步维护）完全一致，缺一个或多一个都会失败；矩阵内部自动转换为
+`entries`（source + allowed_targets）结构输出 JSON。
 
 Excel 源文件与两份生成 JSON 都纳入版本管理；改完 Excel 后请先执行上面的导出菜单再提交。
 
-## player_config 读写流程（Excel + Unity 混合）
+## 状态配置表读写流程（Excel 源）
 
 ```
-Unity Player.asset（曲线/旋转/动画名/资产路径等 Unity 字段）
-        │  Unity 菜单 BigWorld/Config/导出到共享文件夹
-        ▼
-完整 JSON 骨架 ──＋── GameConfig/Player/player_config.xlsx（9 个服务器数值字段）
-        │                Unity 菜单 BigWorld/Config/从Excel导出玩家配置
-        ▼
-GameConfig/Player/player_config.json（合并生成物，禁止手改）
+编辑 GameConfig/StateConfig/state_config.xlsx   (唯一录入源)
         │
-        ├─ 客户端：Unity 菜单 BigWorld/Config/从共享文件夹导入
-        │           → 刷新 Assets/Data/Player.asset
-        │
-        └─ 服务器：重启时直接读 ../GameConfig/Player/player_config.json
+        └─ Unity 菜单 BigWorld/Config/配置导出中心 → 导出"状态配置"
+           ├─ [勾选"生成位移曲线"] 动画剪辑 → Curves/*.bytes（GameConfig + 客户端 Resources 双份）→ 路径回写 xlsx
+           ├─ 生成 GameConfig/StateConfig/state_config.bytes（server 字段，Go 读）
+           └─ 生成 Assets/Resources/Config/StateConfig.bytes（client 字段，运行时读）
 ```
 
-- `Player/player_config.xlsx` 只允许包含服务器实际读取的 9 个字段：`grounded.base_speed`、`grounded.sprint.speed_modifier`、`grounded.sprint.sprint_to_run_time`、`grounded.roll.speed_modifier`、`airborne.fall.fall_speed_limit`、`airborne.fall.gravity`、`collider.height`、`collider.center_y`、`voxel_max_step_height`。
-- 其他玩家配置仍在 Unity `Player.asset` 里维护；Unity 改完非 Excel 字段后先执行 `导出到共享文件夹`，再执行 `从Excel导出玩家配置` 合并。
-- `从Excel导出玩家配置` 会在写 JSON 后自动刷新客户端 `Player.asset`。
+每行配置一个移动状态（13 个不能增删）：`state`（两端）、`animation_name`（客户端，`Resources/Animations/Player`
+下的 AnimationClip 名）、`curve_x/y/z`（两端，曲线 JSON 相对路径如 `Curves/Walk/Walk_x`，无曲线的状态留空）、
+`duration_seconds`（两端，动画时长）、`total_ticks`/`loop`（客户端）、`max_per_frame`（服务器，无曲线状态的每帧位移上限）。
+运行时客户端由 `StateConfigTable` 按路径零拷贝读取曲线 `.bytes`（`SimCurve` 直接包裹 FlatBuffers 访问器，无关键点拷贝）；
+Go 服务器读 server `.bytes` 并按路径加载 `GameConfig/Curves` 下的曲线文件组装位移表。
 
-**位移曲线**（服务器端）：Unity 改完曲线/动画后，菜单 `BigWorld/Config/导出位移曲线到共享文件夹`，
-结果直接写入 `GameConfig/displacement_curves.json`（schema 与旧 `tools/export_displacement` Go 工具一致）。
+## player_config 读写流程（Excel 源）
+
+```
+编辑 GameConfig/Player/player_config.xlsx   (唯一录入源，32 个字段)
+        │
+        └─ Unity 菜单 BigWorld/Config/配置导出中心 → 导出"玩家配置"
+           ├─ 生成 GameConfig/Player/player_config.bytes（服务器读）
+           └─ 生成 Assets/Resources/Config/PlayerConfig.bytes（客户端运行时读）
+```
+
+- `player_config.bytes` 为扁平一层结构：8 个标量键（`sprint_to_run_time`、`fall_speed_limit`、`gravity`、`collider_height`、`collider_center_y`、`collider_radius`、`step_height_percentage`、`voxel_max_step_height`）+ 2 个数组键（`camera_backwards`、`camera_sideways`，各 3 条角度区间）。Excel 共 10 行：标量各一行，相机回正各一行，值用紧凑数组形式（3 组“最小角,最大角,等待,时长”，分号分隔，如 `0,25,0.5,4;25,60,0.3,2.5;60,90,0,1.5`），不能增删。
+- 客户端不再使用 `Player.asset`：运行时由 `PlayerConfigTable.Load()` 从 `Resources/Config/PlayerConfig.bytes` 读取，与 `StateConfigTable`/`MoveTransitionTable` 的加载方式一致。
+
 
 **体素数据**：`Tools > Voxel Generator` 生成时默认输出到本目录（`GameConfig/MainCity_voxels.bytes`），
 并自动同步一份到客户端 `Assets/Resources/VoxelData/`（运行时 `Resources.Load` 加载，且只有客户端
@@ -68,25 +89,20 @@ GameConfig/Player/player_config.json（合并生成物，禁止手改）
 
 ## player_config 字段 ↔ 客户端类映射
 
-顶层段：`grounded` / `airborne` / `collider` / `slope` / `layers` / `voxel_max_step_height` / `animation`，对应 `PlayerConfig` 的 `GroundedData` / `AirborneData` / `DefaultColliderData` / `SlopeData` / `LayerData` / `VoxelMaxStepHeight` / `AnimationData`。
+JSON 扁平一层，键与 `PlayerConfigTable` 属性一一对应：
 
-- `grounded.base_speed` → `PlayerGroundedData.BaseSpeed`（基础移速）
-- `grounded.base_rotation.target_rotation_reach_time` → `PlayerRotationData.TargetRotationReachTime`（Vector3）
-- `grounded.walk/run/dash/sprint/roll` → 各 `Player*Data.SpeedModifier`；dash 还有连击时间、冷却等
-- `grounded.stop` → `PlayerStopData` 三档减速力 + 位移曲线
-- `grounded.slope_speed_angles` → `AnimationCurve`（2 个 keyframes）
-- `airborne.jump` / `airborne.fall` → `PlayerJumpData` / `PlayerFallData`（fall.gravity 是服务器重力参数）
-- `collider` → `DefaultColliderData`（服务器用它算落点/碰撞）
-- `slope` → `SlopeData`
-- `layers.ground_layer_bits` → `PlayerLayerData.GroundLayer`（LayerMask 的 int bits）
-- `voxel_max_step_height` → `PlayerConfig.VoxelMaxStepHeight`
-- `animation` → `PlayerAnimationData` 动画状态名
-- 曲线字段（`curve_x` 等）是**客户端工程内**资产相对路径（`Assets/Resources/Animations/DisplacementCurves/...`），客户端导入时按路径解析，服务器不读。
+- `sprint_to_run_time` → `SprintToRunTime`（冲刺自动转跑步时间）
+- `fall_speed_limit` / `gravity` → `FallSpeedLimit` / `Gravity`（gravity 是服务器重力参数）
+- `collider_height` / `collider_center_y` / `collider_radius` → `ColliderHeight` / `ColliderCenterY` / `ColliderRadius`（服务器用它算落点/碰撞）
+- `step_height_percentage` → `StepHeightPercentage`
+- `voxel_max_step_height` → `VoxelMaxStepHeight`
+- `camera_backwards` / `camera_sideways` → `BackwardsRecenteringData` / `SidewaysRecenteringData`（按相机俯仰角划分的回正区间，客户端专用）
+- 动画名与位移曲线路径不在本文件，见 `StateConfig/state_config.xlsx`。
 
 ## Player/player_config.xlsx 说明
 
 - 工作表名：`server_params`；表头固定为 `A1=字段路径`、`B1=值`、`C1=说明`。
-- 只允许出现上面列出的 9 个服务器字段，缺少、重复、未知字段都会导表失败；值必须是数字，并做基本范围校验（重力/下落限速/碰撞体高度必须 > 0 等）。
+- 只允许出现白名单内的字段（6 个服务器数值字段 + 24 个相机回正字段），缺少、重复、未知字段都会导表失败；值必须是数字，并做基本范围校验（重力/下落限速/碰撞体高度必须 > 0，相机角度 0-360 且下限 ≤ 上限等）。
 - 不要在该 sheet 的 A/B/C 三列之外填写内容。
 
 ## 服务器如何派生移动参数
@@ -96,27 +112,26 @@ GameConfig/Player/player_config.json（合并生成物，禁止手改）
 | 服务器字段 | 共享配置来源 |
 |---|---|
 | `max_step_height` | `voxel_max_step_height` |
-| `sprint_speed_mps` | `grounded.base_speed × grounded.sprint.speed_modifier` |
-| `roll_speed_mps` | `grounded.base_speed × grounded.roll.speed_modifier` |
-| `fall_gravity_mps2` | `airborne.fall.gravity` |
-| `fall_speed_limit_mps` | `airborne.fall.fall_speed_limit` |
-| `player_height` / `player_center_y` | `collider.height` / `collider.center_y` |
+| `sprint_to_run_time` | `sprint_to_run_time` |
+| `fall_gravity_mps2` | `gravity` |
+| `fall_speed_limit_mps` | `fall_speed_limit` |
+| `player_height` / `player_center_y` | `collider_height` / `collider_center_y` |
 
-> 服务器不再有移动参数副本：`sprint_speed_mps` 等值全部从 `Player/player_config.json` 派生，
-> `common/config.json` 里只保留 `player_config_file` / `state_transition_table_file` 路径。
+> 服务器不再有移动参数副本：`fall_gravity_mps2` 等值全部从 `Player/player_config.bytes` 派生，
+> `common/config.json` 里只保留 `player_config_file` / `state_config_file` / `state_transition_table_file` 路径（指向 .bytes）。
 > 上表中这些数值字段的录入源是 `Player/player_config.xlsx`；改完后执行
-> `BigWorld/Config/从Excel导出玩家配置`，服务器重启即生效。
+> `BigWorld/Config/配置导出中心` 导出玩家配置，服务器重启即生效。
 
 ## state_transition_table 说明
 
 录入源是 `StateTransitionTable/state_transition_table.xlsx` 的 `state_transition_table` 工作表（矩阵），
-`StateTransitionTable/state_transition_table.json` 与客户端 `Assets/Resources/Config/StateTransitionTable.json` 均为导表生成物，禁止手改。
+`StateTransitionTable/state_transition_table.bytes` 与客户端 `Assets/Resources/Config/StateTransitionTable.bytes` 均为导表生成物，禁止手改。
 
 状态名使用客户端 `MoveTransitionTable.StateNames` 定义的名字：`Idling, Walking, Running, Sprinting, LightStopping, MediumStopping, HardStopping, LightLanding, Rolling, Dashing, JumpUp, Falling, JumpDown`。
 
 - 客户端：`MoveTransitionTable.CanTransition(from, to)` 直接查生成到 `Resources` 的表。
 - 服务器：`world/gameconfig.go` 把名字映射成 `pb.MoveState`（`Idling→MOVE_IDLE`、`Walking→MOVE_WALK`…），非法迁移返回「非法状态转换」；加载时遇到未知状态名会直接报错，不再静默跳过。
-- 导表工具：Unity 菜单 `BigWorld/Config/从Excel导出状态迁移表`。
+- 导表工具：Unity 菜单 `BigWorld/Config/配置导出中心`。
 
 ## 注意
 
