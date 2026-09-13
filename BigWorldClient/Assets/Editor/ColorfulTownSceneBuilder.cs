@@ -87,6 +87,7 @@ namespace BigWorldClient
 
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             SetupEnvironment();
+            BuildCamera();
 
             GameObject root = new GameObject("ColorfulTown");
             BuildGround(root.transform);
@@ -99,12 +100,21 @@ namespace BigWorldClient
             MarkStatic(root);
 
             EditorSceneManager.SaveScene(scene, ScenePath);
+            AddToBuildSettings();
 
             CaptureShots();
             AssetDatabase.Refresh();
 
             int count = root.GetComponentsInChildren<Transform>(true).Length;
             Debug.Log($"[ColorfulTown] scene saved: {ScenePath}, {count} objects");
+        }
+
+        static void AddToBuildSettings()
+        {
+            List<EditorBuildSettingsScene> scenes = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+            if (scenes.Exists(s => s.path == ScenePath)) return;
+            scenes.Add(new EditorBuildSettingsScene(ScenePath, true));
+            EditorBuildSettings.scenes = scenes.ToArray();
         }
 
         static void EnsureFolder(string path)
@@ -242,9 +252,26 @@ namespace BigWorldClient
             return mesh;
         }
 
+        static void BuildCamera()
+        {
+            GameObject cameraObject = new GameObject("Main Camera");
+            cameraObject.tag = "MainCamera";
+
+            Camera camera = cameraObject.AddComponent<Camera>();
+            camera.clearFlags = CameraClearFlags.Skybox;
+            camera.nearClipPlane = 0.3f;
+            camera.farClipPlane = 1000f;
+            camera.fieldOfView = 60f;
+
+            cameraObject.AddComponent<AudioListener>();
+            cameraObject.AddComponent<CameraController>();
+            cameraObject.transform.position = new Vector3(2f, 3f, -8f);
+            cameraObject.transform.rotation = Quaternion.Euler(10f, -21f, 0f);
+        }
+
         static void SetupEnvironment()
         {
-            Light sun = new GameObject("Sun").AddComponent<Light>();
+            Light sun = new GameObject("Directional Light").AddComponent<Light>();
             sun.type = LightType.Directional;
             sun.transform.rotation = Quaternion.Euler(9f, 205f, 0f);
             sun.color = new Color(1.00f, 0.60f, 0.36f);

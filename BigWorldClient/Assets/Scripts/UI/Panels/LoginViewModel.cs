@@ -59,7 +59,8 @@ namespace BigWorldClient.UI.Panels
             get
             {
                 return !_isSubmitting
-                    && !string.IsNullOrWhiteSpace(_username);
+                    && !string.IsNullOrWhiteSpace(_username)
+                    && !string.IsNullOrWhiteSpace(_password);
             }
         }
 
@@ -67,16 +68,28 @@ namespace BigWorldClient.UI.Panels
 
         public void Login()
         {
+            if (_isSubmitting) return;
+
             string usernameTrimmed = _username.Trim();
 
             if (string.IsNullOrWhiteSpace(_username))
             {
-                ShowError("Please enter a _username");
+                ShowError("Please enter your username");
                 return;
             }
             if (usernameTrimmed.Length < MinUsernameLength)
             {
                 ShowError(string.Format("Username must be at least {0} characters", MinUsernameLength));
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(_password))
+            {
+                ShowError("Please enter your password");
+                return;
+            }
+            if (_password.Length < MinPasswordLength)
+            {
+                ShowError(string.Format("Password must be at least {0} characters", MinPasswordLength));
                 return;
             }
             ClearStatus();

@@ -136,6 +136,18 @@ namespace BigWorldClient.Network
                     UIEventBus.Publish(new LoginResultEvent { Success = true, Message = "登录成功" });
                     break;
 
+                case SessionEventKind.SceneTransfer:
+                    _serverSpawnPos = new Vector3((float)evt.Player.X, 0f, (float)evt.Player.Z);
+                    _hasServerSpawn = true;
+                    _serverSceneId = evt.Player.SceneId;
+                    UIEventBus.Publish(new SceneTransferEvent
+                    {
+                        SceneId = evt.Player.SceneId,
+                        X = (float)evt.Player.X,
+                        Z = (float)evt.Player.Z,
+                    });
+                    break;
+
                 case SessionEventKind.LoginFailed:
                     StopHeartbeat();
                     if (_reconnecting)

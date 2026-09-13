@@ -7,7 +7,7 @@ using BigWorldClient.Network.Protocol;
 
 namespace BigWorldClient.Network
 {
-    public enum SessionEventKind { LoginSucceeded, LoginFailed, ServerShutdown, Disconnected, LoggedOut, Kicked }
+    public enum SessionEventKind { LoginSucceeded, LoginFailed, SceneTransfer, ServerShutdown, Disconnected, LoggedOut, Kicked }
 
     public readonly struct PlayerInfo
     {
@@ -344,6 +344,7 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
                 [MessageTypes.Gw2Cli_HeartbeatRsp] = HandleHeartbeatRsp,
                 [MessageTypes.Wd2Cli_MoveRsp] = HandleMoveRsp,
                 [MessageTypes.Gw2Cli_LogoutRsp] = HandleForceKickRsp,
+                [MessageTypes.Wd2Cli_EnterSceneNotify] = HandleInGameEnterSceneNotify,
             };
 
             _phaseHandlers[State.LoggingOut] = new Dictionary<int, MessageHandler>
@@ -420,6 +421,20 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
             _height = n.Height;
             _gotEnter = true;
             MaybeEnterScene();
+        }
+
+        private void HandleInGameEnterSceneNotify(NetClient client, byte[] payload)
+        {
+            var n = EnterSceneNotify.Parser.ParseFrom(payload);
+            _playerId = n.PlayerId;
+            _worldId = n.WorldId;
+            _sceneId = n.SceneId;
+            _x = n.X;
+            _z = n.Z;
+            _width = n.Width;
+            _height = n.Height;
+            Push(SessionEventKind.SceneTransfer, "",
+                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z, _width, _height));
         }
 
         private void HandleServerShutdownNotify(NetClient client, byte[] payload)

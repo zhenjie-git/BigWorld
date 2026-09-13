@@ -23,6 +23,7 @@ type worldServer struct {
 	players          map[uint64]*playerEntity
 	playersByAccount map[string]*playerEntity
 	sceneMgr         *sceneMgr
+	sceneTriggers    []common.SceneTriggerConfig
 	playerCounter    uint64
 
 	moveTickMs    int64
@@ -68,11 +69,16 @@ func FillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
 
 func NewWorldServer(id string) *worldServer {
 	cfg := common.Config.Servers["world"]
+	sceneTriggers := cfg.SceneTriggers
+	if len(sceneTriggers) == 0 {
+		sceneTriggers = defaultSceneTriggers()
+	}
 	ss := &worldServer{
 		ServerBase:       common.NewServerBase(common.ServerWorld, id),
 		players:          make(map[uint64]*playerEntity),
 		playersByAccount: make(map[string]*playerEntity),
 		sceneMgr:         NewSceneMgr(id),
+		sceneTriggers:    sceneTriggers,
 		dbLoadPendings:   make(map[string]*dbLoadPending),
 		moveTickMs:       int64(cfg.MovementTickMs),
 	}
@@ -135,6 +141,8 @@ func (ss *worldServer) OnTick() {
 	for _, e := range ss.players {
 		ss.AdvanceEntityTo(e, nowTick)
 	}
+	ss.CheckSceneTriggers(now)
+	ss.ClearExpiredTransfers(now)
 
 	for account, pend := range ss.dbLoadPendings {
 		if now.After(pend.deadline) {
@@ -158,6 +166,10 @@ func (ss *worldServer) OnTick() {
 
 func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64, to pb.MoveState, ts int64, dirX, dirZ float64) {
 	entity, ok := ss.players[playerID]
+	if ok && entity.Transferring {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: playerID, Message: "正在传送"})
+		return
+	}
 	var rsp *common.MoveRsp
 	var logX, logY, logZ float64
 	var logLayer int
@@ -237,6 +249,10 @@ func (ss *worldServer) HandleStopStart(conn *common.ConnWrapper, req *common.Sto
 
 func (ss *worldServer) HandleMoveStop(conn *common.ConnWrapper, req *common.MoveStopReq) {
 	entity, ok := ss.players[req.PlayerId]
+	if ok && entity.Transferring {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"})
+		return
+	}
 	var rsp *common.MoveRsp
 	if ok {
 		nowMs := time.Now().UnixMilli()
@@ -264,6 +280,10 @@ func (ss *worldServer) HandleMoveStop(conn *common.ConnWrapper, req *common.Move
 
 func (ss *worldServer) HandleMoveDirChange(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
 	entity, ok := ss.players[req.PlayerId]
+	if ok && entity.Transferring {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"})
+		return
+	}
 	var rsp *common.MoveRsp
 	if ok {
 		nowMs := time.Now().UnixMilli()
@@ -296,7 +316,12 @@ func (ss *worldServer) HandleMoveDirChange(conn *common.ConnWrapper, req *common
 }
 
 func (ss *worldServer) HandleSkill(conn *common.ConnWrapper, req *common.SkillReq) {
-	_, ok := ss.players[req.PlayerId]
+	entity, ok := ss.players[req.PlayerId]
+	if ok && entity.Transferring {
+		rsp := common.SkillRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"}
+		common.SendMsg(conn, common.Wd2Cli_SkillRsp, &rsp)
+		return
+	}
 
 	if !ok {
 		rsp := common.SkillRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
@@ -339,6 +364,7 @@ func (ss *worldServer) resumePlayerEntity(conn *common.ConnWrapper, req *common.
 		entity.GatewayId = req.GatewayId
 		entity.SessionId = req.SessionId
 	}
+	entity.GatewayConn = conn
 
 	sceneID := ""
 	var width, height float64
@@ -380,6 +406,7 @@ func (ss *worldServer) HandleResumeEntity(conn *common.ConnWrapper, req *common.
 	oldGateway, oldSession := entity.GatewayId, entity.SessionId
 	entity.GatewayId = req.GatewayId
 	entity.SessionId = req.SessionId
+	entity.GatewayConn = conn
 
 	sceneID := ""
 	var width, height float64
@@ -452,14 +479,15 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 	sc := ss.sceneMgr.GetOrCreate(rsp.SceneId)
 	x, z, k := sc.SpawnPosition(rsp.Found, rsp.X, rsp.Z)
 	entity := &playerEntity{
-		PlayerId:  rsp.PlayerId,
-		Account:   rsp.Account,
-		GatewayId: pend.gatewayID,
-		SessionId: pend.sessionID,
-		X:         x,
-		Z:         z,
-		VoxelK:    k,
-		Scene:     sc,
+		PlayerId:    rsp.PlayerId,
+		Account:     rsp.Account,
+		GatewayId:   pend.gatewayID,
+		SessionId:   pend.sessionID,
+		GatewayConn: pend.conn,
+		X:           x,
+		Z:           z,
+		VoxelK:      k,
+		Scene:       sc,
 	}
 	if sc.voxelGrid != nil {
 		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)
@@ -492,14 +520,15 @@ func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account, gate
 	sc := ss.sceneMgr.GetOrCreate(ss.sceneMgr.defaultScene)
 	x, z, k := sc.SpawnPosition(false, 0, 0)
 	entity := &playerEntity{
-		PlayerId:  playerID,
-		Account:   account,
-		GatewayId: gatewayID,
-		SessionId: sessionID,
-		X:         x,
-		Z:         z,
-		VoxelK:    k,
-		Scene:     sc,
+		PlayerId:    playerID,
+		Account:     account,
+		GatewayId:   gatewayID,
+		SessionId:   sessionID,
+		GatewayConn: conn,
+		X:           x,
+		Z:           z,
+		VoxelK:      k,
+		Scene:       sc,
 	}
 	if sc.voxelGrid != nil {
 		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)

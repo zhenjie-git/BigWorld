@@ -14,6 +14,7 @@ namespace BigWorldClient.UI.Panels
         [SerializeField] private float _spinnerSpeed = 180f;
 
         private bool _isSpinning;
+        private Framework.UiLoadingVisual _visual;
 
         protected override void OnInit()
         {
@@ -32,16 +33,19 @@ namespace BigWorldClient.UI.Panels
                 rect.offsetMin = Vector2.zero;
                 rect.offsetMax = Vector2.zero;
             }
+
+            _visual = Framework.UiSkin.ApplyLoading(transform, _loadingText, _spinnerImage);
         }
 
         protected override void OnShow(object args)
         {
             _isSpinning = true;
+            _visual?.Reset();
 
-            if (args is string msg && _loadingText != null)
-                _loadingText.text = msg;
-            else if (_loadingText != null)
-                _loadingText.text = "Loading...";
+            if (args is string msg && msg.Length > 0)
+                SetMessage(msg);
+            else
+                SetMessage("LOADING SCENE");
         }
 
         protected override void OnHide()
@@ -51,20 +55,28 @@ namespace BigWorldClient.UI.Panels
 
         private void Update()
         {
-            if (!_isSpinning || _spinnerImage == null) return;
+            if (!_isSpinning) return;
+
+            if (_visual != null)
+            {
+                _visual.Tick(Time.unscaledDeltaTime, true);
+                return;
+            }
+
+            if (_spinnerImage == null) return;
             _spinnerImage.rectTransform.Rotate(0f, 0f, -_spinnerSpeed * Time.deltaTime);
         }
 
         public void SetMessage(string message)
         {
-            if (_loadingText != null)
-                _loadingText.text = message;
+            if (string.IsNullOrEmpty(message)) return;
+            if (_loadingText != null) _loadingText.text = message;
+            if (_visual != null) _visual.SetMessage(message);
         }
 
         public void SetProgress(float progress)
         {
-            if (_loadingText != null)
-                _loadingText.text = "Loading... " + (int)(Mathf.Clamp01(progress) * 100) + "%";
+            if (_visual != null) _visual.SetProgress(progress);
         }
     }
 }

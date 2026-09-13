@@ -127,6 +127,7 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 	session.State = sessionActive
 	session.LastHeartbeat = time.Now()
 	session.Deadline = time.Time{}
+	session.SceneId = snapshot.SceneId
 	gs.AttachPlayer(session)
 
 	loginRsp := common.LoginRsp{

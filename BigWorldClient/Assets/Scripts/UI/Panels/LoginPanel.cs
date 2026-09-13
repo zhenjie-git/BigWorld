@@ -18,6 +18,7 @@ namespace BigWorldClient.UI.Panels
         [SerializeField] private int _minPasswordLength = 6;
 
         private LoginViewModel _vm;
+        private TMP_Text _loginButtonText;
 
         protected override void OnInit()
         {
@@ -29,7 +30,12 @@ namespace BigWorldClient.UI.Panels
 
             _usernameInput.onValueChanged.AddListener(v => _vm.Username = v);
             _passwordInput.onValueChanged.AddListener(v => _vm.Password = v);
+            _passwordInput.onSubmit.AddListener(_ => _vm.Login());
             _loginButton.onClick.AddListener(() => _vm.Login());
+
+            Transform buttonText = _loginButton.transform.Find("Text");
+            _loginButtonText = buttonText != null ? buttonText.GetComponent<TMP_Text>() : null;
+            Framework.UiSkin.ApplyLogin(transform, _usernameInput, _passwordInput, _loginButton, _statusText);
         }
 
         protected override void OnShow(object args)
@@ -54,6 +60,7 @@ namespace BigWorldClient.UI.Panels
             _loginButton.onClick.RemoveAllListeners();
             _usernameInput.onValueChanged.RemoveAllListeners();
             _passwordInput.onValueChanged.RemoveAllListeners();
+            _passwordInput.onSubmit.RemoveAllListeners();
         }
 
         private void OnVMPropertyChanged(string propertyName)
@@ -63,18 +70,18 @@ namespace BigWorldClient.UI.Panels
                 case nameof(_vm.StatusText):
                 case nameof(_vm.HasError):
                     _statusText.text = _vm.StatusText;
-                    _statusText.color = _vm.HasError
-                        ? new Color(1f, 0.4f, 0.4f)
-                        : new Color(0.4f, 1f, 0.4f);
+                    _statusText.color = _vm.HasError ? Framework.UiSkin.ErrorColor : Framework.UiSkin.SuccessColor;
                     break;
 
                 case nameof(_vm.IsSubmitting):
                     ApplyInteractable();
+                    if (_loginButtonText != null)
+                        _loginButtonText.text = _vm.IsSubmitting ? "SIGNING IN..." : "SIGN IN";
                     break;
 
                 case nameof(_vm.Username):
                 case nameof(_vm.Password):
-
+                    ApplyInteractable();
                     break;
             }
         }
@@ -82,9 +89,7 @@ namespace BigWorldClient.UI.Panels
         private void RefreshAll()
         {
             _statusText.text = _vm.StatusText;
-            _statusText.color = _vm.HasError
-                ? new Color(1f, 0.4f, 0.4f)
-                : new Color(0.4f, 1f, 0.4f);
+            _statusText.color = _vm.HasError ? Framework.UiSkin.ErrorColor : Framework.UiSkin.SuccessColor;
             ApplyInteractable();
         }
 
@@ -93,7 +98,7 @@ namespace BigWorldClient.UI.Panels
             bool interactable = !_vm.IsSubmitting;
             _usernameInput.interactable = interactable;
             _passwordInput.interactable = interactable;
-            _loginButton.interactable = interactable;
+            _loginButton.interactable = interactable && _vm.CanSubmit;
         }
     }
 }

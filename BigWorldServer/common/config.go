@@ -6,13 +6,23 @@ import (
 	"os"
 )
 
+type SceneTriggerConfig struct {
+	FromScene string  `json:"from_scene"`
+	ToScene   string  `json:"to_scene"`
+	MinX      float64 `json:"min_x"`
+	MaxX      float64 `json:"max_x"`
+	MinZ      float64 `json:"min_z"`
+	MaxZ      float64 `json:"max_z"`
+}
+
 type ServerConfig struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	ListenAddr  string `json:"listen_addr"`
 	CentralAddr string `json:"central_addr"`
 
-	StateConfigFile string `json:"state_config_file,omitempty"`
+	StateConfigFile string               `json:"state_config_file,omitempty"`
+	SceneTriggers   []SceneTriggerConfig `json:"scene_triggers,omitempty"`
 
 	// Shared GameConfig files (relative to the BigWorldServer working dir).
 	// The single source of truth for movement params + state transition table;

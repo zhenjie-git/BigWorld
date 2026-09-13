@@ -67,6 +67,7 @@ namespace BigWorldClient
             UIEventBus.Subscribe<LoginAttemptEvent>(OnLoginAttempt);
             UIEventBus.Subscribe<LoginResultEvent>(OnLoginResult);
             UIEventBus.Subscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
+            UIEventBus.Subscribe<SceneTransferEvent>(OnSceneTransfer);
             UIEventBus.Subscribe<SessionEndedEvent>(OnSessionEnded);
         }
 
@@ -75,6 +76,7 @@ namespace BigWorldClient
             UIEventBus.Unsubscribe<LoginAttemptEvent>(OnLoginAttempt);
             UIEventBus.Unsubscribe<LoginResultEvent>(OnLoginResult);
             UIEventBus.Unsubscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
+            UIEventBus.Unsubscribe<SceneTransferEvent>(OnSceneTransfer);
             UIEventBus.Unsubscribe<SessionEndedEvent>(OnSessionEnded);
         }
 
@@ -126,6 +128,20 @@ namespace BigWorldClient
             if (_currentSceneId == null) return;
 
             SpawnPlayer();
+        }
+
+        private void OnSceneTransfer(SceneTransferEvent evt)
+        {
+            if (string.IsNullOrEmpty(evt.SceneId)) return;
+            if (evt.SceneId == _currentTemplateId) return;
+
+            if (!string.IsNullOrEmpty(_currentSceneId))
+                SceneMgr.Instance.RemoveScene(_currentSceneId);
+
+            _currentTemplateId = evt.SceneId;
+            var scene = SceneMgr.Instance.CreateScene(evt.SceneId, PlayerConfigTable.Instance.VoxelMaxStepHeight);
+            _currentSceneId = scene.SceneId;
+            scene.LoadAsync();
         }
 
         private void OnSessionEnded(SessionEndedEvent evt)

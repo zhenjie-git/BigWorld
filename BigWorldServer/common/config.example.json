@@ -33,7 +33,17 @@
             "player_config_file": "../GameConfig/Player/player_config.bytes",
             "scene_config_file": "../GameConfig/Scene/scene_config.bytes",
             "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.bytes",
-            "movement_tick_ms": 20
+            "movement_tick_ms": 20,
+            "scene_triggers": [
+                {
+                    "from_scene": "MainCity",
+                    "to_scene": "ColorfulTown",
+                    "min_x": 7.5,
+                    "max_x": 9.5,
+                    "min_z": 7.5,
+                    "max_z": 9.5
+                }
+            ]
         },
         "dbproxy": {
             "id": 5,

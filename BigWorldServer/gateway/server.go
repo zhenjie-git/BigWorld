@@ -51,6 +51,7 @@ type clientSession struct {
 
 	WorldId   string
 	WorldAddr string
+	SceneId   string
 
 	Login *loginSnapshot
 
@@ -121,6 +122,7 @@ func NewGatewayServer(id string) *gatewayServer {
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Gw_CreateEntityRsp, gs.HandleWorldCreateEntityRsp)
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Gw_DestroyEntityRsp, gs.HandleWorldDestroyEntityRsp)
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Gw_ResumeEntityRsp, gs.HandleWorldResumeEntityRsp)
+	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EnterSceneNotify, gs.HandleWorldEnterSceneNotify)
 
 	gs.OnDisconnect = gs.HandleClientDisconnect
 	gs.Loop.OnTick = gs.OnTick
@@ -562,6 +564,7 @@ func (gs *gatewayServer) HandleWorldCreateEntityRsp(_ *common.ConnWrapper, rsp *
 	}
 
 	session.PlayerId = rsp.PlayerId
+	session.SceneId = rsp.SceneId
 	session.Login = &loginSnapshot{
 		SceneId: rsp.SceneId,
 		X:       rsp.X,
@@ -602,6 +605,7 @@ func (gs *gatewayServer) HandleWorldResumeEntityRsp(_ *common.ConnWrapper, rsp *
 	session.State = sessionActive
 	session.LastHeartbeat = time.Now()
 	session.Deadline = time.Time{}
+	session.SceneId = rsp.SceneId
 	gs.AttachPlayer(session)
 
 	loginRsp := common.LoginRsp{
@@ -637,6 +641,15 @@ func (gs *gatewayServer) HandleWorldResumeEntityRsp(_ *common.ConnWrapper, rsp *
 		})
 	})
 }
+func (gs *gatewayServer) HandleWorldEnterSceneNotify(_ *common.ConnWrapper, notify *common.EnterSceneNotify) {
+	session := gs.GetByPlayer(notify.PlayerId)
+	if session == nil || session.Conn == nil || session.State != sessionActive {
+		return
+	}
+	session.SceneId = notify.SceneId
+	common.SendMsg(session.Conn, common.Wd2Cli_EnterSceneNotify, notify)
+}
+
 func (gs *gatewayServer) HandleWorldDestroyEntityRsp(_ *common.ConnWrapper, rsp *common.DestroyEntityRsp) {
 	session := gs.GetByPlayer(rsp.PlayerId)
 	if session == nil || session.State != sessionDestroying {
