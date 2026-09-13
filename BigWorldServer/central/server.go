@@ -25,6 +25,7 @@ type accountState struct {
 	GatewayId string
 	WorldId   string
 	PlayerId  uint64
+	SessionId string
 	Status    AccountStatus
 
 	PendingReqId     uint64
@@ -36,10 +37,13 @@ type onlinePlayer struct {
 	Account   string
 	WorldId   string
 	GatewayId string
+	SessionId string
 }
 
 type forceKickDeadline struct {
 	gatewayId string
+	sessionId string
+	account   string
 	deadline  time.Time
 }
 
@@ -74,7 +78,6 @@ func NewCentralServer(id string) *centralServer {
 
 	for _, src := range common.ServerSrcs {
 		r := cs.Router(src)
-		common.Register(r, common.Srv2Ct_RegisterReq, cs.HandleRegister)
 		common.Register(r, common.Srv2Ct_HeartbeatReq, cs.HandleHeartbeat)
 		common.Register(r, common.Srv2Ct_ServerListReq, cs.HandleServerList)
 		common.Register(r, common.Srv2Ct_ShutdownReq, cs.HandleShutdown)
@@ -90,6 +93,8 @@ func NewCentralServer(id string) *centralServer {
 
 	cs.Loop.OnTick = cs.OnTick
 	cs.Loop.TickEvery = time.Second
+	cs.OnDisconnect = cs.HandleServerDisconnect
+	cs.OnPeerHello = cs.HandlePeerHello
 	return cs
 }
 
@@ -104,7 +109,7 @@ func (cs *centralServer) OnTick() {
 
 	for playerID, fk := range cs.forceKickDeadlines {
 		if now.After(fk.deadline) {
-			cs.HandleForceKickTimeout(playerID, fk.gatewayId)
+			cs.HandleForceKickTimeout(playerID, fk.gatewayId, fk.sessionId, fk.account)
 		}
 	}
 

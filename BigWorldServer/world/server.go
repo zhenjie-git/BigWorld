@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"bigworld/common"
@@ -19,14 +20,19 @@ const (
 
 type worldServer struct {
 	*common.ServerBase
-	players       map[uint64]*playerEntity
-	sceneMgr      *sceneMgr
-	playerCounter uint64
+	players          map[uint64]*playerEntity
+	playersByAccount map[string]*playerEntity
+	sceneMgr         *sceneMgr
+	playerCounter    uint64
 
 	moveTickMs    int64
 	rollbackTicks int64
 
-	dbConn *common.ConnWrapper
+	dbConn       *common.ConnWrapper
+	dbID         string
+	dbAddr       string
+	dbConnecting bool
+	dbMu         sync.Mutex
 
 	dbLoadPendings map[string]*dbLoadPending
 
@@ -38,9 +44,11 @@ type worldServer struct {
 }
 
 type dbLoadPending struct {
-	conn     *common.ConnWrapper
-	account  string
-	deadline time.Time
+	conn      *common.ConnWrapper
+	account   string
+	gatewayID string
+	sessionID string
+	deadline  time.Time
 }
 
 func FillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
@@ -61,11 +69,12 @@ func FillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
 func NewWorldServer(id string) *worldServer {
 	cfg := common.Config.Servers["world"]
 	ss := &worldServer{
-		ServerBase:     common.NewServerBase(common.ServerWorld, id),
-		players:        make(map[uint64]*playerEntity),
-		sceneMgr:       NewSceneMgr(id),
-		dbLoadPendings: make(map[string]*dbLoadPending),
-		moveTickMs:     int64(cfg.MovementTickMs),
+		ServerBase:       common.NewServerBase(common.ServerWorld, id),
+		players:          make(map[uint64]*playerEntity),
+		playersByAccount: make(map[string]*playerEntity),
+		sceneMgr:         NewSceneMgr(id),
+		dbLoadPendings:   make(map[string]*dbLoadPending),
+		moveTickMs:       int64(cfg.MovementTickMs),
 	}
 	if ss.moveTickMs <= 0 {
 		ss.moveTickMs = 20
@@ -102,12 +111,13 @@ func NewWorldServer(id string) *worldServer {
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_SkillReq, ss.HandleSkill)
 	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_DestroyEntityReq, ss.HandleDestroyEntity)
 	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_CreateEntityReq, ss.HandleCreateEntity)
+	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_ResumeEntityReq, ss.HandleResumeEntity)
 
 	common.Register(ss.Router(common.SrcDbProxy), common.Db2Wd_LoadPlayerRsp, ss.HandleDbLoadPlayerRsp)
 	common.Register(ss.Router(common.SrcDbProxy), common.Db2Wd_SavePlayerRsp, ss.HandleDbSavePlayerRsp)
 
 	cr := ss.Router(common.SrcCentral)
-	common.Register(cr, common.Ct2Srv_RegisterRsp, ss.HandleCentralRegisterRsp)
+	common.Register(cr, common.Srv2Srv_HelloRsp, ss.HandleCentralHelloRsp)
 	common.Register(cr, common.Ct2Srv_ServerListRsp, ss.HandleCentralServerListRsp)
 	common.Register(cr, common.Ct2Srv_NewDbProxyNotify, ss.HandleCentralNewDbProxy)
 	common.Register(cr, common.Ct2Srv_ShutdownNotify, ss.HandleCentralShutdownNotify)
@@ -300,46 +310,125 @@ func (ss *worldServer) HandleSkill(conn *common.ConnWrapper, req *common.SkillRe
 }
 
 func (ss *worldServer) HandleDestroyEntity(conn *common.ConnWrapper, req *common.DestroyEntityReq) {
-	var saved *playerEntity
 	entity, ok := ss.players[req.PlayerId]
-	if ok {
-		saved = entity
-		delete(ss.players, req.PlayerId)
-		if entity.Scene != nil {
-			delete(entity.Scene.Players, req.PlayerId)
-		}
-	}
-
-	if saved != nil {
-		ss.SavePlayer(saved)
-	}
-
 	if !ok {
-		rsp := common.DestroyEntityRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
+		rsp := common.DestroyEntityRsp{Success: false, PlayerId: req.PlayerId, Message: "entity not found", SessionId: req.SessionId}
 		common.SendMsg(conn, common.Wd2Gw_DestroyEntityRsp, &rsp)
 		return
 	}
 
-	rsp := common.DestroyEntityRsp{Success: true, PlayerId: req.PlayerId, Message: "实体销毁成功"}
-	common.SendMsg(conn, common.Wd2Gw_DestroyEntityRsp, &rsp)
-	log.Printf("[world %s] player %d entity destroyed", ss.ServerId, req.PlayerId)
-}
-
-func (ss *worldServer) HandleCreateEntity(conn *common.ConnWrapper, req *common.CreateEntityReq) {
-	log.Printf("[world %s] creating player: account=%s", ss.ServerId, req.Account)
-
-	dbConn := ss.dbConn
-	if dbConn == nil {
-		ss.CreateEntityLocal(conn, req.Account)
+	if (entity.GatewayId != "" && req.GatewayId != "" && entity.GatewayId != req.GatewayId) ||
+		(entity.SessionId != "" && req.SessionId != "" && entity.SessionId != req.SessionId) {
+		log.Printf("[world %s] reject stale destroy for player %d: owner gateway=%s session=%s, request gateway=%s session=%s",
+			ss.ServerId, req.PlayerId, entity.GatewayId, entity.SessionId, req.GatewayId, req.SessionId)
+		rsp := common.DestroyEntityRsp{Success: false, PlayerId: req.PlayerId, Message: "stale session", SessionId: entity.SessionId}
+		common.SendMsg(conn, common.Wd2Gw_DestroyEntityRsp, &rsp)
 		return
 	}
 
-	pend := &dbLoadPending{conn: conn, account: req.Account, deadline: time.Now().Add(loadPlayerTimeout)}
+	saved := entity
+	ss.detachPlayerLocked(entity)
+
+	rsp := common.DestroyEntityRsp{Success: true, PlayerId: req.PlayerId, Message: "destroyed", SessionId: saved.SessionId}
+	common.SendMsg(conn, common.Wd2Gw_DestroyEntityRsp, &rsp)
+	log.Printf("[world %s] player %d session %s entity destroyed", ss.ServerId, req.PlayerId, saved.SessionId)
+}
+func (ss *worldServer) resumePlayerEntity(conn *common.ConnWrapper, req *common.CreateEntityReq, entity *playerEntity) {
+	oldGateway, oldSession := entity.GatewayId, entity.SessionId
+	if oldGateway != req.GatewayId || oldSession != req.SessionId {
+		entity.GatewayId = req.GatewayId
+		entity.SessionId = req.SessionId
+	}
+
+	sceneID := ""
+	var width, height float64
+	if entity.Scene != nil {
+		sceneID = entity.Scene.SceneId
+		width = entity.Scene.Width
+		height = entity.Scene.Height
+	}
+
+	rsp := common.CreateEntityRsp{
+		Success:   true,
+		PlayerId:  entity.PlayerId,
+		Account:   entity.Account,
+		X:         entity.X,
+		Z:         entity.Z,
+		Width:     width,
+		Height:    height,
+		Message:   "resumed",
+		SceneId:   sceneID,
+		SessionId: req.SessionId,
+	}
+	common.SendMsg(conn, common.Wd2Gw_CreateEntityRsp, &rsp)
+	log.Printf("[world %s] player %d (account=%s) session=%s resumed at (%.1f, %.1f), old gateway=%s old session=%s",
+		ss.ServerId, entity.PlayerId, entity.Account, req.SessionId, entity.X, entity.Z, oldGateway, oldSession)
+}
+func (ss *worldServer) HandleResumeEntity(conn *common.ConnWrapper, req *common.ResumeEntityReq) {
+	if req.GatewayId == "" || req.SessionId == "" {
+		rsp := common.ResumeEntityRsp{Success: false, Message: "invalid owner", PlayerId: req.PlayerId, SessionId: req.SessionId}
+		common.SendMsg(conn, common.Wd2Gw_ResumeEntityRsp, &rsp)
+		return
+	}
+	entity, ok := ss.players[req.PlayerId]
+	if !ok {
+		rsp := common.ResumeEntityRsp{Success: false, Message: "entity not found", PlayerId: req.PlayerId, SessionId: req.SessionId}
+		common.SendMsg(conn, common.Wd2Gw_ResumeEntityRsp, &rsp)
+		return
+	}
+
+	oldGateway, oldSession := entity.GatewayId, entity.SessionId
+	entity.GatewayId = req.GatewayId
+	entity.SessionId = req.SessionId
+
+	sceneID := ""
+	var width, height float64
+	if entity.Scene != nil {
+		sceneID = entity.Scene.SceneId
+		width = entity.Scene.Width
+		height = entity.Scene.Height
+	}
+	rsp := common.ResumeEntityRsp{
+		Success:   true,
+		Message:   "resumed",
+		PlayerId:  entity.PlayerId,
+		SessionId: req.SessionId,
+		SceneId:   sceneID,
+		X:         entity.X,
+		Z:         entity.Z,
+		Width:     width,
+		Height:    height,
+	}
+	common.SendMsg(conn, common.Wd2Gw_ResumeEntityRsp, &rsp)
+	log.Printf("[world %s] player %d session=%s resumed from gateway=%s session=%s at (%.1f, %.1f)",
+		ss.ServerId, entity.PlayerId, req.SessionId, oldGateway, oldSession, entity.X, entity.Z)
+}
+func (ss *worldServer) HandleCreateEntity(conn *common.ConnWrapper, req *common.CreateEntityReq) {
+	log.Printf("[world %s] creating player: account=%s gateway=%s session=%s", ss.ServerId, req.Account, req.GatewayId, req.SessionId)
+
+	if entity, ok := ss.playersByAccount[req.Account]; ok {
+		delete(ss.dbLoadPendings, req.Account)
+		ss.resumePlayerEntity(conn, req, entity)
+		return
+	}
+
+	if ss.dbConn == nil {
+		ss.CreateEntityLocal(conn, req.Account, req.GatewayId, req.SessionId)
+		return
+	}
+
+	pend := &dbLoadPending{
+		conn:      conn,
+		account:   req.Account,
+		gatewayID: req.GatewayId,
+		sessionID: req.SessionId,
+		deadline:  time.Now().Add(loadPlayerTimeout),
+	}
 	ss.dbLoadPendings[req.Account] = pend
 
 	if err := ss.ForwardMsgToDb(common.Wd2Db_LoadPlayerReq, &common.LoadPlayerReq{Account: req.Account}); err != nil {
 		delete(ss.dbLoadPendings, req.Account)
-		ss.CreateEntityLocal(conn, req.Account)
+		ss.CreateEntityLocal(conn, req.Account, req.GatewayId, req.SessionId)
 		return
 	}
 }
@@ -356,82 +445,111 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 	if rsp.PlayerId == 0 {
 		log.Printf("[world %s] LoadPlayerRsp had no id for account=%s: %s; falling back",
 			ss.ServerId, rsp.Account, rsp.Message)
-		ss.CreateEntityLocal(pend.conn, rsp.Account)
+		ss.CreateEntityLocal(pend.conn, rsp.Account, pend.gatewayID, pend.sessionID)
 		return
 	}
 
 	sc := ss.sceneMgr.GetOrCreate(rsp.SceneId)
 	x, z, k := sc.SpawnPosition(rsp.Found, rsp.X, rsp.Z)
 	entity := &playerEntity{
-		PlayerId: rsp.PlayerId,
-		Account:  rsp.Account,
-		X:        x,
-		Z:        z,
-		VoxelK:   k,
-		Scene:    sc,
+		PlayerId:  rsp.PlayerId,
+		Account:   rsp.Account,
+		GatewayId: pend.gatewayID,
+		SessionId: pend.sessionID,
+		X:         x,
+		Z:         z,
+		VoxelK:    k,
+		Scene:     sc,
 	}
 	if sc.voxelGrid != nil {
 		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)
 	}
 	ss.InitEntityTimeline(entity)
-	sc.Players[rsp.PlayerId] = entity
-	ss.players[rsp.PlayerId] = entity
-	width, height := sc.Width, sc.Height
+	ss.replacePlayerEntity(entity)
 
+	width, height := sc.Width, sc.Height
 	createRsp := common.CreateEntityRsp{
-		Success:  true,
-		PlayerId: rsp.PlayerId,
-		Account:  rsp.Account,
-		X:        x,
-		Z:        z,
-		Width:    width,
-		Height:   height,
-		Message:  "实体创建成功",
-		SceneId:  sc.SceneId,
+		Success:   true,
+		PlayerId:  rsp.PlayerId,
+		Account:   rsp.Account,
+		X:         x,
+		Z:         z,
+		Width:     width,
+		Height:    height,
+		Message:   "created",
+		SceneId:   sc.SceneId,
+		SessionId: pend.sessionID,
 	}
 	common.SendMsg(pend.conn, common.Wd2Gw_CreateEntityRsp, &createRsp)
-	log.Printf("[world %s] player %d (account=%s) loaded at (%.1f, %.1f) found=%v",
-		ss.ServerId, rsp.PlayerId, rsp.Account, x, z, rsp.Found)
+	log.Printf("[world %s] player %d (account=%s) session=%s loaded at (%.1f, %.1f) found=%v",
+		ss.ServerId, rsp.PlayerId, rsp.Account, pend.sessionID, x, z, rsp.Found)
 }
 
-func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account string) {
+func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account, gatewayID, sessionID string) {
 	ss.playerCounter++
 	playerID := uint64(common.Config.Servers["world"].ID)*10000 + ss.playerCounter
 
 	sc := ss.sceneMgr.GetOrCreate(ss.sceneMgr.defaultScene)
 	x, z, k := sc.SpawnPosition(false, 0, 0)
 	entity := &playerEntity{
-		PlayerId: playerID,
-		Account:  account,
-		X:        x,
-		Z:        z,
-		VoxelK:   k,
-		Scene:    sc,
+		PlayerId:  playerID,
+		Account:   account,
+		GatewayId: gatewayID,
+		SessionId: sessionID,
+		X:         x,
+		Z:         z,
+		VoxelK:    k,
+		Scene:     sc,
 	}
 	if sc.voxelGrid != nil {
 		entity.Y = sc.voxelGrid.SurfaceHeight(x, z, k)
 	}
 	ss.InitEntityTimeline(entity)
-	sc.Players[playerID] = entity
-	ss.players[playerID] = entity
-	width, height := sc.Width, sc.Height
+	ss.replacePlayerEntity(entity)
 
+	width, height := sc.Width, sc.Height
 	rsp := common.CreateEntityRsp{
-		Success:  true,
-		PlayerId: playerID,
-		Account:  account,
-		X:        entity.X,
-		Z:        entity.Z,
-		Width:    width,
-		Height:   height,
-		Message:  "实体创建成功(本地降级)",
-		SceneId:  sc.SceneId,
+		Success:   true,
+		PlayerId:  playerID,
+		Account:   account,
+		X:         entity.X,
+		Z:         entity.Z,
+		Width:     width,
+		Height:    height,
+		Message:   "created local fallback",
+		SceneId:   sc.SceneId,
+		SessionId: sessionID,
 	}
 	common.SendMsg(conn, common.Wd2Gw_CreateEntityRsp, &rsp)
-	log.Printf("[world %s] player %d (account=%s) created locally at (%.1f, %.1f)",
-		ss.ServerId, playerID, account, entity.X, entity.Z)
+	log.Printf("[world %s] player %d (account=%s) session=%s created locally at (%.1f, %.1f)",
+		ss.ServerId, playerID, account, sessionID, entity.X, entity.Z)
 }
 
+func (ss *worldServer) detachPlayerLocked(entity *playerEntity) {
+	if entity == nil {
+		return
+	}
+	delete(ss.players, entity.PlayerId)
+	if entity.Account != "" && ss.playersByAccount[entity.Account] == entity {
+		delete(ss.playersByAccount, entity.Account)
+	}
+	if entity.Scene != nil {
+		delete(entity.Scene.Players, entity.PlayerId)
+	}
+	ss.SavePlayer(entity)
+}
+
+func (ss *worldServer) replacePlayerEntity(entity *playerEntity) {
+	if old, ok := ss.players[entity.PlayerId]; ok && old != entity {
+		ss.detachPlayerLocked(old)
+	}
+	if old, ok := ss.playersByAccount[entity.Account]; ok && old != entity {
+		ss.detachPlayerLocked(old)
+	}
+	entity.Scene.Players[entity.PlayerId] = entity
+	ss.players[entity.PlayerId] = entity
+	ss.playersByAccount[entity.Account] = entity
+}
 func (ss *worldServer) HandleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.SavePlayerRsp) {
 	if rsp.ReqId == 0 {
 
@@ -451,8 +569,9 @@ func (ss *worldServer) HandleDbSavePlayerRsp(_ *common.ConnWrapper, rsp *common.
 
 func (ss *worldServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (ss *worldServer) HandleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+func (ss *worldServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
 	if !rsp.Success {
+		log.Printf("[world %s] hello rejected: %s", ss.ServerId, rsp.Message)
 		return
 	}
 	log.Printf("[world %s] registered: %s", ss.ServerId, rsp.Message)
@@ -515,29 +634,83 @@ func (ss *worldServer) ForwardMsgToDb(msgType common.MessageType, m proto.Messag
 }
 
 func (ss *worldServer) ConnectToDb(dbID, dbAddr string) {
-	if ss.dbConn != nil {
+	ss.dbMu.Lock()
+	ss.dbID = dbID
+	ss.dbAddr = dbAddr
+	if ss.dbConn != nil || ss.dbConnecting {
+		ss.dbMu.Unlock()
 		return
 	}
+	ss.dbConnecting = true
+	ss.dbMu.Unlock()
 
-	go func() {
-		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
-		if err != nil {
-			log.Printf("[world %s] failed to connect to dbproxy %s at %s: %v", ss.ServerId, dbID, dbAddr, err)
+	go ss.DbConnectLoop()
+}
+
+func (ss *worldServer) DbConnectLoop() {
+	backoff := time.Second
+	for {
+		select {
+		case <-ss.Done():
+			ss.setDBConnecting(false)
+			return
+		default:
+		}
+
+		ss.dbMu.Lock()
+		dbID, dbAddr := ss.dbID, ss.dbAddr
+		ss.dbMu.Unlock()
+		if dbAddr == "" {
+			ss.setDBConnecting(false)
 			return
 		}
-		ss.Loop.Defer(func() {
+
+		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
+		if err != nil {
+			log.Printf("[world %s] failed to connect to dbproxy %s at %s: %v, retry in %v", ss.ServerId, dbID, dbAddr, err, backoff)
+			select {
+			case <-ss.Done():
+				return
+			case <-time.After(backoff):
+			}
+			if backoff < 30*time.Second {
+				backoff *= 2
+			}
+			continue
+		}
+
+		result := make(chan bool, 1)
+		posted := ss.Loop.Post(common.Event{Kind: common.EventDefer, Fn: func() {
 			if ss.dbConn != nil {
-				conn.Close()
+				_ = conn.Close()
+				ss.setDBConnecting(false)
+				result <- true
 				return
 			}
 			cw := common.NewConnWrapper(conn)
 			cw.PeerType = common.ServerDbProxy
 			ss.dbConn = cw
+			ss.setDBConnecting(false)
 			log.Printf("[world %s] connected to dbproxy %s at %s", ss.ServerId, dbID, dbAddr)
-			common.SendMsg(cw, common.Srv2Srv_IdentifyReq, &common.IdentifyReq{ServerType: common.ServerWorld})
+			ss.SendHello(cw)
 			go ss.DbReadLoop(cw)
-		})
-	}()
+			result <- true
+		}})
+		if !posted {
+			_ = conn.Close()
+			ss.setDBConnecting(false)
+			return
+		}
+		if <-result {
+			return
+		}
+	}
+}
+
+func (ss *worldServer) setDBConnecting(value bool) {
+	ss.dbMu.Lock()
+	ss.dbConnecting = value
+	ss.dbMu.Unlock()
 }
 
 func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
@@ -549,24 +722,30 @@ func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
 	for {
 		msg, err := common.ReadMessage(cw.Conn)
 		if err != nil {
-
-			dropped := cw
 			ss.Loop.Defer(func() {
-				if ss.dbConn == dropped {
-					ss.dbConn.Close()
+				if ss.dbConn == cw {
+					_ = ss.dbConn.Close()
 					ss.dbConn = nil
-					log.Printf("[world %s] dbproxy connection lost", ss.ServerId)
+					log.Printf("[world %s] dbproxy connection lost: %v", ss.ServerId, err)
 				}
+				ss.setDBConnecting(false)
+				ss.ConnectToDb(ss.dbID, ss.dbAddr)
 			})
 			return
 		}
 		if !ss.Loop.Post(common.Event{Kind: common.EventMessage, Conn: cw, Msg: msg}) {
 			cw.Close()
+			ss.Loop.Defer(func() {
+				if ss.dbConn == cw {
+					ss.dbConn = nil
+				}
+				ss.setDBConnecting(false)
+				ss.ConnectToDb(ss.dbID, ss.dbAddr)
+			})
 			return
 		}
 	}
 }
-
 func entitySceneId(e *playerEntity) string {
 	if e.Scene == nil {
 		return ""

@@ -38,6 +38,7 @@ type MySQLConfig struct {
 type AppConfig struct {
 	ECDSAPrivateKey string                  `json:"ecdsa_private_key"`
 	ECDSAPublicKey  string                  `json:"ecdsa_public_key"`
+	ServerSecret    string                  `json:"server_secret"`
 	MySQL           MySQLConfig             `json:"mysql"`
 	Servers         map[string]ServerConfig `json:"servers"`
 }

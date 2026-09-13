@@ -5,6 +5,8 @@ import pb "bigworld/common/pb"
 type playerEntity struct {
 	PlayerId       uint64
 	Account        string
+	GatewayId      string
+	SessionId      string
 	X, Z, Y        float64
 	VoxelK         int
 	Airborne       bool

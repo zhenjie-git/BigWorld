@@ -3,8 +3,8 @@ package common
 type MessageType uint16
 
 const (
-	Srv2Ct_RegisterReq          MessageType = 1
-	Ct2Srv_RegisterRsp          MessageType = 2
+	Srv2Srv_HelloReq            MessageType = 1
+	Srv2Srv_HelloRsp            MessageType = 2
 	Srv2Ct_HeartbeatReq         MessageType = 3
 	Ct2Srv_HeartbeatRsp         MessageType = 4
 	Srv2Ct_ServerListReq        MessageType = 5
@@ -58,5 +58,6 @@ const (
 	Cli2Wd_StopStartReq         MessageType = 56
 	Cli2Wd_MoveStopReq          MessageType = 57
 	Cli2Wd_MoveDirChangeReq     MessageType = 58
-	Srv2Srv_IdentifyReq         MessageType = 60
+	Gw2Wd_ResumeEntityReq       MessageType = 60
+	Wd2Gw_ResumeEntityRsp       MessageType = 61
 )

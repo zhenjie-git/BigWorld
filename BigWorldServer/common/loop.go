@@ -16,7 +16,7 @@ const (
 
 	EventDefer
 
-	EventIdentify
+	EventHello
 )
 
 type EventSrc int

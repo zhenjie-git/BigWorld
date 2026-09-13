@@ -7,9 +7,17 @@ import (
 	"bigworld/common"
 )
 
-func (cs *centralServer) HandleRegister(conn *common.ConnWrapper, req *common.RegisterReq) {
-	log.Printf("[central] register request: type=%s id=%s addr=%s",
-		req.ServerType, req.ServerId, req.ListenAddr)
+func (cs *centralServer) HandlePeerHello(conn *common.ConnWrapper, req *common.HelloReq) *common.HelloRsp {
+	if req.ServerId == "" || req.ListenAddr == "" {
+		return &common.HelloRsp{Success: false, Message: "empty server id or listen addr"}
+	}
+
+	log.Printf("[central] hello request: type=%s id=%s addr=%s", req.ServerType, req.ServerId, req.ListenAddr)
+
+	if old, ok := cs.servers[req.ServerId]; ok && old.conn != nil && old.conn != conn {
+		delete(cs.connToID, old.conn)
+		_ = old.conn.Close()
+	}
 
 	cs.servers[req.ServerId] = &serverRecord{
 		info: common.ServerEntry{
@@ -21,9 +29,6 @@ func (cs *centralServer) HandleRegister(conn *common.ConnWrapper, req *common.Re
 		lastHB: time.Now().Unix(),
 	}
 	cs.connToID[conn] = req.ServerId
-
-	rsp := common.RegisterRsp{Success: true, Message: "registered"}
-	common.SendMsg(conn, common.Ct2Srv_RegisterRsp, &rsp)
 
 	log.Printf("[central] server registered: %s (%s) at %s",
 		req.ServerId, req.ServerType, req.ListenAddr)
@@ -55,9 +60,13 @@ func (cs *centralServer) HandleRegister(conn *common.ConnWrapper, req *common.Re
 			}
 		}
 	}
-}
 
+	return &common.HelloRsp{Success: true, Message: "registered", Registered: true}
+}
 func (cs *centralServer) HandleHeartbeat(conn *common.ConnWrapper, req *common.HeartbeatReq) {
+	if id := cs.connToID[conn]; id == "" || id != req.ServerId {
+		return
+	}
 	if record, ok := cs.servers[req.ServerId]; ok {
 		record.lastHB = time.Now().Unix()
 	}
@@ -76,4 +85,15 @@ func (cs *centralServer) HandleServerList(conn *common.ConnWrapper, req *common.
 
 	rsp := common.ServerListRsp{Servers: entries}
 	common.SendMsg(conn, common.Ct2Srv_ServerListRsp, &rsp)
+}
+
+func (cs *centralServer) HandleServerDisconnect(conn *common.ConnWrapper) {
+	id, ok := cs.connToID[conn]
+	if !ok {
+		return
+	}
+	delete(cs.connToID, conn)
+	if rec, ok := cs.servers[id]; ok && rec.conn == conn {
+		cs.CleanupServer(id)
+	}
 }

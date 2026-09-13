@@ -18,16 +18,20 @@ enum ServerType {
 
 // --- Infrastructure (server <-> central) ---
 
-message RegisterReq {
-  ServerType server_type = 1;
-  string server_id       = 2;
-  string listen_addr     = 3;
+message HelloReq {
+  ServerType server_type      = 1;
+  string     server_id        = 2;
+  string     listen_addr      = 3;
+  string     secret           = 4;
+  uint32     protocol_version = 5;
 }
 
-message RegisterRsp {
-  bool   success  = 1;
-  string message  = 2;
+message HelloRsp {
+  bool   success    = 1;
+  string message    = 2;
+  bool   registered = 3;
 }
+
 
 message HeartbeatReq {
   string server_id = 1;
@@ -111,6 +115,7 @@ message TokenVerifyRsp {
 message LoginPrepareReq {
   uint64 req_id  = 1;
   string account = 2;
+  string session_id = 3;
 }
 
 message LoginPrepareRsp {
@@ -128,6 +133,7 @@ message LoginFinishReq {
   string world_id   = 4;
   string gateway_id = 5;
   string message    = 6;
+  string session_id = 7;
 }
 
 message LoginFinishRsp {
@@ -135,12 +141,14 @@ message LoginFinishRsp {
   uint64 player_id = 2;
   string account   = 3;
   string message   = 4;
+  string session_id = 5;
 }
 
 message ForceKickNotify {
   uint64 player_id = 1;
   string account   = 2;
   string world_id  = 3;
+  string session_id = 4;
 }
 
 message EnterSceneNotify {
@@ -166,29 +174,36 @@ message LogoutRsp {
 
 message LogoutBeginReq {
   uint64 player_id = 1;
+  string gateway_id = 2;
+  string session_id = 3;
 }
 
 message LogoutBeginRsp {
   bool   success   = 1;
   uint64 player_id = 2;
   string message   = 3;
+  string session_id = 4;
 }
 
 message LogoutCleanupReq {
   uint64 player_id  = 1;
   string gateway_id = 2;
+  string session_id = 3;
 }
 
 message LogoutCleanupRsp {
   bool   success   = 1;
   uint64 player_id = 2;
   string message   = 3;
+  string session_id = 4;
 }
 
 // --- Game (gateway <-> world) ---
 
 message CreateEntityReq {
-  string account = 1;
+  string account    = 1;
+  string gateway_id = 2;
+  string session_id = 3;
 }
 
 message CreateEntityRsp {
@@ -201,16 +216,37 @@ message CreateEntityRsp {
   double height    = 7;
   string message   = 8;
   string scene_id  = 9;
+  string session_id = 10;
 }
 
 message DestroyEntityReq {
   uint64 player_id = 1;
+  string gateway_id = 2;
+  string session_id = 3;
 }
 
 message DestroyEntityRsp {
   bool   success   = 1;
   uint64 player_id = 2;
   string message   = 3;
+  string session_id = 4;
+}
+message ResumeEntityReq {
+  uint64 player_id  = 1;
+  string gateway_id = 2;
+  string session_id = 3;
+}
+
+message ResumeEntityRsp {
+  bool   success    = 1;
+  string message    = 2;
+  uint64 player_id  = 3;
+  string session_id = 4;
+  string scene_id   = 5;
+  double x          = 6;
+  double z          = 7;
+  double width      = 8;
+  double height     = 9;
 }
 
 // 玩家移动状态：决定服务器校验规则。与 Unity 状态机一一对应。
@@ -416,10 +452,4 @@ message ShutdownAck {
 
 message ServerShutdownNotify {
   string message = 1;
-}
-
-// IdentifyReq is the first message a server sends on any server-to-server
-// connection it initiates, so the accepting side knows the peer's type.
-message IdentifyReq {
-  ServerType server_type = 1;
 }

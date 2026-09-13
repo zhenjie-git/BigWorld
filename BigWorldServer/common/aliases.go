@@ -14,9 +14,8 @@ const (
 )
 
 type (
-	RegisterReq          = pb.RegisterReq
-	IdentifyReq          = pb.IdentifyReq
-	RegisterRsp          = pb.RegisterRsp
+	HelloReq             = pb.HelloReq
+	HelloRsp             = pb.HelloRsp
 	HeartbeatReq         = pb.HeartbeatReq
 	HeartbeatRsp         = pb.HeartbeatRsp
 	ServerListReq        = pb.ServerListReq
@@ -44,6 +43,8 @@ type (
 	CreateEntityRsp      = pb.CreateEntityRsp
 	DestroyEntityReq     = pb.DestroyEntityReq
 	DestroyEntityRsp     = pb.DestroyEntityRsp
+	ResumeEntityReq      = pb.ResumeEntityReq
+	ResumeEntityRsp      = pb.ResumeEntityRsp
 	MoveRsp              = pb.MoveRsp
 	MoveDir              = pb.MoveDir
 	WalkStartReq         = pb.WalkStartReq

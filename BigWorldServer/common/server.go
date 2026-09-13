@@ -13,6 +13,8 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+const HelloProtocolVersion uint32 = 1
+
 type ServerBase struct {
 	ServerType ServerType
 	ServerId   string
@@ -33,15 +35,33 @@ type ServerBase struct {
 	routers map[EventSrc]*MessageRouter
 
 	OnDisconnect func(conn *ConnWrapper)
+	OnPeerHello  func(conn *ConnWrapper, req *HelloReq) *HelloRsp
+	allowedPeers map[ServerType]bool
 }
 
+func (s *ServerBase) Done() <-chan struct{} {
+	return s.quit
+}
+func defaultAllowedPeers(st ServerType) map[ServerType]bool {
+	switch st {
+	case ServerCentral:
+		return map[ServerType]bool{ServerGateway: true, ServerLogin: true, ServerWorld: true, ServerDbProxy: true}
+	case ServerWorld:
+		return map[ServerType]bool{ServerGateway: true}
+	case ServerDbProxy:
+		return map[ServerType]bool{ServerLogin: true, ServerWorld: true}
+	default:
+		return map[ServerType]bool{}
+	}
+}
 func NewServerBase(st ServerType, id string) *ServerBase {
 	s := &ServerBase{
-		ServerType: st,
-		ServerId:   id,
-		quit:       make(chan struct{}),
-		conns:      make(map[*ConnWrapper]struct{}),
-		routers:    make(map[EventSrc]*MessageRouter),
+		ServerType:   st,
+		ServerId:     id,
+		quit:         make(chan struct{}),
+		conns:        make(map[*ConnWrapper]struct{}),
+		routers:      make(map[EventSrc]*MessageRouter),
+		allowedPeers: defaultAllowedPeers(st),
 	}
 	s.Loop = NewEventLoop(4096)
 	s.Loop.Handler = s.DefaultDispatch
@@ -66,9 +86,9 @@ func (s *ServerBase) DefaultDispatch(ev Event) {
 		if r, ok := s.routers[SrcForServerType(ev.Conn.PeerType)]; ok {
 			r.Dispatch(ev.Conn, ev.Msg)
 		}
-	case EventIdentify:
+	case EventHello:
 		if ev.Conn != nil {
-			s.HandleIdentify(ev.Conn, ev.Msg)
+			s.HandleHello(ev.Conn, ev.Msg)
 		}
 	case EventDisconnect:
 		if s.OnDisconnect != nil {
@@ -81,16 +101,65 @@ func (s *ServerBase) DefaultDispatch(ev Event) {
 	}
 }
 
-func (s *ServerBase) HandleIdentify(conn *ConnWrapper, msg Message) {
-	var req IdentifyReq
+func (s *ServerBase) HandleHello(conn *ConnWrapper, msg Message) {
+	var req HelloReq
 	if err := proto.Unmarshal(msg.Data, &req); err != nil {
-		log.Printf("[%s] bad IdentifyReq from %s: %v", s.ServerId, conn.RemoteAddr(), err)
+		log.Printf("[%s] bad HelloReq from %s: %v", s.ServerId, conn.RemoteAddr(), err)
+		conn.Close()
 		return
 	}
-	conn.PeerType = req.ServerType
-	log.Printf("[%s] peer identified as %s from %s", s.ServerId, req.ServerType, conn.RemoteAddr())
-}
 
+	if !conn.MarkHelloDone() {
+		log.Printf("[%s] duplicate HelloReq from %s", s.ServerId, conn.RemoteAddr())
+		conn.Close()
+		return
+	}
+
+	fail := func(message string) {
+		_ = SendMsg(conn, Srv2Srv_HelloRsp, &HelloRsp{Success: false, Message: message})
+		conn.CloseAfterSend()
+	}
+
+	if Config.ServerSecret == "" {
+		log.Printf("[%s] rejected HelloReq from %s: server secret not configured", s.ServerId, conn.RemoteAddr())
+		fail("server secret not configured")
+		return
+	}
+	if req.Secret != Config.ServerSecret {
+		log.Printf("[%s] rejected HelloReq from %s: bad secret", s.ServerId, conn.RemoteAddr())
+		fail("bad secret")
+		return
+	}
+	if req.ProtocolVersion != HelloProtocolVersion {
+		log.Printf("[%s] rejected HelloReq from %s: protocol %d != %d", s.ServerId, conn.RemoteAddr(), req.ProtocolVersion, HelloProtocolVersion)
+		fail("protocol mismatch")
+		return
+	}
+	if s.allowedPeers != nil && !s.allowedPeers[req.ServerType] {
+		log.Printf("[%s] rejected HelloReq from %s: peer type %s not allowed", s.ServerId, conn.RemoteAddr(), req.ServerType)
+		fail("peer type not allowed")
+		return
+	}
+
+	conn.PeerType = req.ServerType
+	rsp := &HelloRsp{Success: true}
+	if s.OnPeerHello != nil {
+		rsp = s.OnPeerHello(conn, &req)
+	}
+	if rsp == nil {
+		rsp = &HelloRsp{Success: false, Message: "hello rejected"}
+	}
+	if err := SendMsg(conn, Srv2Srv_HelloRsp, rsp); err != nil {
+		conn.Close()
+		return
+	}
+	if !rsp.Success {
+		conn.CloseAfterSend()
+		return
+	}
+	log.Printf("[%s] peer hello: type=%s id=%s registered=%v from %s",
+		s.ServerId, req.ServerType, req.ServerId, rsp.Registered, conn.RemoteAddr())
+}
 func (s *ServerBase) Listen(addr string) error {
 	var err error
 	s.ListenAddr = addr
@@ -148,8 +217,8 @@ func (s *ServerBase) ReadLoop(cw *ConnWrapper) {
 		if err != nil {
 			return
 		}
-		if msg.Type == Srv2Srv_IdentifyReq {
-			if !s.Loop.Post(Event{Kind: EventIdentify, Conn: cw, Msg: msg}) {
+		if msg.Type == Srv2Srv_HelloReq {
+			if !s.Loop.Post(Event{Kind: EventHello, Conn: cw, Msg: msg}) {
 				cw.Close()
 				return
 			}
@@ -183,17 +252,22 @@ func (s *ServerBase) DialCentral(addr string) error {
 	s.centralConn = cw
 	s.mu.Unlock()
 	log.Printf("[%s %s] connected to central at %s", s.ServerType, s.ServerId, addr)
-	s.SendIdentify(cw)
+	s.SendHello(cw)
 	return nil
 }
 
-func (s *ServerBase) SendIdentify(cw *ConnWrapper) {
+func (s *ServerBase) SendHello(cw *ConnWrapper) {
 	if s.ServerType == ServerCentral {
 		return
 	}
-	_ = SendMsg(cw, Srv2Srv_IdentifyReq, &IdentifyReq{ServerType: s.ServerType})
+	_ = SendMsg(cw, Srv2Srv_HelloReq, &HelloReq{
+		ServerType:      s.ServerType,
+		ServerId:        s.ServerId,
+		ListenAddr:      s.ListenAddr,
+		Secret:          Config.ServerSecret,
+		ProtocolVersion: HelloProtocolVersion,
+	})
 }
-
 func (s *ServerBase) CentralConnectionLoop(addr string) {
 	defer s.wg.Done()
 	backoff := time.Second
@@ -223,9 +297,7 @@ func (s *ServerBase) CentralConnectionLoop(addr string) {
 				continue
 			}
 			backoff = time.Second
-			if err := s.Register(); err != nil {
-				log.Printf("[%s %s] re-register after reconnect failed: %v", s.ServerType, s.ServerId, err)
-			}
+
 			continue
 		}
 
@@ -262,19 +334,6 @@ func (s *ServerBase) SendToCentralMsg(msgType MessageType, m proto.Message) erro
 	return s.SendToCentral(Message{Type: msgType, Data: data})
 }
 
-func (s *ServerBase) Register() error {
-	req := RegisterReq{
-		ServerType: s.ServerType,
-		ServerId:   s.ServerId,
-		ListenAddr: s.ListenAddr,
-	}
-	data, err := MarshalHelper(&req)
-	if err != nil {
-		return err
-	}
-	return s.SendToCentral(Message{Type: Srv2Ct_RegisterReq, Data: data})
-}
-
 func (s *ServerBase) StartHeartbeat(ctx context.Context, interval time.Duration) {
 	s.wg.Add(1)
 	go func() {
@@ -304,9 +363,6 @@ func (s *ServerBase) Start(centralAddr string) error {
 
 	if centralAddr != "" {
 		if err := s.ConnectToCentral(centralAddr); err != nil {
-			return err
-		}
-		if err := s.Register(); err != nil {
 			return err
 		}
 

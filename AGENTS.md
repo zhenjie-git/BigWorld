@@ -11,7 +11,7 @@
 
 ## 服务器架构(单消费者事件循环)
 - 每进程一个 `EventLoop`:读 goroutine 只解析入队,主循环串行消费,游戏状态无锁。
-- 事件按 `ConnWrapper.PeerType` 在消费时路由到对应 `Router(src)`,连接身份由 `IdentifyReq` 首帧声明。
+- 事件按 `ConnWrapper.PeerType` 在消费时路由到对应 `Router(src)`,连接身份由 `HelloReq` 首帧声明。
 - tick 语义:消息优先于 tick(drain-then-tick);World 的移动模拟、自动存档、超时扫描全部在 OnTick 内。
 - 阻塞操作(TCP 拨号、MySQL 查询)在辅助 goroutine 执行,结果通过 `Loop.Defer` 回投主循环。
 

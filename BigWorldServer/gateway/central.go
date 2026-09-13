@@ -7,82 +7,146 @@ import (
 	"bigworld/common"
 )
 
-func (gs *gatewayServer) HandleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp *common.LoginPrepareRsp) {
-	pending, ok := gs.pendings[rsp.ReqId]
-	if ok {
-		delete(gs.pendings, rsp.ReqId)
+func (gs *gatewayServer) SendLogoutCleanupRaw(playerID uint64, sessionID string) {
+	req := common.LogoutCleanupReq{
+		PlayerId:  playerID,
+		GatewayId: gs.ServerId,
+		SessionId: sessionID,
 	}
+	gs.SendToCentralMsg(common.Gw2Ct_LogoutCleanupReq, &req)
+}
 
-	if !ok {
+func (gs *gatewayServer) FailLogoutSession(session *clientSession, message string) {
+	if session == nil {
+		return
+	}
+	conn := session.Conn
+	gs.RemoveSession(session)
+	if conn != nil {
+		rsp := common.LogoutRsp{Success: false, Message: message}
+		common.SendMsg(conn, common.Gw2Cli_LogoutRsp, &rsp)
+		conn.CloseAfterSend()
+	}
+}
+
+func (gs *gatewayServer) HandleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp *common.LoginPrepareRsp) {
+	var pending *clientSession
+	for _, session := range gs.byConn {
+		if session.ReqID == rsp.ReqId && session.State == sessionPreparing {
+			pending = session
+			break
+		}
+	}
+	if pending == nil {
 		return
 	}
 
 	if !rsp.Success {
-		pending.conn.Close()
+		gs.FailSession(pending, rsp.Message)
 		return
 	}
 
-	log.Printf("[gateway] login prepared: account=%s world=%s", pending.account, rsp.WorldId)
+	log.Printf("[gateway] login prepared: account=%s world=%s session=%s",
+		pending.Account, rsp.WorldId, pending.SessionId)
 
-	pend := &loginPending{
-		conn:      pending.conn,
-		account:   pending.account,
-		worldID:   rsp.WorldId,
-		worldAddr: rsp.WorldAddr,
-		deadline:  time.Now().Add(createEntityTimeout),
+	pending.WorldId = rsp.WorldId
+	pending.WorldAddr = rsp.WorldAddr
+	pending.State = sessionCreating
+	pending.Deadline = time.Now().Add(createEntityTimeout)
+
+	createReq := common.CreateEntityReq{
+		Account:   pending.Account,
+		GatewayId: gs.ServerId,
+		SessionId: pending.SessionId,
 	}
-	gs.loginPendings[pending.account] = pend
-
-	createReq := common.CreateEntityReq{Account: pending.account}
-	gs.ForwardMsgToWorld(rsp.WorldId, common.Gw2Wd_CreateEntityReq, &createReq)
+	if err := gs.ForwardMsgToWorld(rsp.WorldId, common.Gw2Wd_CreateEntityReq, &createReq); err != nil {
+		gs.SendLoginFinishFailure(pending.Account, pending.SessionId, "world unavailable")
+		gs.FailSession(pending, "world unavailable")
+	}
 }
 
 func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp *common.LoginFinishRsp) {
-	pend, ok := gs.loginPendings[rsp.Account]
-	if ok {
-		delete(gs.loginPendings, rsp.Account)
+	session := gs.GetByAccount(rsp.Account)
+	if session == nil {
+		return
+	}
+	if rsp.SessionId != "" && session.SessionId != "" && rsp.SessionId != session.SessionId {
+		return
+	}
+	if session.State != sessionFinishing && session.State != sessionResuming {
+		return
 	}
 
-	if !ok || !rsp.Success {
-		if pend != nil {
-			pend.conn.Close()
+	if !rsp.Success {
+		if session.State == sessionResuming {
+			gs.FailSession(session, rsp.Message)
+			return
+		}
+		conn := session.Conn
+		gs.DetachConn(session)
+		if conn != nil {
+			gs.FailClientLogin(conn, rsp.Message)
+		}
+		if session.PlayerId != 0 && session.WorldId != "" {
+			owner := gs.byPlayer[session.PlayerId]
+			if owner == nil || owner == session {
+				gs.AttachPlayer(session)
+				gs.EnterDestroy(session, session.WorldId)
+				return
+			}
+		}
+		gs.RemoveSession(session)
+		return
+	}
+
+	if rsp.PlayerId != 0 {
+		session.PlayerId = rsp.PlayerId
+	}
+
+	if session.State == sessionResuming {
+		gs.AttachPlayer(session)
+		session.State = sessionResumingWorld
+		session.Deadline = time.Now().Add(createEntityTimeout)
+		req := common.ResumeEntityReq{
+			PlayerId:  session.PlayerId,
+			GatewayId: gs.ServerId,
+			SessionId: session.SessionId,
+		}
+		if err := gs.ForwardMsgToWorld(session.WorldId, common.Gw2Wd_ResumeEntityReq, &req); err != nil {
+			gs.SendLogoutCleanup(session)
+			gs.FailSession(session, "world unavailable")
 		}
 		return
 	}
 
+	snapshot := session.Login
+	session.Login = nil
+	if snapshot == nil {
+		snapshot = &loginSnapshot{}
+	}
+	session.State = sessionActive
+	session.LastHeartbeat = time.Now()
+	session.Deadline = time.Time{}
+	gs.AttachPlayer(session)
+
 	loginRsp := common.LoginRsp{
 		Success:   true,
 		Message:   rsp.Message,
-		WorldAddr: pend.worldAddr,
-		WorldId:   pend.worldID,
-		PlayerId:  pend.playerID,
-		X:         pend.x,
-		Z:         pend.z,
-		Width:     pend.width,
-		Height:    pend.height,
-		SceneId:   pend.sceneID,
+		WorldAddr: session.WorldAddr,
+		WorldId:   session.WorldId,
+		PlayerId:  session.PlayerId,
+		X:         snapshot.X,
+		Z:         snapshot.Z,
+		Width:     snapshot.Width,
+		Height:    snapshot.Height,
+		SceneId:   snapshot.SceneId,
 	}
-	common.SendMsg(pend.conn, common.Gw2Cli_LoginRsp, &loginRsp)
+	common.SendMsg(session.Conn, common.Gw2Cli_LoginRsp, &loginRsp)
 
-	gs.sessions[pend.conn] = &clientSession{
-		PlayerId:      pend.playerID,
-		WorldId:       pend.worldID,
-		WorldAddr:     pend.worldAddr,
-		SceneId:       pend.sceneID,
-		Account:       rsp.Account,
-		LastHeartbeat: time.Now(),
-		State:         stateHealthy,
-		X:             pend.x,
-		Z:             pend.z,
-		Width:         pend.width,
-		Height:        pend.height,
-	}
-	gs.playerConns[pend.playerID] = pend.conn
-
-	pendConn := pend.conn
-	worldID, x, z := pend.worldID, pend.x, pend.z
-	width, height, playerID := pend.width, pend.height, pend.playerID
-	sceneID := pend.sceneID
+	conn := session.Conn
+	worldID, x, z := session.WorldId, snapshot.X, snapshot.Z
+	width, height, playerID := snapshot.Width, snapshot.Height, session.PlayerId
+	sceneID := snapshot.SceneId
 	time.AfterFunc(100*time.Millisecond, func() {
 		gs.Loop.Defer(func() {
 			notify := common.EnterSceneNotify{
@@ -94,47 +158,67 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 				Height:   height,
 				SceneId:  sceneID,
 			}
-			common.SendMsg(pendConn, common.Wd2Cli_EnterSceneNotify, &notify)
+			common.SendMsg(conn, common.Wd2Cli_EnterSceneNotify, &notify)
 		})
 	})
 }
-
 func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
-	log.Printf("[gateway] force-kick: player=%d account=%s", notify.PlayerId, notify.Account)
+	log.Printf("[gateway] force-kick: player=%d account=%s session=%s world=%s",
+		notify.PlayerId, notify.Account, notify.SessionId, notify.WorldId)
 
-	delete(gs.recoverableSessions, notify.Account)
-
-	if _, loggingOut := gs.loggingOut[notify.PlayerId]; loggingOut {
-		log.Printf("[gateway] force-kick skipped, player %d already logging out", notify.PlayerId)
+	session := gs.GetByPlayer(notify.PlayerId)
+	if session == nil {
+		session = gs.GetByAccount(notify.Account)
+	}
+	if session == nil {
+		gs.SendLogoutCleanupRaw(notify.PlayerId, notify.SessionId)
+		return
+	}
+	if notify.SessionId != "" && session.SessionId != "" && session.SessionId != notify.SessionId {
+		log.Printf("[gateway] ignoring stale force-kick for player %d session=%s", notify.PlayerId, notify.SessionId)
 		return
 	}
 
-	oldConn := gs.playerConns[notify.PlayerId]
-	if oldConn != nil {
-		delete(gs.sessions, oldConn)
-		delete(gs.playerConns, notify.PlayerId)
-	}
-	delete(gs.loggingOut, notify.PlayerId)
-
-	if oldConn != nil {
-		rsp := common.LogoutRsp{Success: false, Message: "账号在其他设备登录"}
-		common.SendMsg(oldConn, common.Gw2Cli_LogoutRsp, &rsp)
-		oldConn.Close()
-	}
-
-	if notify.WorldId != "" {
-		gs.SendDestroyAndArmTimer(notify.PlayerId, notify.WorldId)
-	} else {
-		gs.SendLogoutCleanup(notify.PlayerId)
+	switch session.State {
+	case sessionSuspect:
+		gs.SendLogoutCleanup(session)
+		gs.RemoveSession(session)
+		return
+	case sessionLoggingOut, sessionDestroying:
+		return
+	case sessionActive:
+		conn := session.Conn
+		gs.DetachConn(session)
+		if conn != nil {
+			rsp := common.LogoutRsp{Success: false, Message: "account logged in elsewhere"}
+			common.SendMsg(conn, common.Gw2Cli_LogoutRsp, &rsp)
+			conn.CloseAfterSend()
+		}
+		worldID := notify.WorldId
+		if worldID == "" {
+			worldID = session.WorldId
+		}
+		gs.AttachPlayer(session)
+		gs.EnterDestroy(session, worldID)
+	default:
+		if session.State == sessionResumingWorld {
+			gs.SendLogoutCleanup(session)
+		}
+		conn := session.Conn
+		gs.RemoveSession(session)
+		if conn != nil {
+			gs.FailClientLogin(conn, "account logged in elsewhere")
+		}
 	}
 }
 
-func (gs *gatewayServer) HandleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
-	if rsp.Success {
-		log.Printf("[gateway %s] registered: %s", gs.ServerId, rsp.Message)
-		req := common.ServerListReq{Type: common.ServerWorld}
-		gs.SendToCentralMsg(common.Srv2Ct_ServerListReq, &req)
+func (gs *gatewayServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
+	if !rsp.Success {
+		log.Printf("[gateway %s] hello rejected: %s", gs.ServerId, rsp.Message)
+		return
 	}
+	log.Printf("[gateway %s] registered: %s", gs.ServerId, rsp.Message)
+	gs.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerWorld})
 }
 
 func (gs *gatewayServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *common.ServerListRsp) {
@@ -148,59 +232,55 @@ func (gs *gatewayServer) HandleCentralNewWorld(_ *common.ConnWrapper, entry *com
 }
 
 func (gs *gatewayServer) HandleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp *common.LogoutBeginRsp) {
+	session := gs.GetByPlayer(rsp.PlayerId)
+	if session == nil {
+		return
+	}
+	if rsp.SessionId != "" && session.SessionId != "" && session.SessionId != rsp.SessionId {
+		return
+	}
 	if !rsp.Success {
+		gs.FailLogoutSession(session, rsp.Message)
 		return
 	}
-	playerConn := gs.playerConns[rsp.PlayerId]
-	if playerConn == nil {
-
-		return
-	}
-	session := gs.sessions[playerConn]
-	var worldID string
-	if session != nil {
-		worldID = session.WorldId
-	}
-
-	if worldID == "" {
-		gs.SendLogoutCleanup(rsp.PlayerId)
-		return
-	}
-
-	gs.SendDestroyAndArmTimer(rsp.PlayerId, worldID)
-}
-
-func (gs *gatewayServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
-	clientConns := make([]*common.ConnWrapper, 0, len(gs.sessions))
-	for c := range gs.sessions {
-		clientConns = append(clientConns, c)
-	}
-
-	for _, c := range clientConns {
-		common.SendMsg(c, common.Gw2Cli_ServerShutdownNotify, &common.ServerShutdownNotify{Message: notify.Reason})
-		c.CloseAfterSend()
-	}
-
-	gs.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: gs.ServerId})
-	log.Printf("[gateway %s] notified %d clients of shutdown, stopping", gs.ServerId, len(clientConns))
-	go gs.Stop()
+	gs.StartLogoutCleanup(session)
 }
 
 func (gs *gatewayServer) HandleCentralLogoutCleanupRsp(_ *common.ConnWrapper, rsp *common.LogoutCleanupRsp) {
-	clientConn, ok := gs.playerConns[rsp.PlayerId]
-	if ok {
-		delete(gs.playerConns, rsp.PlayerId)
-	}
-	if clientConn != nil {
-		delete(gs.sessions, clientConn)
-	}
-	delete(gs.loggingOut, rsp.PlayerId)
-
-	if clientConn == nil {
+	session := gs.GetByPlayer(rsp.PlayerId)
+	if session == nil {
 		return
 	}
+	if rsp.SessionId != "" && session.SessionId != "" && session.SessionId != rsp.SessionId {
+		return
+	}
+	conn := session.Conn
+	gs.RemoveSession(session)
+	if conn != nil {
+		message := rsp.Message
+		if message == "" {
+			if rsp.Success {
+				message = "logged out"
+			} else {
+				message = "logout failed"
+			}
+		}
+		logoutRsp := common.LogoutRsp{Success: rsp.Success, Message: message}
+		common.SendMsg(conn, common.Gw2Cli_LogoutRsp, &logoutRsp)
+		conn.CloseAfterSend()
+	}
+}
 
-	logoutRsp := common.LogoutRsp{Success: true, Message: "已下线"}
-	common.SendMsg(clientConn, common.Gw2Cli_LogoutRsp, &logoutRsp)
-	clientConn.Close()
+func (gs *gatewayServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
+	conns := make([]*common.ConnWrapper, 0, len(gs.byConn))
+	for conn := range gs.byConn {
+		conns = append(conns, conn)
+	}
+	for _, conn := range conns {
+		common.SendMsg(conn, common.Gw2Cli_ServerShutdownNotify, &common.ServerShutdownNotify{Message: notify.Reason})
+		conn.CloseAfterSend()
+	}
+	gs.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: gs.ServerId})
+	log.Printf("[gateway %s] notified %d clients of shutdown, stopping", gs.ServerId, len(conns))
+	go gs.Stop()
 }

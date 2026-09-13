@@ -13,11 +13,21 @@ import (
 
 const sendQueueSize = 1024
 
+type sendItem struct {
+	data       []byte
+	closeAfter bool
+}
+
 type ConnWrapper struct {
 	net.Conn
-	sendCh    chan []byte
+	sendCh    chan sendItem
 	closed    chan struct{}
 	closeOnce sync.Once
+	sendMu    sync.Mutex
+	closing   bool
+
+	helloMu   sync.Mutex
+	helloDone bool
 
 	PeerType ServerType
 }
@@ -25,29 +35,47 @@ type ConnWrapper struct {
 func NewConnWrapper(conn net.Conn) *ConnWrapper {
 	cw := &ConnWrapper{
 		Conn:   conn,
-		sendCh: make(chan []byte, sendQueueSize),
+		sendCh: make(chan sendItem, sendQueueSize),
 		closed: make(chan struct{}),
 	}
 	go cw.WriteLoop()
 	return cw
 }
 
+func (cw *ConnWrapper) MarkHelloDone() bool {
+	cw.helloMu.Lock()
+	defer cw.helloMu.Unlock()
+	if cw.helloDone {
+		return false
+	}
+	cw.helloDone = true
+	return true
+}
 func (cw *ConnWrapper) Send(msg Message) error {
 	data, err := Encode(msg)
 	if err != nil {
 		return err
 	}
+	cw.sendMu.Lock()
+	if cw.closing {
+		cw.sendMu.Unlock()
+		return net.ErrClosed
+	}
 	select {
 	case <-cw.closed:
+		cw.sendMu.Unlock()
 		return net.ErrClosed
 	default:
 	}
 	select {
-	case cw.sendCh <- data:
+	case cw.sendCh <- sendItem{data: data}:
+		cw.sendMu.Unlock()
 		return nil
 	case <-cw.closed:
+		cw.sendMu.Unlock()
 		return net.ErrClosed
 	default:
+		cw.sendMu.Unlock()
 		log.Printf("[conn] send queue full, closing slow connection %v", cw.RemoteAddr())
 		cw.Close()
 		return fmt.Errorf("send queue full")
@@ -55,37 +83,54 @@ func (cw *ConnWrapper) Send(msg Message) error {
 }
 
 func (cw *ConnWrapper) WriteLoop() {
-	defer cw.Conn.Close()
+	defer func() {
+		cw.markClosed()
+		_ = cw.Conn.Close()
+	}()
 	for {
 		select {
-		case data := <-cw.sendCh:
-			if _, err := cw.Conn.Write(data); err != nil {
+		case item := <-cw.sendCh:
+			if item.closeAfter {
+				return
+			}
+			if _, err := cw.Conn.Write(item.data); err != nil {
 				return
 			}
 		case <-cw.closed:
-			for {
-				select {
-				case data := <-cw.sendCh:
-					if _, err := cw.Conn.Write(data); err != nil {
-						return
-					}
-				default:
-					return
-				}
-			}
+			return
 		}
 	}
 }
 
-func (cw *ConnWrapper) Close() error {
+func (cw *ConnWrapper) markClosed() {
 	cw.closeOnce.Do(func() {
 		close(cw.closed)
 	})
-	return nil
+}
+
+func (cw *ConnWrapper) Close() error {
+	cw.markClosed()
+	return cw.Conn.Close()
 }
 
 func (cw *ConnWrapper) CloseAfterSend() error {
-	return cw.Close()
+	cw.sendMu.Lock()
+	if cw.closing {
+		cw.sendMu.Unlock()
+		return nil
+	}
+	cw.closing = true
+	select {
+	case cw.sendCh <- sendItem{closeAfter: true}:
+		cw.sendMu.Unlock()
+		return nil
+	case <-cw.closed:
+		cw.sendMu.Unlock()
+		return net.ErrClosed
+	default:
+		cw.sendMu.Unlock()
+		return cw.Close()
+	}
 }
 
 type Message struct {

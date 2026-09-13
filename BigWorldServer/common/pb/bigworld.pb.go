@@ -161,29 +161,31 @@ func (MoveState) EnumDescriptor() ([]byte, []int) {
 	return file_bigworld_proto_rawDescGZIP(), []int{1}
 }
 
-type RegisterReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerType    ServerType             `protobuf:"varint,1,opt,name=server_type,json=serverType,proto3,enum=bigworld.ServerType" json:"server_type,omitempty"`
-	ServerId      string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
-	ListenAddr    string                 `protobuf:"bytes,3,opt,name=listen_addr,json=listenAddr,proto3" json:"listen_addr,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+type HelloReq struct {
+	state           protoimpl.MessageState `protogen:"open.v1"`
+	ServerType      ServerType             `protobuf:"varint,1,opt,name=server_type,json=serverType,proto3,enum=bigworld.ServerType" json:"server_type,omitempty"`
+	ServerId        string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
+	ListenAddr      string                 `protobuf:"bytes,3,opt,name=listen_addr,json=listenAddr,proto3" json:"listen_addr,omitempty"`
+	Secret          string                 `protobuf:"bytes,4,opt,name=secret,proto3" json:"secret,omitempty"`
+	ProtocolVersion uint32                 `protobuf:"varint,5,opt,name=protocol_version,json=protocolVersion,proto3" json:"protocol_version,omitempty"`
+	unknownFields   protoimpl.UnknownFields
+	sizeCache       protoimpl.SizeCache
 }
 
-func (x *RegisterReq) Reset() {
-	*x = RegisterReq{}
+func (x *HelloReq) Reset() {
+	*x = HelloReq{}
 	mi := &file_bigworld_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RegisterReq) String() string {
+func (x *HelloReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RegisterReq) ProtoMessage() {}
+func (*HelloReq) ProtoMessage() {}
 
-func (x *RegisterReq) ProtoReflect() protoreflect.Message {
+func (x *HelloReq) ProtoReflect() protoreflect.Message {
 	mi := &file_bigworld_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -195,54 +197,69 @@ func (x *RegisterReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RegisterReq.ProtoReflect.Descriptor instead.
-func (*RegisterReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use HelloReq.ProtoReflect.Descriptor instead.
+func (*HelloReq) Descriptor() ([]byte, []int) {
 	return file_bigworld_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *RegisterReq) GetServerType() ServerType {
+func (x *HelloReq) GetServerType() ServerType {
 	if x != nil {
 		return x.ServerType
 	}
 	return ServerType_SERVER_INVALID
 }
 
-func (x *RegisterReq) GetServerId() string {
+func (x *HelloReq) GetServerId() string {
 	if x != nil {
 		return x.ServerId
 	}
 	return ""
 }
 
-func (x *RegisterReq) GetListenAddr() string {
+func (x *HelloReq) GetListenAddr() string {
 	if x != nil {
 		return x.ListenAddr
 	}
 	return ""
 }
 
-type RegisterRsp struct {
+func (x *HelloReq) GetSecret() string {
+	if x != nil {
+		return x.Secret
+	}
+	return ""
+}
+
+func (x *HelloReq) GetProtocolVersion() uint32 {
+	if x != nil {
+		return x.ProtocolVersion
+	}
+	return 0
+}
+
+type HelloRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	Registered    bool                   `protobuf:"varint,3,opt,name=registered,proto3" json:"registered,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *RegisterRsp) Reset() {
-	*x = RegisterRsp{}
+func (x *HelloRsp) Reset() {
+	*x = HelloRsp{}
 	mi := &file_bigworld_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *RegisterRsp) String() string {
+func (x *HelloRsp) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*RegisterRsp) ProtoMessage() {}
+func (*HelloRsp) ProtoMessage() {}
 
-func (x *RegisterRsp) ProtoReflect() protoreflect.Message {
+func (x *HelloRsp) ProtoReflect() protoreflect.Message {
 	mi := &file_bigworld_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -254,23 +271,30 @@ func (x *RegisterRsp) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use RegisterRsp.ProtoReflect.Descriptor instead.
-func (*RegisterRsp) Descriptor() ([]byte, []int) {
+// Deprecated: Use HelloRsp.ProtoReflect.Descriptor instead.
+func (*HelloRsp) Descriptor() ([]byte, []int) {
 	return file_bigworld_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *RegisterRsp) GetSuccess() bool {
+func (x *HelloRsp) GetSuccess() bool {
 	if x != nil {
 		return x.Success
 	}
 	return false
 }
 
-func (x *RegisterRsp) GetMessage() string {
+func (x *HelloRsp) GetMessage() string {
 	if x != nil {
 		return x.Message
 	}
 	return ""
+}
+
+func (x *HelloRsp) GetRegistered() bool {
+	if x != nil {
+		return x.Registered
+	}
+	return false
 }
 
 type HeartbeatReq struct {
@@ -1025,6 +1049,7 @@ type LoginPrepareReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	ReqId         uint64                 `protobuf:"varint,1,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
 	Account       string                 `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1069,6 +1094,13 @@ func (x *LoginPrepareReq) GetReqId() uint64 {
 func (x *LoginPrepareReq) GetAccount() string {
 	if x != nil {
 		return x.Account
+	}
+	return ""
+}
+
+func (x *LoginPrepareReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
 	}
 	return ""
 }
@@ -1157,6 +1189,7 @@ type LoginFinishReq struct {
 	WorldId       string                 `protobuf:"bytes,4,opt,name=world_id,json=worldId,proto3" json:"world_id,omitempty"`
 	GatewayId     string                 `protobuf:"bytes,5,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
+	SessionId     string                 `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1233,12 +1266,20 @@ func (x *LoginFinishReq) GetMessage() string {
 	return ""
 }
 
+func (x *LoginFinishReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type LoginFinishRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	PlayerId      uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	Account       string                 `protobuf:"bytes,3,opt,name=account,proto3" json:"account,omitempty"`
 	Message       string                 `protobuf:"bytes,4,opt,name=message,proto3" json:"message,omitempty"`
+	SessionId     string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1301,11 +1342,19 @@ func (x *LoginFinishRsp) GetMessage() string {
 	return ""
 }
 
+func (x *LoginFinishRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type ForceKickNotify struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	Account       string                 `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
 	WorldId       string                 `protobuf:"bytes,3,opt,name=world_id,json=worldId,proto3" json:"world_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1357,6 +1406,13 @@ func (x *ForceKickNotify) GetAccount() string {
 func (x *ForceKickNotify) GetWorldId() string {
 	if x != nil {
 		return x.WorldId
+	}
+	return ""
+}
+
+func (x *ForceKickNotify) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
 	}
 	return ""
 }
@@ -1552,6 +1608,8 @@ func (x *LogoutRsp) GetMessage() string {
 type LogoutBeginReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1593,11 +1651,26 @@ func (x *LogoutBeginReq) GetPlayerId() uint64 {
 	return 0
 }
 
+func (x *LogoutBeginReq) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *LogoutBeginReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type LogoutBeginRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	PlayerId      uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1653,10 +1726,18 @@ func (x *LogoutBeginRsp) GetMessage() string {
 	return ""
 }
 
+func (x *LogoutBeginRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type LogoutCleanupReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1705,11 +1786,19 @@ func (x *LogoutCleanupReq) GetGatewayId() string {
 	return ""
 }
 
+func (x *LogoutCleanupReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type LogoutCleanupRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	PlayerId      uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1765,9 +1854,18 @@ func (x *LogoutCleanupRsp) GetMessage() string {
 	return ""
 }
 
+func (x *LogoutCleanupRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type CreateEntityReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Account       string                 `protobuf:"bytes,1,opt,name=account,proto3" json:"account,omitempty"`
+	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1809,6 +1907,20 @@ func (x *CreateEntityReq) GetAccount() string {
 	return ""
 }
 
+func (x *CreateEntityReq) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *CreateEntityReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type CreateEntityRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
@@ -1820,6 +1932,7 @@ type CreateEntityRsp struct {
 	Height        float64                `protobuf:"fixed64,7,opt,name=height,proto3" json:"height,omitempty"`
 	Message       string                 `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
 	SceneId       string                 `protobuf:"bytes,9,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,10,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1917,9 +2030,18 @@ func (x *CreateEntityRsp) GetSceneId() string {
 	return ""
 }
 
+func (x *CreateEntityRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type DestroyEntityReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1961,11 +2083,26 @@ func (x *DestroyEntityReq) GetPlayerId() uint64 {
 	return 0
 }
 
+func (x *DestroyEntityReq) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *DestroyEntityReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
 type DestroyEntityRsp struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
 	PlayerId      uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -2021,6 +2158,181 @@ func (x *DestroyEntityRsp) GetMessage() string {
 	return ""
 }
 
+func (x *DestroyEntityRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type ResumeEntityReq struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	GatewayId     string                 `protobuf:"bytes,2,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,3,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeEntityReq) Reset() {
+	*x = ResumeEntityReq{}
+	mi := &file_bigworld_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeEntityReq) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeEntityReq) ProtoMessage() {}
+
+func (x *ResumeEntityReq) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeEntityReq.ProtoReflect.Descriptor instead.
+func (*ResumeEntityReq) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ResumeEntityReq) GetPlayerId() uint64 {
+	if x != nil {
+		return x.PlayerId
+	}
+	return 0
+}
+
+func (x *ResumeEntityReq) GetGatewayId() string {
+	if x != nil {
+		return x.GatewayId
+	}
+	return ""
+}
+
+func (x *ResumeEntityReq) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+type ResumeEntityRsp struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Success       bool                   `protobuf:"varint,1,opt,name=success,proto3" json:"success,omitempty"`
+	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
+	PlayerId      uint64                 `protobuf:"varint,3,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	SceneId       string                 `protobuf:"bytes,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	X             float64                `protobuf:"fixed64,6,opt,name=x,proto3" json:"x,omitempty"`
+	Z             float64                `protobuf:"fixed64,7,opt,name=z,proto3" json:"z,omitempty"`
+	Width         float64                `protobuf:"fixed64,8,opt,name=width,proto3" json:"width,omitempty"`
+	Height        float64                `protobuf:"fixed64,9,opt,name=height,proto3" json:"height,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ResumeEntityRsp) Reset() {
+	*x = ResumeEntityRsp{}
+	mi := &file_bigworld_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ResumeEntityRsp) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ResumeEntityRsp) ProtoMessage() {}
+
+func (x *ResumeEntityRsp) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ResumeEntityRsp.ProtoReflect.Descriptor instead.
+func (*ResumeEntityRsp) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *ResumeEntityRsp) GetSuccess() bool {
+	if x != nil {
+		return x.Success
+	}
+	return false
+}
+
+func (x *ResumeEntityRsp) GetMessage() string {
+	if x != nil {
+		return x.Message
+	}
+	return ""
+}
+
+func (x *ResumeEntityRsp) GetPlayerId() uint64 {
+	if x != nil {
+		return x.PlayerId
+	}
+	return 0
+}
+
+func (x *ResumeEntityRsp) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *ResumeEntityRsp) GetSceneId() string {
+	if x != nil {
+		return x.SceneId
+	}
+	return ""
+}
+
+func (x *ResumeEntityRsp) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *ResumeEntityRsp) GetZ() float64 {
+	if x != nil {
+		return x.Z
+	}
+	return 0
+}
+
+func (x *ResumeEntityRsp) GetWidth() float64 {
+	if x != nil {
+		return x.Width
+	}
+	return 0
+}
+
+func (x *ResumeEntityRsp) GetHeight() float64 {
+	if x != nil {
+		return x.Height
+	}
+	return 0
+}
+
 // 每状态一条开始协议 + 方向变更：客户端进入某个移动状态时发一次开始协议，
 // 世界服每 tick 用同一份导出位移曲线在本地推进位置；移动中转向再补一条方向变更。
 type MoveDir struct {
@@ -2033,7 +2345,7 @@ type MoveDir struct {
 
 func (x *MoveDir) Reset() {
 	*x = MoveDir{}
-	mi := &file_bigworld_proto_msgTypes[29]
+	mi := &file_bigworld_proto_msgTypes[31]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2045,7 +2357,7 @@ func (x *MoveDir) String() string {
 func (*MoveDir) ProtoMessage() {}
 
 func (x *MoveDir) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[29]
+	mi := &file_bigworld_proto_msgTypes[31]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2058,7 +2370,7 @@ func (x *MoveDir) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveDir.ProtoReflect.Descriptor instead.
 func (*MoveDir) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{29}
+	return file_bigworld_proto_rawDescGZIP(), []int{31}
 }
 
 func (x *MoveDir) GetX() float32 {
@@ -2086,7 +2398,7 @@ type WalkStartReq struct {
 
 func (x *WalkStartReq) Reset() {
 	*x = WalkStartReq{}
-	mi := &file_bigworld_proto_msgTypes[30]
+	mi := &file_bigworld_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2098,7 +2410,7 @@ func (x *WalkStartReq) String() string {
 func (*WalkStartReq) ProtoMessage() {}
 
 func (x *WalkStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[30]
+	mi := &file_bigworld_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2111,7 +2423,7 @@ func (x *WalkStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use WalkStartReq.ProtoReflect.Descriptor instead.
 func (*WalkStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{30}
+	return file_bigworld_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *WalkStartReq) GetPlayerId() uint64 {
@@ -2146,7 +2458,7 @@ type RunStartReq struct {
 
 func (x *RunStartReq) Reset() {
 	*x = RunStartReq{}
-	mi := &file_bigworld_proto_msgTypes[31]
+	mi := &file_bigworld_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2158,7 +2470,7 @@ func (x *RunStartReq) String() string {
 func (*RunStartReq) ProtoMessage() {}
 
 func (x *RunStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[31]
+	mi := &file_bigworld_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2171,7 +2483,7 @@ func (x *RunStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RunStartReq.ProtoReflect.Descriptor instead.
 func (*RunStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{31}
+	return file_bigworld_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *RunStartReq) GetPlayerId() uint64 {
@@ -2206,7 +2518,7 @@ type SprintStartReq struct {
 
 func (x *SprintStartReq) Reset() {
 	*x = SprintStartReq{}
-	mi := &file_bigworld_proto_msgTypes[32]
+	mi := &file_bigworld_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2218,7 +2530,7 @@ func (x *SprintStartReq) String() string {
 func (*SprintStartReq) ProtoMessage() {}
 
 func (x *SprintStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[32]
+	mi := &file_bigworld_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2231,7 +2543,7 @@ func (x *SprintStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SprintStartReq.ProtoReflect.Descriptor instead.
 func (*SprintStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{32}
+	return file_bigworld_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *SprintStartReq) GetPlayerId() uint64 {
@@ -2266,7 +2578,7 @@ type JumpStartReq struct {
 
 func (x *JumpStartReq) Reset() {
 	*x = JumpStartReq{}
-	mi := &file_bigworld_proto_msgTypes[33]
+	mi := &file_bigworld_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2278,7 +2590,7 @@ func (x *JumpStartReq) String() string {
 func (*JumpStartReq) ProtoMessage() {}
 
 func (x *JumpStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[33]
+	mi := &file_bigworld_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2291,7 +2603,7 @@ func (x *JumpStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use JumpStartReq.ProtoReflect.Descriptor instead.
 func (*JumpStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{33}
+	return file_bigworld_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *JumpStartReq) GetPlayerId() uint64 {
@@ -2326,7 +2638,7 @@ type DashStartReq struct {
 
 func (x *DashStartReq) Reset() {
 	*x = DashStartReq{}
-	mi := &file_bigworld_proto_msgTypes[34]
+	mi := &file_bigworld_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2338,7 +2650,7 @@ func (x *DashStartReq) String() string {
 func (*DashStartReq) ProtoMessage() {}
 
 func (x *DashStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[34]
+	mi := &file_bigworld_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2351,7 +2663,7 @@ func (x *DashStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DashStartReq.ProtoReflect.Descriptor instead.
 func (*DashStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{34}
+	return file_bigworld_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *DashStartReq) GetPlayerId() uint64 {
@@ -2386,7 +2698,7 @@ type RollStartReq struct {
 
 func (x *RollStartReq) Reset() {
 	*x = RollStartReq{}
-	mi := &file_bigworld_proto_msgTypes[35]
+	mi := &file_bigworld_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2398,7 +2710,7 @@ func (x *RollStartReq) String() string {
 func (*RollStartReq) ProtoMessage() {}
 
 func (x *RollStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[35]
+	mi := &file_bigworld_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2411,7 +2723,7 @@ func (x *RollStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use RollStartReq.ProtoReflect.Descriptor instead.
 func (*RollStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{35}
+	return file_bigworld_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *RollStartReq) GetPlayerId() uint64 {
@@ -2446,7 +2758,7 @@ type StopStartReq struct {
 
 func (x *StopStartReq) Reset() {
 	*x = StopStartReq{}
-	mi := &file_bigworld_proto_msgTypes[36]
+	mi := &file_bigworld_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2458,7 +2770,7 @@ func (x *StopStartReq) String() string {
 func (*StopStartReq) ProtoMessage() {}
 
 func (x *StopStartReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[36]
+	mi := &file_bigworld_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2471,7 +2783,7 @@ func (x *StopStartReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StopStartReq.ProtoReflect.Descriptor instead.
 func (*StopStartReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{36}
+	return file_bigworld_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *StopStartReq) GetPlayerId() uint64 {
@@ -2505,7 +2817,7 @@ type MoveStopReq struct {
 
 func (x *MoveStopReq) Reset() {
 	*x = MoveStopReq{}
-	mi := &file_bigworld_proto_msgTypes[37]
+	mi := &file_bigworld_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2517,7 +2829,7 @@ func (x *MoveStopReq) String() string {
 func (*MoveStopReq) ProtoMessage() {}
 
 func (x *MoveStopReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[37]
+	mi := &file_bigworld_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2530,7 +2842,7 @@ func (x *MoveStopReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveStopReq.ProtoReflect.Descriptor instead.
 func (*MoveStopReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{37}
+	return file_bigworld_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *MoveStopReq) GetPlayerId() uint64 {
@@ -2558,7 +2870,7 @@ type MoveDirChangeReq struct {
 
 func (x *MoveDirChangeReq) Reset() {
 	*x = MoveDirChangeReq{}
-	mi := &file_bigworld_proto_msgTypes[38]
+	mi := &file_bigworld_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2570,7 +2882,7 @@ func (x *MoveDirChangeReq) String() string {
 func (*MoveDirChangeReq) ProtoMessage() {}
 
 func (x *MoveDirChangeReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[38]
+	mi := &file_bigworld_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2583,7 +2895,7 @@ func (x *MoveDirChangeReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveDirChangeReq.ProtoReflect.Descriptor instead.
 func (*MoveDirChangeReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{38}
+	return file_bigworld_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *MoveDirChangeReq) GetPlayerId() uint64 {
@@ -2635,7 +2947,7 @@ type MoveRsp struct {
 
 func (x *MoveRsp) Reset() {
 	*x = MoveRsp{}
-	mi := &file_bigworld_proto_msgTypes[39]
+	mi := &file_bigworld_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2647,7 +2959,7 @@ func (x *MoveRsp) String() string {
 func (*MoveRsp) ProtoMessage() {}
 
 func (x *MoveRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[39]
+	mi := &file_bigworld_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2660,7 +2972,7 @@ func (x *MoveRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use MoveRsp.ProtoReflect.Descriptor instead.
 func (*MoveRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{39}
+	return file_bigworld_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *MoveRsp) GetSuccess() bool {
@@ -2792,7 +3104,7 @@ type SkillReq struct {
 
 func (x *SkillReq) Reset() {
 	*x = SkillReq{}
-	mi := &file_bigworld_proto_msgTypes[40]
+	mi := &file_bigworld_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2804,7 +3116,7 @@ func (x *SkillReq) String() string {
 func (*SkillReq) ProtoMessage() {}
 
 func (x *SkillReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[40]
+	mi := &file_bigworld_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2817,7 +3129,7 @@ func (x *SkillReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SkillReq.ProtoReflect.Descriptor instead.
 func (*SkillReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{40}
+	return file_bigworld_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *SkillReq) GetPlayerId() uint64 {
@@ -2845,7 +3157,7 @@ type SkillRsp struct {
 
 func (x *SkillRsp) Reset() {
 	*x = SkillRsp{}
-	mi := &file_bigworld_proto_msgTypes[41]
+	mi := &file_bigworld_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2857,7 +3169,7 @@ func (x *SkillRsp) String() string {
 func (*SkillRsp) ProtoMessage() {}
 
 func (x *SkillRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[41]
+	mi := &file_bigworld_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2870,7 +3182,7 @@ func (x *SkillRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SkillRsp.ProtoReflect.Descriptor instead.
 func (*SkillRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{41}
+	return file_bigworld_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *SkillRsp) GetSuccess() bool {
@@ -2903,7 +3215,7 @@ type ClientHeartbeatReq struct {
 
 func (x *ClientHeartbeatReq) Reset() {
 	*x = ClientHeartbeatReq{}
-	mi := &file_bigworld_proto_msgTypes[42]
+	mi := &file_bigworld_proto_msgTypes[44]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2915,7 +3227,7 @@ func (x *ClientHeartbeatReq) String() string {
 func (*ClientHeartbeatReq) ProtoMessage() {}
 
 func (x *ClientHeartbeatReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[42]
+	mi := &file_bigworld_proto_msgTypes[44]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2928,7 +3240,7 @@ func (x *ClientHeartbeatReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientHeartbeatReq.ProtoReflect.Descriptor instead.
 func (*ClientHeartbeatReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{42}
+	return file_bigworld_proto_rawDescGZIP(), []int{44}
 }
 
 func (x *ClientHeartbeatReq) GetClientTimeMs() int64 {
@@ -2948,7 +3260,7 @@ type ClientHeartbeatRsp struct {
 
 func (x *ClientHeartbeatRsp) Reset() {
 	*x = ClientHeartbeatRsp{}
-	mi := &file_bigworld_proto_msgTypes[43]
+	mi := &file_bigworld_proto_msgTypes[45]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -2960,7 +3272,7 @@ func (x *ClientHeartbeatRsp) String() string {
 func (*ClientHeartbeatRsp) ProtoMessage() {}
 
 func (x *ClientHeartbeatRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[43]
+	mi := &file_bigworld_proto_msgTypes[45]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2973,7 +3285,7 @@ func (x *ClientHeartbeatRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ClientHeartbeatRsp.ProtoReflect.Descriptor instead.
 func (*ClientHeartbeatRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{43}
+	return file_bigworld_proto_rawDescGZIP(), []int{45}
 }
 
 func (x *ClientHeartbeatRsp) GetServerTimeMs() int64 {
@@ -3002,7 +3314,7 @@ type ValidateAccountReq struct {
 
 func (x *ValidateAccountReq) Reset() {
 	*x = ValidateAccountReq{}
-	mi := &file_bigworld_proto_msgTypes[44]
+	mi := &file_bigworld_proto_msgTypes[46]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3014,7 +3326,7 @@ func (x *ValidateAccountReq) String() string {
 func (*ValidateAccountReq) ProtoMessage() {}
 
 func (x *ValidateAccountReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[44]
+	mi := &file_bigworld_proto_msgTypes[46]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3027,7 +3339,7 @@ func (x *ValidateAccountReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateAccountReq.ProtoReflect.Descriptor instead.
 func (*ValidateAccountReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{44}
+	return file_bigworld_proto_rawDescGZIP(), []int{46}
 }
 
 func (x *ValidateAccountReq) GetReqId() uint64 {
@@ -3062,7 +3374,7 @@ type ValidateAccountRsp struct {
 
 func (x *ValidateAccountRsp) Reset() {
 	*x = ValidateAccountRsp{}
-	mi := &file_bigworld_proto_msgTypes[45]
+	mi := &file_bigworld_proto_msgTypes[47]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3074,7 +3386,7 @@ func (x *ValidateAccountRsp) String() string {
 func (*ValidateAccountRsp) ProtoMessage() {}
 
 func (x *ValidateAccountRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[45]
+	mi := &file_bigworld_proto_msgTypes[47]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3087,7 +3399,7 @@ func (x *ValidateAccountRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ValidateAccountRsp.ProtoReflect.Descriptor instead.
 func (*ValidateAccountRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{45}
+	return file_bigworld_proto_rawDescGZIP(), []int{47}
 }
 
 func (x *ValidateAccountRsp) GetReqId() uint64 {
@@ -3123,7 +3435,7 @@ type LoadPlayerReq struct {
 
 func (x *LoadPlayerReq) Reset() {
 	*x = LoadPlayerReq{}
-	mi := &file_bigworld_proto_msgTypes[46]
+	mi := &file_bigworld_proto_msgTypes[48]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3135,7 +3447,7 @@ func (x *LoadPlayerReq) String() string {
 func (*LoadPlayerReq) ProtoMessage() {}
 
 func (x *LoadPlayerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[46]
+	mi := &file_bigworld_proto_msgTypes[48]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3148,7 +3460,7 @@ func (x *LoadPlayerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoadPlayerReq.ProtoReflect.Descriptor instead.
 func (*LoadPlayerReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{46}
+	return file_bigworld_proto_rawDescGZIP(), []int{48}
 }
 
 func (x *LoadPlayerReq) GetAccount() string {
@@ -3173,7 +3485,7 @@ type LoadPlayerRsp struct {
 
 func (x *LoadPlayerRsp) Reset() {
 	*x = LoadPlayerRsp{}
-	mi := &file_bigworld_proto_msgTypes[47]
+	mi := &file_bigworld_proto_msgTypes[49]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3185,7 +3497,7 @@ func (x *LoadPlayerRsp) String() string {
 func (*LoadPlayerRsp) ProtoMessage() {}
 
 func (x *LoadPlayerRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[47]
+	mi := &file_bigworld_proto_msgTypes[49]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3198,7 +3510,7 @@ func (x *LoadPlayerRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LoadPlayerRsp.ProtoReflect.Descriptor instead.
 func (*LoadPlayerRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{47}
+	return file_bigworld_proto_rawDescGZIP(), []int{49}
 }
 
 func (x *LoadPlayerRsp) GetFound() bool {
@@ -3264,7 +3576,7 @@ type PlayerData struct {
 
 func (x *PlayerData) Reset() {
 	*x = PlayerData{}
-	mi := &file_bigworld_proto_msgTypes[48]
+	mi := &file_bigworld_proto_msgTypes[50]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3276,7 +3588,7 @@ func (x *PlayerData) String() string {
 func (*PlayerData) ProtoMessage() {}
 
 func (x *PlayerData) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[48]
+	mi := &file_bigworld_proto_msgTypes[50]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3289,7 +3601,7 @@ func (x *PlayerData) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PlayerData.ProtoReflect.Descriptor instead.
 func (*PlayerData) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{48}
+	return file_bigworld_proto_rawDescGZIP(), []int{50}
 }
 
 func (x *PlayerData) GetPlayerId() uint64 {
@@ -3337,7 +3649,7 @@ type SavePlayerReq struct {
 
 func (x *SavePlayerReq) Reset() {
 	*x = SavePlayerReq{}
-	mi := &file_bigworld_proto_msgTypes[49]
+	mi := &file_bigworld_proto_msgTypes[51]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3349,7 +3661,7 @@ func (x *SavePlayerReq) String() string {
 func (*SavePlayerReq) ProtoMessage() {}
 
 func (x *SavePlayerReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[49]
+	mi := &file_bigworld_proto_msgTypes[51]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3362,7 +3674,7 @@ func (x *SavePlayerReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePlayerReq.ProtoReflect.Descriptor instead.
 func (*SavePlayerReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{49}
+	return file_bigworld_proto_rawDescGZIP(), []int{51}
 }
 
 func (x *SavePlayerReq) GetReqId() uint64 {
@@ -3390,7 +3702,7 @@ type SavePlayerRsp struct {
 
 func (x *SavePlayerRsp) Reset() {
 	*x = SavePlayerRsp{}
-	mi := &file_bigworld_proto_msgTypes[50]
+	mi := &file_bigworld_proto_msgTypes[52]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3402,7 +3714,7 @@ func (x *SavePlayerRsp) String() string {
 func (*SavePlayerRsp) ProtoMessage() {}
 
 func (x *SavePlayerRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[50]
+	mi := &file_bigworld_proto_msgTypes[52]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3415,7 +3727,7 @@ func (x *SavePlayerRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SavePlayerRsp.ProtoReflect.Descriptor instead.
 func (*SavePlayerRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{50}
+	return file_bigworld_proto_rawDescGZIP(), []int{52}
 }
 
 func (x *SavePlayerRsp) GetReqId() uint64 {
@@ -3448,7 +3760,7 @@ type ShutdownReq struct {
 
 func (x *ShutdownReq) Reset() {
 	*x = ShutdownReq{}
-	mi := &file_bigworld_proto_msgTypes[51]
+	mi := &file_bigworld_proto_msgTypes[53]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3460,7 +3772,7 @@ func (x *ShutdownReq) String() string {
 func (*ShutdownReq) ProtoMessage() {}
 
 func (x *ShutdownReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[51]
+	mi := &file_bigworld_proto_msgTypes[53]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3473,7 +3785,7 @@ func (x *ShutdownReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownReq.ProtoReflect.Descriptor instead.
 func (*ShutdownReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{51}
+	return file_bigworld_proto_rawDescGZIP(), []int{53}
 }
 
 func (x *ShutdownReq) GetReason() string {
@@ -3493,7 +3805,7 @@ type ShutdownRsp struct {
 
 func (x *ShutdownRsp) Reset() {
 	*x = ShutdownRsp{}
-	mi := &file_bigworld_proto_msgTypes[52]
+	mi := &file_bigworld_proto_msgTypes[54]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3505,7 +3817,7 @@ func (x *ShutdownRsp) String() string {
 func (*ShutdownRsp) ProtoMessage() {}
 
 func (x *ShutdownRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[52]
+	mi := &file_bigworld_proto_msgTypes[54]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3518,7 +3830,7 @@ func (x *ShutdownRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownRsp.ProtoReflect.Descriptor instead.
 func (*ShutdownRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{52}
+	return file_bigworld_proto_rawDescGZIP(), []int{54}
 }
 
 func (x *ShutdownRsp) GetSuccess() bool {
@@ -3544,7 +3856,7 @@ type ShutdownNotify struct {
 
 func (x *ShutdownNotify) Reset() {
 	*x = ShutdownNotify{}
-	mi := &file_bigworld_proto_msgTypes[53]
+	mi := &file_bigworld_proto_msgTypes[55]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3556,7 +3868,7 @@ func (x *ShutdownNotify) String() string {
 func (*ShutdownNotify) ProtoMessage() {}
 
 func (x *ShutdownNotify) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[53]
+	mi := &file_bigworld_proto_msgTypes[55]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3569,7 +3881,7 @@ func (x *ShutdownNotify) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownNotify.ProtoReflect.Descriptor instead.
 func (*ShutdownNotify) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{53}
+	return file_bigworld_proto_rawDescGZIP(), []int{55}
 }
 
 func (x *ShutdownNotify) GetReason() string {
@@ -3588,7 +3900,7 @@ type ShutdownAck struct {
 
 func (x *ShutdownAck) Reset() {
 	*x = ShutdownAck{}
-	mi := &file_bigworld_proto_msgTypes[54]
+	mi := &file_bigworld_proto_msgTypes[56]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3600,7 +3912,7 @@ func (x *ShutdownAck) String() string {
 func (*ShutdownAck) ProtoMessage() {}
 
 func (x *ShutdownAck) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[54]
+	mi := &file_bigworld_proto_msgTypes[56]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3613,7 +3925,7 @@ func (x *ShutdownAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ShutdownAck.ProtoReflect.Descriptor instead.
 func (*ShutdownAck) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{54}
+	return file_bigworld_proto_rawDescGZIP(), []int{56}
 }
 
 func (x *ShutdownAck) GetServerId() string {
@@ -3632,7 +3944,7 @@ type ServerShutdownNotify struct {
 
 func (x *ServerShutdownNotify) Reset() {
 	*x = ServerShutdownNotify{}
-	mi := &file_bigworld_proto_msgTypes[55]
+	mi := &file_bigworld_proto_msgTypes[57]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -3644,7 +3956,7 @@ func (x *ServerShutdownNotify) String() string {
 func (*ServerShutdownNotify) ProtoMessage() {}
 
 func (x *ServerShutdownNotify) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[55]
+	mi := &file_bigworld_proto_msgTypes[57]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -3657,7 +3969,7 @@ func (x *ServerShutdownNotify) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ServerShutdownNotify.ProtoReflect.Descriptor instead.
 func (*ServerShutdownNotify) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{55}
+	return file_bigworld_proto_rawDescGZIP(), []int{57}
 }
 
 func (x *ServerShutdownNotify) GetMessage() string {
@@ -3667,66 +3979,25 @@ func (x *ServerShutdownNotify) GetMessage() string {
 	return ""
 }
 
-// IdentifyReq is the first message a server sends on any server-to-server
-// connection it initiates, so the accepting side knows the peer's type.
-type IdentifyReq struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	ServerType    ServerType             `protobuf:"varint,1,opt,name=server_type,json=serverType,proto3,enum=bigworld.ServerType" json:"server_type,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *IdentifyReq) Reset() {
-	*x = IdentifyReq{}
-	mi := &file_bigworld_proto_msgTypes[56]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *IdentifyReq) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*IdentifyReq) ProtoMessage() {}
-
-func (x *IdentifyReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[56]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use IdentifyReq.ProtoReflect.Descriptor instead.
-func (*IdentifyReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{56}
-}
-
-func (x *IdentifyReq) GetServerType() ServerType {
-	if x != nil {
-		return x.ServerType
-	}
-	return ServerType_SERVER_INVALID
-}
-
 var File_bigworld_proto protoreflect.FileDescriptor
 
 const file_bigworld_proto_rawDesc = "" +
 	"\n" +
-	"\x0ebigworld.proto\x12\bbigworld\"\x82\x01\n" +
-	"\vRegisterReq\x125\n" +
+	"\x0ebigworld.proto\x12\bbigworld\"\xc2\x01\n" +
+	"\bHelloReq\x125\n" +
 	"\vserver_type\x18\x01 \x01(\x0e2\x14.bigworld.ServerTypeR\n" +
 	"serverType\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12\x1f\n" +
 	"\vlisten_addr\x18\x03 \x01(\tR\n" +
-	"listenAddr\"A\n" +
-	"\vRegisterRsp\x12\x18\n" +
+	"listenAddr\x12\x16\n" +
+	"\x06secret\x18\x04 \x01(\tR\x06secret\x12)\n" +
+	"\x10protocol_version\x18\x05 \x01(\rR\x0fprotocolVersion\"^\n" +
+	"\bHelloRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"+\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1e\n" +
+	"\n" +
+	"registered\x18\x03 \x01(\bR\n" +
+	"registered\"+\n" +
 	"\fHeartbeatReq\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\"(\n" +
 	"\fHeartbeatRsp\x12\x18\n" +
@@ -3789,17 +4060,19 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x05width\x18\t \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\n" +
 	" \x01(\x01R\x06height\x12\x18\n" +
-	"\amessage\x18\v \x01(\tR\amessage\"B\n" +
+	"\amessage\x18\v \x01(\tR\amessage\"a\n" +
 	"\x0fLoginPrepareReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x18\n" +
-	"\aaccount\x18\x02 \x01(\tR\aaccount\"\x96\x01\n" +
+	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\x96\x01\n" +
 	"\x0fLoginPrepareRsp\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x19\n" +
 	"\bworld_id\x18\x03 \x01(\tR\aworldId\x12\x1d\n" +
 	"\n" +
 	"world_addr\x18\x04 \x01(\tR\tworldAddr\x12\x18\n" +
-	"\amessage\x18\x05 \x01(\tR\amessage\"\xb5\x01\n" +
+	"\amessage\x18\x05 \x01(\tR\amessage\"\xd4\x01\n" +
 	"\x0eLoginFinishReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
@@ -3807,16 +4080,22 @@ const file_bigworld_proto_rawDesc = "" +
 	"\bworld_id\x18\x04 \x01(\tR\aworldId\x12\x1d\n" +
 	"\n" +
 	"gateway_id\x18\x05 \x01(\tR\tgatewayId\x12\x18\n" +
-	"\amessage\x18\x06 \x01(\tR\amessage\"{\n" +
+	"\amessage\x18\x06 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\a \x01(\tR\tsessionId\"\x9a\x01\n" +
 	"\x0eLoginFinishRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x03 \x01(\tR\aaccount\x12\x18\n" +
-	"\amessage\x18\x04 \x01(\tR\amessage\"c\n" +
+	"\amessage\x18\x04 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x05 \x01(\tR\tsessionId\"\x82\x01\n" +
 	"\x0fForceKickNotify\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\x19\n" +
-	"\bworld_id\x18\x03 \x01(\tR\aworldId\"\xaf\x01\n" +
+	"\bworld_id\x18\x03 \x01(\tR\aworldId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"\xaf\x01\n" +
 	"\x10EnterSceneNotify\x12\x19\n" +
 	"\bworld_id\x18\x01 \x01(\tR\aworldId\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\f\n" +
@@ -3829,23 +4108,37 @@ const file_bigworld_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"?\n" +
 	"\tLogoutRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x02 \x01(\tR\amessage\"-\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\"k\n" +
 	"\x0eLogoutBeginReq\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"a\n" +
+	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x1d\n" +
+	"\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\x80\x01\n" +
 	"\x0eLogoutBeginRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"N\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"m\n" +
 	"\x10LogoutCleanupReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x1d\n" +
 	"\n" +
-	"gateway_id\x18\x02 \x01(\tR\tgatewayId\"c\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\x82\x01\n" +
 	"\x10LogoutCleanupRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"+\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"i\n" +
 	"\x0fCreateEntityReq\x12\x18\n" +
-	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xe1\x01\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\x12\x1d\n" +
+	"\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\x80\x02\n" +
 	"\x0fCreateEntityRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
@@ -3855,13 +4148,39 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x05width\x18\x06 \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\a \x01(\x01R\x06height\x12\x18\n" +
 	"\amessage\x18\b \x01(\tR\amessage\x12\x19\n" +
-	"\bscene_id\x18\t \x01(\tR\asceneId\"/\n" +
+	"\bscene_id\x18\t \x01(\tR\asceneId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\n" +
+	" \x01(\tR\tsessionId\"m\n" +
 	"\x10DestroyEntityReq\x12\x1b\n" +
-	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"c\n" +
+	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x1d\n" +
+	"\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\x82\x01\n" +
 	"\x10DestroyEntityRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"%\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"l\n" +
+	"\x0fResumeEntityReq\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x1d\n" +
+	"\n" +
+	"gateway_id\x18\x02 \x01(\tR\tgatewayId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x03 \x01(\tR\tsessionId\"\xe6\x01\n" +
+	"\x0fResumeEntityRsp\x12\x18\n" +
+	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x18\n" +
+	"\amessage\x18\x02 \x01(\tR\amessage\x12\x1b\n" +
+	"\tplayer_id\x18\x03 \x01(\x04R\bplayerId\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\x12\x19\n" +
+	"\bscene_id\x18\x05 \x01(\tR\asceneId\x12\f\n" +
+	"\x01x\x18\x06 \x01(\x01R\x01x\x12\f\n" +
+	"\x01z\x18\a \x01(\x01R\x01z\x12\x14\n" +
+	"\x05width\x18\b \x01(\x01R\x05width\x12\x16\n" +
+	"\x06height\x18\t \x01(\x01R\x06height\"%\n" +
 	"\aMoveDir\x12\f\n" +
 	"\x01x\x18\x01 \x01(\x02R\x01x\x12\f\n" +
 	"\x01z\x18\x02 \x01(\x02R\x01z\"v\n" +
@@ -3975,10 +4294,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\vShutdownAck\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\"0\n" +
 	"\x14ServerShutdownNotify\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"D\n" +
-	"\vIdentifyReq\x125\n" +
-	"\vserver_type\x18\x01 \x01(\x0e2\x14.bigworld.ServerTypeR\n" +
-	"serverType*\x80\x01\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage*\x80\x01\n" +
 	"\n" +
 	"ServerType\x12\x12\n" +
 	"\x0eSERVER_INVALID\x10\x00\x12\x12\n" +
@@ -4016,12 +4332,12 @@ func file_bigworld_proto_rawDescGZIP() []byte {
 }
 
 var file_bigworld_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 57)
+var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 58)
 var file_bigworld_proto_goTypes = []any{
 	(ServerType)(0),              // 0: bigworld.ServerType
 	(MoveState)(0),               // 1: bigworld.MoveState
-	(*RegisterReq)(nil),          // 2: bigworld.RegisterReq
-	(*RegisterRsp)(nil),          // 3: bigworld.RegisterRsp
+	(*HelloReq)(nil),             // 2: bigworld.HelloReq
+	(*HelloRsp)(nil),             // 3: bigworld.HelloRsp
 	(*HeartbeatReq)(nil),         // 4: bigworld.HeartbeatReq
 	(*HeartbeatRsp)(nil),         // 5: bigworld.HeartbeatRsp
 	(*ServerListReq)(nil),        // 6: bigworld.ServerListReq
@@ -4049,56 +4365,56 @@ var file_bigworld_proto_goTypes = []any{
 	(*CreateEntityRsp)(nil),      // 28: bigworld.CreateEntityRsp
 	(*DestroyEntityReq)(nil),     // 29: bigworld.DestroyEntityReq
 	(*DestroyEntityRsp)(nil),     // 30: bigworld.DestroyEntityRsp
-	(*MoveDir)(nil),              // 31: bigworld.MoveDir
-	(*WalkStartReq)(nil),         // 32: bigworld.WalkStartReq
-	(*RunStartReq)(nil),          // 33: bigworld.RunStartReq
-	(*SprintStartReq)(nil),       // 34: bigworld.SprintStartReq
-	(*JumpStartReq)(nil),         // 35: bigworld.JumpStartReq
-	(*DashStartReq)(nil),         // 36: bigworld.DashStartReq
-	(*RollStartReq)(nil),         // 37: bigworld.RollStartReq
-	(*StopStartReq)(nil),         // 38: bigworld.StopStartReq
-	(*MoveStopReq)(nil),          // 39: bigworld.MoveStopReq
-	(*MoveDirChangeReq)(nil),     // 40: bigworld.MoveDirChangeReq
-	(*MoveRsp)(nil),              // 41: bigworld.MoveRsp
-	(*SkillReq)(nil),             // 42: bigworld.SkillReq
-	(*SkillRsp)(nil),             // 43: bigworld.SkillRsp
-	(*ClientHeartbeatReq)(nil),   // 44: bigworld.ClientHeartbeatReq
-	(*ClientHeartbeatRsp)(nil),   // 45: bigworld.ClientHeartbeatRsp
-	(*ValidateAccountReq)(nil),   // 46: bigworld.ValidateAccountReq
-	(*ValidateAccountRsp)(nil),   // 47: bigworld.ValidateAccountRsp
-	(*LoadPlayerReq)(nil),        // 48: bigworld.LoadPlayerReq
-	(*LoadPlayerRsp)(nil),        // 49: bigworld.LoadPlayerRsp
-	(*PlayerData)(nil),           // 50: bigworld.PlayerData
-	(*SavePlayerReq)(nil),        // 51: bigworld.SavePlayerReq
-	(*SavePlayerRsp)(nil),        // 52: bigworld.SavePlayerRsp
-	(*ShutdownReq)(nil),          // 53: bigworld.ShutdownReq
-	(*ShutdownRsp)(nil),          // 54: bigworld.ShutdownRsp
-	(*ShutdownNotify)(nil),       // 55: bigworld.ShutdownNotify
-	(*ShutdownAck)(nil),          // 56: bigworld.ShutdownAck
-	(*ServerShutdownNotify)(nil), // 57: bigworld.ServerShutdownNotify
-	(*IdentifyReq)(nil),          // 58: bigworld.IdentifyReq
+	(*ResumeEntityReq)(nil),      // 31: bigworld.ResumeEntityReq
+	(*ResumeEntityRsp)(nil),      // 32: bigworld.ResumeEntityRsp
+	(*MoveDir)(nil),              // 33: bigworld.MoveDir
+	(*WalkStartReq)(nil),         // 34: bigworld.WalkStartReq
+	(*RunStartReq)(nil),          // 35: bigworld.RunStartReq
+	(*SprintStartReq)(nil),       // 36: bigworld.SprintStartReq
+	(*JumpStartReq)(nil),         // 37: bigworld.JumpStartReq
+	(*DashStartReq)(nil),         // 38: bigworld.DashStartReq
+	(*RollStartReq)(nil),         // 39: bigworld.RollStartReq
+	(*StopStartReq)(nil),         // 40: bigworld.StopStartReq
+	(*MoveStopReq)(nil),          // 41: bigworld.MoveStopReq
+	(*MoveDirChangeReq)(nil),     // 42: bigworld.MoveDirChangeReq
+	(*MoveRsp)(nil),              // 43: bigworld.MoveRsp
+	(*SkillReq)(nil),             // 44: bigworld.SkillReq
+	(*SkillRsp)(nil),             // 45: bigworld.SkillRsp
+	(*ClientHeartbeatReq)(nil),   // 46: bigworld.ClientHeartbeatReq
+	(*ClientHeartbeatRsp)(nil),   // 47: bigworld.ClientHeartbeatRsp
+	(*ValidateAccountReq)(nil),   // 48: bigworld.ValidateAccountReq
+	(*ValidateAccountRsp)(nil),   // 49: bigworld.ValidateAccountRsp
+	(*LoadPlayerReq)(nil),        // 50: bigworld.LoadPlayerReq
+	(*LoadPlayerRsp)(nil),        // 51: bigworld.LoadPlayerRsp
+	(*PlayerData)(nil),           // 52: bigworld.PlayerData
+	(*SavePlayerReq)(nil),        // 53: bigworld.SavePlayerReq
+	(*SavePlayerRsp)(nil),        // 54: bigworld.SavePlayerRsp
+	(*ShutdownReq)(nil),          // 55: bigworld.ShutdownReq
+	(*ShutdownRsp)(nil),          // 56: bigworld.ShutdownRsp
+	(*ShutdownNotify)(nil),       // 57: bigworld.ShutdownNotify
+	(*ShutdownAck)(nil),          // 58: bigworld.ShutdownAck
+	(*ServerShutdownNotify)(nil), // 59: bigworld.ServerShutdownNotify
 }
 var file_bigworld_proto_depIdxs = []int32{
-	0,  // 0: bigworld.RegisterReq.server_type:type_name -> bigworld.ServerType
+	0,  // 0: bigworld.HelloReq.server_type:type_name -> bigworld.ServerType
 	0,  // 1: bigworld.ServerListReq.type:type_name -> bigworld.ServerType
 	0,  // 2: bigworld.ServerEntry.server_type:type_name -> bigworld.ServerType
 	7,  // 3: bigworld.ServerListRsp.servers:type_name -> bigworld.ServerEntry
-	31, // 4: bigworld.WalkStartReq.dir:type_name -> bigworld.MoveDir
-	31, // 5: bigworld.RunStartReq.dir:type_name -> bigworld.MoveDir
-	31, // 6: bigworld.SprintStartReq.dir:type_name -> bigworld.MoveDir
-	31, // 7: bigworld.JumpStartReq.dir:type_name -> bigworld.MoveDir
-	31, // 8: bigworld.DashStartReq.dir:type_name -> bigworld.MoveDir
-	31, // 9: bigworld.RollStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 4: bigworld.WalkStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 5: bigworld.RunStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 6: bigworld.SprintStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 7: bigworld.JumpStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 8: bigworld.DashStartReq.dir:type_name -> bigworld.MoveDir
+	33, // 9: bigworld.RollStartReq.dir:type_name -> bigworld.MoveDir
 	1,  // 10: bigworld.StopStartReq.stop_kind:type_name -> bigworld.MoveState
-	31, // 11: bigworld.MoveDirChangeReq.dir:type_name -> bigworld.MoveDir
+	33, // 11: bigworld.MoveDirChangeReq.dir:type_name -> bigworld.MoveDir
 	1,  // 12: bigworld.MoveRsp.state:type_name -> bigworld.MoveState
-	50, // 13: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
-	0,  // 14: bigworld.IdentifyReq.server_type:type_name -> bigworld.ServerType
-	15, // [15:15] is the sub-list for method output_type
-	15, // [15:15] is the sub-list for method input_type
-	15, // [15:15] is the sub-list for extension type_name
-	15, // [15:15] is the sub-list for extension extendee
-	0,  // [0:15] is the sub-list for field type_name
+	52, // 13: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
+	14, // [14:14] is the sub-list for method output_type
+	14, // [14:14] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_bigworld_proto_init() }
@@ -4112,7 +4428,7 @@ func file_bigworld_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bigworld_proto_rawDesc), len(file_bigworld_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   57,
+			NumMessages:   58,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"sync"
 	"time"
 
 	"bigworld/common"
@@ -37,7 +38,11 @@ type loginServer struct {
 	pendings         map[uint64]*gatewayPending
 	validatePendings map[uint64]*validatePending
 
-	dbConn *common.ConnWrapper
+	dbConn       *common.ConnWrapper
+	dbID         string
+	dbAddr       string
+	dbConnecting bool
+	dbMu         sync.Mutex
 }
 
 func NewLoginServer(id string) *loginServer {
@@ -51,7 +56,7 @@ func NewLoginServer(id string) *loginServer {
 
 	cr := ls.Router(common.SrcCentral)
 	common.Register(cr, common.Ct2Lg_GatewayAssignRsp, ls.HandleGatewayAssignRsp)
-	common.Register(cr, common.Ct2Srv_RegisterRsp, ls.HandleRegisterRsp)
+	common.Register(cr, common.Srv2Srv_HelloRsp, ls.HandleCentralHelloRsp)
 	common.Register(cr, common.Ct2Srv_ServerListRsp, ls.HandleCentralServerListRsp)
 	common.Register(cr, common.Ct2Srv_NewDbProxyNotify, ls.HandleCentralNewDbProxy)
 	common.Register(cr, common.Ct2Srv_ShutdownNotify, ls.HandleCentralShutdownNotify)
@@ -196,7 +201,11 @@ func (ls *loginServer) HandleGatewayAssignTimeout(reqID uint64) {
 	common.SendMsg(pending.conn, common.Lg2Cli_LoginRsp, &rsp)
 }
 
-func (ls *loginServer) HandleRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+func (ls *loginServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
+	if !rsp.Success {
+		log.Printf("[login %s] hello rejected: %s", ls.ServerId, rsp.Message)
+		return
+	}
 	if rsp.Success {
 		log.Printf("[login %s] registered: %s", ls.ServerId, rsp.Message)
 
@@ -232,29 +241,83 @@ func (ls *loginServer) ForwardMsgToDb(msgType common.MessageType, m proto.Messag
 }
 
 func (ls *loginServer) ConnectToDb(dbID, dbAddr string) {
-	if ls.dbConn != nil {
+	ls.dbMu.Lock()
+	ls.dbID = dbID
+	ls.dbAddr = dbAddr
+	if ls.dbConn != nil || ls.dbConnecting {
+		ls.dbMu.Unlock()
 		return
 	}
+	ls.dbConnecting = true
+	ls.dbMu.Unlock()
 
-	go func() {
-		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
-		if err != nil {
-			log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v", ls.ServerId, dbID, dbAddr, err)
+	go ls.DbConnectLoop()
+}
+
+func (ls *loginServer) DbConnectLoop() {
+	backoff := time.Second
+	for {
+		select {
+		case <-ls.Done():
+			ls.setDBConnecting(false)
+			return
+		default:
+		}
+
+		ls.dbMu.Lock()
+		dbID, dbAddr := ls.dbID, ls.dbAddr
+		ls.dbMu.Unlock()
+		if dbAddr == "" {
+			ls.setDBConnecting(false)
 			return
 		}
-		ls.Loop.Defer(func() {
+
+		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
+		if err != nil {
+			log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v, retry in %v", ls.ServerId, dbID, dbAddr, err, backoff)
+			select {
+			case <-ls.Done():
+				return
+			case <-time.After(backoff):
+			}
+			if backoff < 30*time.Second {
+				backoff *= 2
+			}
+			continue
+		}
+
+		result := make(chan bool, 1)
+		posted := ls.Loop.Post(common.Event{Kind: common.EventDefer, Fn: func() {
 			if ls.dbConn != nil {
-				conn.Close()
+				_ = conn.Close()
+				ls.setDBConnecting(false)
+				result <- true
 				return
 			}
 			cw := common.NewConnWrapper(conn)
 			cw.PeerType = common.ServerDbProxy
 			ls.dbConn = cw
+			ls.setDBConnecting(false)
 			log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerId, dbID, dbAddr)
-			common.SendMsg(cw, common.Srv2Srv_IdentifyReq, &common.IdentifyReq{ServerType: common.ServerLogin})
+			ls.SendHello(cw)
 			go ls.DbReadLoop(cw)
-		})
-	}()
+			result <- true
+		}})
+		if !posted {
+			_ = conn.Close()
+			ls.setDBConnecting(false)
+			return
+		}
+		if <-result {
+			return
+		}
+	}
+}
+
+func (ls *loginServer) setDBConnecting(value bool) {
+	ls.dbMu.Lock()
+	ls.dbConnecting = value
+	ls.dbMu.Unlock()
 }
 
 func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
@@ -266,18 +329,26 @@ func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 	for {
 		msg, err := common.ReadMessage(cw.Conn)
 		if err != nil {
-			dropped := cw
 			ls.Loop.Defer(func() {
-				if ls.dbConn == dropped {
-					ls.dbConn.Close()
+				if ls.dbConn == cw {
+					_ = ls.dbConn.Close()
 					ls.dbConn = nil
 					log.Printf("[login %s] dbproxy connection lost: %v", ls.ServerId, err)
 				}
+				ls.setDBConnecting(false)
+				ls.ConnectToDb(ls.dbID, ls.dbAddr)
 			})
 			return
 		}
 		if !ls.Loop.Post(common.Event{Kind: common.EventMessage, Conn: cw, Msg: msg}) {
 			cw.Close()
+			ls.Loop.Defer(func() {
+				if ls.dbConn == cw {
+					ls.dbConn = nil
+				}
+				ls.setDBConnecting(false)
+				ls.ConnectToDb(ls.dbID, ls.dbAddr)
+			})
 			return
 		}
 	}

@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"math/big"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -17,6 +18,19 @@ var (
 	tokenSignKey   *ecdsa.PrivateKey
 	tokenVerifyKey *ecdsa.PublicKey
 )
+
+var usedTokens = struct {
+	sync.Mutex
+	seen map[string]int64
+}{seen: make(map[string]int64)}
+
+func NewSessionId() string {
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		return fmt.Sprintf("sess-%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b[:])
+}
 
 func InitTokenVerifier(pemStr string) error {
 	block, _ := pem.Decode([]byte(pemStr))
@@ -108,6 +122,20 @@ func VerifyToken(token string) (string, error) {
 	if elapsed < 0 || elapsed > 600 {
 		return "", fmt.Errorf("token expired")
 	}
+
+	now := time.Now().Unix()
+	usedTokens.Lock()
+	for k, exp := range usedTokens.seen {
+		if exp <= now {
+			delete(usedTokens.seen, k)
+		}
+	}
+	if exp, ok := usedTokens.seen[token]; ok && exp > now {
+		usedTokens.Unlock()
+		return "", fmt.Errorf("token already used")
+	}
+	usedTokens.seen[token] = now + 600
+	usedTokens.Unlock()
 
 	return account, nil
 }

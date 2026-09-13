@@ -2,8 +2,8 @@ namespace BigWorldClient.Network
 {
     public static class MessageTypes
     {
-        public const int Srv2Ct_RegisterReq = 1;
-        public const int Ct2Srv_RegisterRsp = 2;
+        public const int Srv2Srv_HelloReq = 1;
+        public const int Srv2Srv_HelloRsp = 2;
         public const int Srv2Ct_HeartbeatReq = 3;
         public const int Ct2Srv_HeartbeatRsp = 4;
         public const int Srv2Ct_ServerListReq = 5;
@@ -57,6 +57,7 @@ namespace BigWorldClient.Network
         public const int Cli2Wd_StopStartReq = 56;
         public const int Cli2Wd_MoveStopReq = 57;
         public const int Cli2Wd_MoveDirChangeReq = 58;
-        public const int Srv2Srv_IdentifyReq = 60;
+        public const int Gw2Wd_ResumeEntityReq = 60;
+        public const int Wd2Gw_ResumeEntityRsp = 61;
     }
 }

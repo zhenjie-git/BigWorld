@@ -7,7 +7,7 @@ using BigWorldClient.Network.Protocol;
 
 namespace BigWorldClient.Network
 {
-    public enum SessionEventKind { LoginSucceeded, LoginFailed, ServerShutdown, Disconnected, LoggedOut }
+    public enum SessionEventKind { LoginSucceeded, LoginFailed, ServerShutdown, Disconnected, LoggedOut, Kicked }
 
     public readonly struct PlayerInfo
     {
@@ -93,6 +93,7 @@ namespace BigWorldClient.Network
         private const long LoginTimeoutMs = 15_000;
         private const int ConnectTimeoutMs = 5000;
         private const int EventWaitMs = 500;
+        private const long LogoutTimeoutMs = 10_000;
 
         private volatile NetClient _client;
         private readonly ConcurrentQueue<SessionEvent> _events = new ConcurrentQueue<SessionEvent>();
@@ -217,41 +218,72 @@ namespace BigWorldClient.Network
         }
 
         private void Loop(NetClient client, int token)
+{
+    try
+    {
+        int connectionId = client.Connect(_host, _port, ConnectTimeoutMs);
+        if (connectionId == 0)
         {
-            try
+            if (token == _sessionToken)
+                Push(SessionEventKind.LoginFailed, "connect failed");
+            return;
+        }
+        if (!_running || token != _sessionToken)
+            return;
+        _activeConnectionId = connectionId;
+
+        while (_running && token == _sessionToken)
+        {
+            if ((_state == State.Phase1 || _state == State.Phase2)
+                && NowMs() - _phaseStartTicks > LoginTimeoutMs)
             {
-                int connectionId = client.Connect(_host, _port, ConnectTimeoutMs);
-                if (connectionId == 0)
+                Push(SessionEventKind.LoginFailed, "login timeout");
+                return;
+            }
+
+            if (_state == State.LoggingOut && NowMs() - _phaseStartTicks > LogoutTimeoutMs)
+            {
+                Push(SessionEventKind.LoggedOut, "logout timeout");
+                return;
+            }
+
+            if (client.TryDequeue(out NetClient.NetEvent evt))
+            {
+                try
+                {
+                    HandleNetEvent(client, evt);
+                }
+                catch (Exception ex)
                 {
                     if (token == _sessionToken)
-                        Push(SessionEventKind.LoginFailed, "无法连接登录服务器");
+                    {
+                        if (_state == State.InGame)
+                            Push(SessionEventKind.Disconnected, ex.Message);
+                        else if (_state == State.LoggingOut)
+                            Push(SessionEventKind.LoggedOut, ex.Message);
+                        else
+                            Push(SessionEventKind.LoginFailed, ex.Message);
+                    }
+                    _running = false;
                     return;
                 }
-                _activeConnectionId = connectionId;
-
-                while (_running && token == _sessionToken)
-                {
-                    if ((_state == State.Phase1 || _state == State.Phase2)
-                        && NowMs() - _phaseStartTicks > LoginTimeoutMs)
-                    {
-                        Push(SessionEventKind.LoginFailed, "登录超时");
-                        return;
-                    }
-
-                    if (client.TryDequeue(out NetClient.NetEvent evt))
-                        HandleNetEvent(client, evt);
-                    else
-                        client.WaitForEvent(EventWaitMs);
-                }
             }
-            finally
+            else
             {
-                client.Dispose();
+                client.WaitForEvent(EventWaitMs);
             }
         }
-
-        private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
+    }
+    finally
+    {
+        client.Dispose();
+    }
+}
+private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
         {
+            if (evt.ConnectionId != _activeConnectionId)
+                return;
+
             switch (evt.Kind)
             {
                 case NetClient.NetEventKind.Connected:
@@ -272,18 +304,21 @@ namespace BigWorldClient.Network
                     break;
 
                 case NetClient.NetEventKind.Disconnected:
-                    if (evt.ConnectionId != _activeConnectionId) break;
                     if (_state == State.Phase1 || _state == State.Phase2)
                     {
-                        Push(SessionEventKind.LoginFailed, "连接断开");
+                        Push(SessionEventKind.LoginFailed, "connection closed");
                         _running = false;
                     }
                     else if (_state == State.InGame)
                     {
-                        Push(SessionEventKind.Disconnected, "与服务器连接断开");
+                        Push(SessionEventKind.Disconnected, "connection closed");
                         _running = false;
                     }
-
+                    else if (_state == State.LoggingOut)
+                    {
+                        Push(SessionEventKind.LoggedOut, "connection closed during logout");
+                        _running = false;
+                    }
                     break;
             }
         }
@@ -308,6 +343,7 @@ namespace BigWorldClient.Network
                 [MessageTypes.Gw2Cli_ServerShutdownNotify] = HandleServerShutdownNotify,
                 [MessageTypes.Gw2Cli_HeartbeatRsp] = HandleHeartbeatRsp,
                 [MessageTypes.Wd2Cli_MoveRsp] = HandleMoveRsp,
+                [MessageTypes.Gw2Cli_LogoutRsp] = HandleForceKickRsp,
             };
 
             _phaseHandlers[State.LoggingOut] = new Dictionary<int, MessageHandler>
@@ -420,6 +456,12 @@ namespace BigWorldClient.Network
             _running = false;
         }
 
+        private void HandleForceKickRsp(NetClient client, byte[] payload)
+        {
+            var rsp = LogoutRsp.Parser.ParseFrom(payload);
+            Push(SessionEventKind.Kicked, string.IsNullOrEmpty(rsp.Message) ? "account logged in elsewhere" : rsp.Message);
+            _running = false;
+        }
         private void MaybeEnterScene()
         {
             if (!_gotGwRsp || !_gotEnter) return;
@@ -442,8 +484,15 @@ namespace BigWorldClient.Network
             if (_state == State.InGame)
             {
                 _state = State.LoggingOut;
+                _phaseStartTicks = NowMs();
                 var req = new LogoutReq { PlayerId = _playerId };
                 _client.Send(MessageTypes.Cli2Gw_LogoutReq, req.ToByteArray());
+            }
+            else if (_state != State.Idle && _state != State.LoggingOut)
+            {
+                _state = State.Idle;
+                _running = false;
+                Push(SessionEventKind.LoggedOut, "logout requested");
             }
         }
 
@@ -473,7 +522,10 @@ namespace BigWorldClient.Network
         {
             _running = false;
             _sessionToken++;
+            var old = _thread;
             _thread = null;
+            if (old != null && old.IsAlive && old != Thread.CurrentThread)
+                old.Join(500);
         }
 
         public void Dispose() => StopThread();

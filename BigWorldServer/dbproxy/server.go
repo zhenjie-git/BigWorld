@@ -22,7 +22,7 @@ func NewDbProxyServer(id string, db *playerDB) *dbProxyServer {
 	common.Register(s.Router(common.SrcWorld), common.Wd2Db_SavePlayerReq, s.HandleSavePlayer)
 
 	cr := s.Router(common.SrcCentral)
-	common.Register(cr, common.Ct2Srv_RegisterRsp, s.HandleCentralRegisterRsp)
+	common.Register(cr, common.Srv2Srv_HelloRsp, s.HandleCentralHelloRsp)
 	common.Register(cr, common.Ct2Srv_ShutdownNotify, s.HandleCentralShutdownNotify)
 	common.Register(cr, common.Ct2Srv_HeartbeatRsp, s.NoopHeartbeat)
 	return s
@@ -30,7 +30,11 @@ func NewDbProxyServer(id string, db *playerDB) *dbProxyServer {
 
 func (s *dbProxyServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (s *dbProxyServer) HandleCentralRegisterRsp(_ *common.ConnWrapper, rsp *common.RegisterRsp) {
+func (s *dbProxyServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
+	if !rsp.Success {
+		log.Printf("[dbproxy %s] hello rejected: %s", s.ServerId, rsp.Message)
+		return
+	}
 	if rsp.Success {
 		log.Printf("[dbproxy %s] registered: %s", s.ServerId, rsp.Message)
 	}

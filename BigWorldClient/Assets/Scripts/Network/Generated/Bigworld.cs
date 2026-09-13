@@ -24,122 +24,134 @@ namespace BigWorldClient.Network.Protocol {
     static BigworldReflection() {
       byte[] descriptorData = global::System.Convert.FromBase64String(
           string.Concat(
-            "Cg5iaWd3b3JsZC5wcm90bxIIYmlnd29ybGQiYAoLUmVnaXN0ZXJSZXESKQoL",
-            "c2VydmVyX3R5cGUYASABKA4yFC5iaWd3b3JsZC5TZXJ2ZXJUeXBlEhEKCXNl",
-            "cnZlcl9pZBgCIAEoCRITCgtsaXN0ZW5fYWRkchgDIAEoCSIvCgtSZWdpc3Rl",
-            "clJzcBIPCgdzdWNjZXNzGAEgASgIEg8KB21lc3NhZ2UYAiABKAkiIQoMSGVh",
-            "cnRiZWF0UmVxEhEKCXNlcnZlcl9pZBgBIAEoCSIfCgxIZWFydGJlYXRSc3AS",
-            "DwoHc3VjY2VzcxgBIAEoCCIzCg1TZXJ2ZXJMaXN0UmVxEiIKBHR5cGUYASAB",
-            "KA4yFC5iaWd3b3JsZC5TZXJ2ZXJUeXBlImAKC1NlcnZlckVudHJ5EikKC3Nl",
+            "Cg5iaWd3b3JsZC5wcm90bxIIYmlnd29ybGQihwEKCEhlbGxvUmVxEikKC3Nl",
             "cnZlcl90eXBlGAEgASgOMhQuYmlnd29ybGQuU2VydmVyVHlwZRIRCglzZXJ2",
-            "ZXJfaWQYAiABKAkSEwoLbGlzdGVuX2FkZHIYAyABKAkiNwoNU2VydmVyTGlz",
-            "dFJzcBImCgdzZXJ2ZXJzGAEgAygLMhUuYmlnd29ybGQuU2VydmVyRW50cnki",
-            "LQoITG9naW5SZXESDwoHYWNjb3VudBgBIAEoCRIQCghwYXNzd29yZBgCIAEo",
-            "CSLRAQoITG9naW5Sc3ASDwoHc3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIg",
-            "ASgJEg0KBXRva2VuGAMgASgJEhQKDGdhdGV3YXlfYWRkchgEIAEoCRISCgp3",
-            "b3JsZF9hZGRyGAUgASgJEhAKCHdvcmxkX2lkGAYgASgJEhEKCXBsYXllcl9p",
-            "ZBgHIAEoBBIJCgF4GAggASgBEgkKAXoYCSABKAESDQoFd2lkdGgYCiABKAES",
-            "DgoGaGVpZ2h0GAsgASgBEhAKCHNjZW5lX2lkGAwgASgJIkYKEEdhdGV3YXlB",
-            "c3NpZ25SZXESDgoGcmVxX2lkGAEgASgEEhEKCXNlcnZlcl9pZBgCIAEoCRIP",
-            "CgdhY2NvdW50GAMgASgJIm4KEEdhdGV3YXlBc3NpZ25Sc3ASDgoGcmVxX2lk",
-            "GAEgASgEEg8KB3N1Y2Nlc3MYAiABKAgSFAoMZ2F0ZXdheV9hZGRyGAMgASgJ",
-            "EhIKCmdhdGV3YXlfaWQYBCABKAkSDwoHbWVzc2FnZRgFIAEoCSJUCg5Ub2tl",
-            "blZlcmlmeVJlcRIOCgZyZXFfaWQYASABKAQSDQoFdG9rZW4YAiABKAkSDwoH",
-            "YWNjb3VudBgDIAEoCRISCgpnYXRld2F5X2lkGAQgASgJIsEBCg5Ub2tlblZl",
-            "cmlmeVJzcBIOCgZyZXFfaWQYASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdh",
-            "Y2NvdW50GAMgASgJEhEKCXBsYXllcl9pZBgEIAEoBBISCgp3b3JsZF9hZGRy",
-            "GAUgASgJEhAKCHdvcmxkX2lkGAYgASgJEgkKAXgYByABKAESCQoBehgIIAEo",
-            "ARINCgV3aWR0aBgJIAEoARIOCgZoZWlnaHQYCiABKAESDwoHbWVzc2FnZRgL",
-            "IAEoCSIyCg9Mb2dpblByZXBhcmVSZXESDgoGcmVxX2lkGAEgASgEEg8KB2Fj",
-            "Y291bnQYAiABKAkiaQoPTG9naW5QcmVwYXJlUnNwEg4KBnJlcV9pZBgBIAEo",
-            "BBIPCgdzdWNjZXNzGAIgASgIEhAKCHdvcmxkX2lkGAMgASgJEhIKCndvcmxk",
-            "X2FkZHIYBCABKAkSDwoHbWVzc2FnZRgFIAEoCSJ8Cg5Mb2dpbkZpbmlzaFJl",
-            "cRIRCglwbGF5ZXJfaWQYASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdhY2Nv",
-            "dW50GAMgASgJEhAKCHdvcmxkX2lkGAQgASgJEhIKCmdhdGV3YXlfaWQYBSAB",
-            "KAkSDwoHbWVzc2FnZRgGIAEoCSJWCg5Mb2dpbkZpbmlzaFJzcBIPCgdzdWNj",
-            "ZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdhY2NvdW50GAMgASgJ",
-            "Eg8KB21lc3NhZ2UYBCABKAkiRwoPRm9yY2VLaWNrTm90aWZ5EhEKCXBsYXll",
-            "cl9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHdvcmxkX2lkGAMgASgJ",
-            "In4KEEVudGVyU2NlbmVOb3RpZnkSEAoId29ybGRfaWQYASABKAkSEQoJcGxh",
-            "eWVyX2lkGAIgASgEEgkKAXgYAyABKAESCQoBehgEIAEoARINCgV3aWR0aBgF",
-            "IAEoARIOCgZoZWlnaHQYBiABKAESEAoIc2NlbmVfaWQYByABKAkiHgoJTG9n",
-            "b3V0UmVxEhEKCXBsYXllcl9pZBgBIAEoBCItCglMb2dvdXRSc3ASDwoHc3Vj",
-            "Y2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIiMKDkxvZ291dEJlZ2luUmVx",
-            "EhEKCXBsYXllcl9pZBgBIAEoBCJFCg5Mb2dvdXRCZWdpblJzcBIPCgdzdWNj",
-            "ZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJ",
-            "IjkKEExvZ291dENsZWFudXBSZXESEQoJcGxheWVyX2lkGAEgASgEEhIKCmdh",
-            "dGV3YXlfaWQYAiABKAkiRwoQTG9nb3V0Q2xlYW51cFJzcBIPCgdzdWNjZXNz",
-            "GAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiIK",
-            "D0NyZWF0ZUVudGl0eVJlcRIPCgdhY2NvdW50GAEgASgJIp4BCg9DcmVhdGVF",
-            "bnRpdHlSc3ASDwoHc3VjY2VzcxgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQS",
-            "DwoHYWNjb3VudBgDIAEoCRIJCgF4GAQgASgBEgkKAXoYBSABKAESDQoFd2lk",
-            "dGgYBiABKAESDgoGaGVpZ2h0GAcgASgBEg8KB21lc3NhZ2UYCCABKAkSEAoI",
-            "c2NlbmVfaWQYCSABKAkiJQoQRGVzdHJveUVudGl0eVJlcRIRCglwbGF5ZXJf",
-            "aWQYASABKAQiRwoQRGVzdHJveUVudGl0eVJzcBIPCgdzdWNjZXNzGAEgASgI",
-            "EhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIh8KB01vdmVE",
-            "aXISCQoBeBgBIAEoAhIJCgF6GAIgASgCIlkKDFdhbGtTdGFydFJlcRIRCglw",
-            "bGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURp",
-            "chIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJYCgtSdW5TdGFydFJlcRIRCglw",
-            "bGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURp",
-            "chIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJbCg5TcHJpbnRTdGFydFJlcRIR",
+            "ZXJfaWQYAiABKAkSEwoLbGlzdGVuX2FkZHIYAyABKAkSDgoGc2VjcmV0GAQg",
+            "ASgJEhgKEHByb3RvY29sX3ZlcnNpb24YBSABKA0iQAoISGVsbG9Sc3ASDwoH",
+            "c3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJEhIKCnJlZ2lzdGVyZWQY",
+            "AyABKAgiIQoMSGVhcnRiZWF0UmVxEhEKCXNlcnZlcl9pZBgBIAEoCSIfCgxI",
+            "ZWFydGJlYXRSc3ASDwoHc3VjY2VzcxgBIAEoCCIzCg1TZXJ2ZXJMaXN0UmVx",
+            "EiIKBHR5cGUYASABKA4yFC5iaWd3b3JsZC5TZXJ2ZXJUeXBlImAKC1NlcnZl",
+            "ckVudHJ5EikKC3NlcnZlcl90eXBlGAEgASgOMhQuYmlnd29ybGQuU2VydmVy",
+            "VHlwZRIRCglzZXJ2ZXJfaWQYAiABKAkSEwoLbGlzdGVuX2FkZHIYAyABKAki",
+            "NwoNU2VydmVyTGlzdFJzcBImCgdzZXJ2ZXJzGAEgAygLMhUuYmlnd29ybGQu",
+            "U2VydmVyRW50cnkiLQoITG9naW5SZXESDwoHYWNjb3VudBgBIAEoCRIQCghw",
+            "YXNzd29yZBgCIAEoCSLRAQoITG9naW5Sc3ASDwoHc3VjY2VzcxgBIAEoCBIP",
+            "CgdtZXNzYWdlGAIgASgJEg0KBXRva2VuGAMgASgJEhQKDGdhdGV3YXlfYWRk",
+            "chgEIAEoCRISCgp3b3JsZF9hZGRyGAUgASgJEhAKCHdvcmxkX2lkGAYgASgJ",
+            "EhEKCXBsYXllcl9pZBgHIAEoBBIJCgF4GAggASgBEgkKAXoYCSABKAESDQoF",
+            "d2lkdGgYCiABKAESDgoGaGVpZ2h0GAsgASgBEhAKCHNjZW5lX2lkGAwgASgJ",
+            "IkYKEEdhdGV3YXlBc3NpZ25SZXESDgoGcmVxX2lkGAEgASgEEhEKCXNlcnZl",
+            "cl9pZBgCIAEoCRIPCgdhY2NvdW50GAMgASgJIm4KEEdhdGV3YXlBc3NpZ25S",
+            "c3ASDgoGcmVxX2lkGAEgASgEEg8KB3N1Y2Nlc3MYAiABKAgSFAoMZ2F0ZXdh",
+            "eV9hZGRyGAMgASgJEhIKCmdhdGV3YXlfaWQYBCABKAkSDwoHbWVzc2FnZRgF",
+            "IAEoCSJUCg5Ub2tlblZlcmlmeVJlcRIOCgZyZXFfaWQYASABKAQSDQoFdG9r",
+            "ZW4YAiABKAkSDwoHYWNjb3VudBgDIAEoCRISCgpnYXRld2F5X2lkGAQgASgJ",
+            "IsEBCg5Ub2tlblZlcmlmeVJzcBIOCgZyZXFfaWQYASABKAQSDwoHc3VjY2Vz",
+            "cxgCIAEoCBIPCgdhY2NvdW50GAMgASgJEhEKCXBsYXllcl9pZBgEIAEoBBIS",
+            "Cgp3b3JsZF9hZGRyGAUgASgJEhAKCHdvcmxkX2lkGAYgASgJEgkKAXgYByAB",
+            "KAESCQoBehgIIAEoARINCgV3aWR0aBgJIAEoARIOCgZoZWlnaHQYCiABKAES",
+            "DwoHbWVzc2FnZRgLIAEoCSJGCg9Mb2dpblByZXBhcmVSZXESDgoGcmVxX2lk",
+            "GAEgASgEEg8KB2FjY291bnQYAiABKAkSEgoKc2Vzc2lvbl9pZBgDIAEoCSJp",
+            "Cg9Mb2dpblByZXBhcmVSc3ASDgoGcmVxX2lkGAEgASgEEg8KB3N1Y2Nlc3MY",
+            "AiABKAgSEAoId29ybGRfaWQYAyABKAkSEgoKd29ybGRfYWRkchgEIAEoCRIP",
+            "CgdtZXNzYWdlGAUgASgJIpABCg5Mb2dpbkZpbmlzaFJlcRIRCglwbGF5ZXJf",
+            "aWQYASABKAQSDwoHc3VjY2VzcxgCIAEoCBIPCgdhY2NvdW50GAMgASgJEhAK",
+            "CHdvcmxkX2lkGAQgASgJEhIKCmdhdGV3YXlfaWQYBSABKAkSDwoHbWVzc2Fn",
+            "ZRgGIAEoCRISCgpzZXNzaW9uX2lkGAcgASgJImoKDkxvZ2luRmluaXNoUnNw",
+            "Eg8KB3N1Y2Nlc3MYASABKAgSEQoJcGxheWVyX2lkGAIgASgEEg8KB2FjY291",
+            "bnQYAyABKAkSDwoHbWVzc2FnZRgEIAEoCRISCgpzZXNzaW9uX2lkGAUgASgJ",
+            "IlsKD0ZvcmNlS2lja05vdGlmeRIRCglwbGF5ZXJfaWQYASABKAQSDwoHYWNj",
+            "b3VudBgCIAEoCRIQCgh3b3JsZF9pZBgDIAEoCRISCgpzZXNzaW9uX2lkGAQg",
+            "ASgJIn4KEEVudGVyU2NlbmVOb3RpZnkSEAoId29ybGRfaWQYASABKAkSEQoJ",
+            "cGxheWVyX2lkGAIgASgEEgkKAXgYAyABKAESCQoBehgEIAEoARINCgV3aWR0",
+            "aBgFIAEoARIOCgZoZWlnaHQYBiABKAESEAoIc2NlbmVfaWQYByABKAkiHgoJ",
+            "TG9nb3V0UmVxEhEKCXBsYXllcl9pZBgBIAEoBCItCglMb2dvdXRSc3ASDwoH",
+            "c3VjY2VzcxgBIAEoCBIPCgdtZXNzYWdlGAIgASgJIksKDkxvZ291dEJlZ2lu",
+            "UmVxEhEKCXBsYXllcl9pZBgBIAEoBBISCgpnYXRld2F5X2lkGAIgASgJEhIK",
+            "CnNlc3Npb25faWQYAyABKAkiWQoOTG9nb3V0QmVnaW5Sc3ASDwoHc3VjY2Vz",
+            "cxgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQSDwoHbWVzc2FnZRgDIAEoCRIS",
+            "CgpzZXNzaW9uX2lkGAQgASgJIk0KEExvZ291dENsZWFudXBSZXESEQoJcGxh",
+            "eWVyX2lkGAEgASgEEhIKCmdhdGV3YXlfaWQYAiABKAkSEgoKc2Vzc2lvbl9p",
+            "ZBgDIAEoCSJbChBMb2dvdXRDbGVhbnVwUnNwEg8KB3N1Y2Nlc3MYASABKAgS",
+            "EQoJcGxheWVyX2lkGAIgASgEEg8KB21lc3NhZ2UYAyABKAkSEgoKc2Vzc2lv",
+            "bl9pZBgEIAEoCSJKCg9DcmVhdGVFbnRpdHlSZXESDwoHYWNjb3VudBgBIAEo",
+            "CRISCgpnYXRld2F5X2lkGAIgASgJEhIKCnNlc3Npb25faWQYAyABKAkisgEK",
+            "D0NyZWF0ZUVudGl0eVJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9p",
+            "ZBgCIAEoBBIPCgdhY2NvdW50GAMgASgJEgkKAXgYBCABKAESCQoBehgFIAEo",
+            "ARINCgV3aWR0aBgGIAEoARIOCgZoZWlnaHQYByABKAESDwoHbWVzc2FnZRgI",
+            "IAEoCRIQCghzY2VuZV9pZBgJIAEoCRISCgpzZXNzaW9uX2lkGAogASgJIk0K",
+            "EERlc3Ryb3lFbnRpdHlSZXESEQoJcGxheWVyX2lkGAEgASgEEhIKCmdhdGV3",
+            "YXlfaWQYAiABKAkSEgoKc2Vzc2lvbl9pZBgDIAEoCSJbChBEZXN0cm95RW50",
+            "aXR5UnNwEg8KB3N1Y2Nlc3MYASABKAgSEQoJcGxheWVyX2lkGAIgASgEEg8K",
+            "B21lc3NhZ2UYAyABKAkSEgoKc2Vzc2lvbl9pZBgEIAEoCSJMCg9SZXN1bWVF",
+            "bnRpdHlSZXESEQoJcGxheWVyX2lkGAEgASgEEhIKCmdhdGV3YXlfaWQYAiAB",
+            "KAkSEgoKc2Vzc2lvbl9pZBgDIAEoCSKhAQoPUmVzdW1lRW50aXR5UnNwEg8K",
+            "B3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgCIAEoCRIRCglwbGF5ZXJfaWQY",
+            "AyABKAQSEgoKc2Vzc2lvbl9pZBgEIAEoCRIQCghzY2VuZV9pZBgFIAEoCRIJ",
+            "CgF4GAYgASgBEgkKAXoYByABKAESDQoFd2lkdGgYCCABKAESDgoGaGVpZ2h0",
+            "GAkgASgBIh8KB01vdmVEaXISCQoBeBgBIAEoAhIJCgF6GAIgASgCIlkKDFdh",
+            "bGtTdGFydFJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEu",
+            "Ymlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJYCgtS",
+            "dW5TdGFydFJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEu",
+            "Ymlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJbCg5T",
+            "cHJpbnRTdGFydFJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgL",
+            "MhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJZ",
+            "CgxKdW1wU3RhcnRSZXESEQoJcGxheWVyX2lkGAEgASgEEh4KA2RpchgCIAEo",
+            "CzIRLmJpZ3dvcmxkLk1vdmVEaXISFgoOc2VydmVyX3RpbWVfbXMYAyABKAMi",
+            "WQoMRGFzaFN0YXJ0UmVxEhEKCXBsYXllcl9pZBgBIAEoBBIeCgNkaXIYAiAB",
+            "KAsyES5iaWd3b3JsZC5Nb3ZlRGlyEhYKDnNlcnZlcl90aW1lX21zGAMgASgD",
+            "IlkKDFJvbGxTdGFydFJlcRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIg",
+            "ASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEo",
+            "AyJhCgxTdG9wU3RhcnRSZXESEQoJcGxheWVyX2lkGAEgASgEEiYKCXN0b3Bf",
+            "a2luZBgCIAEoDjITLmJpZ3dvcmxkLk1vdmVTdGF0ZRIWCg5zZXJ2ZXJfdGlt",
+            "ZV9tcxgDIAEoAyI4CgtNb3ZlU3RvcFJlcRIRCglwbGF5ZXJfaWQYASABKAQS",
+            "FgoOc2VydmVyX3RpbWVfbXMYAiABKAMiXQoQTW92ZURpckNoYW5nZVJlcRIR",
             "CglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92",
-            "ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJZCgxKdW1wU3RhcnRSZXES",
-            "EQoJcGxheWVyX2lkGAEgASgEEh4KA2RpchgCIAEoCzIRLmJpZ3dvcmxkLk1v",
-            "dmVEaXISFgoOc2VydmVyX3RpbWVfbXMYAyABKAMiWQoMRGFzaFN0YXJ0UmVx",
-            "EhEKCXBsYXllcl9pZBgBIAEoBBIeCgNkaXIYAiABKAsyES5iaWd3b3JsZC5N",
-            "b3ZlRGlyEhYKDnNlcnZlcl90aW1lX21zGAMgASgDIlkKDFJvbGxTdGFydFJl",
-            "cRIRCglwbGF5ZXJfaWQYASABKAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQu",
-            "TW92ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyJhCgxTdG9wU3RhcnRS",
-            "ZXESEQoJcGxheWVyX2lkGAEgASgEEiYKCXN0b3Bfa2luZBgCIAEoDjITLmJp",
-            "Z3dvcmxkLk1vdmVTdGF0ZRIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyI4CgtN",
-            "b3ZlU3RvcFJlcRIRCglwbGF5ZXJfaWQYASABKAQSFgoOc2VydmVyX3RpbWVf",
-            "bXMYAiABKAMiXQoQTW92ZURpckNoYW5nZVJlcRIRCglwbGF5ZXJfaWQYASAB",
-            "KAQSHgoDZGlyGAIgASgLMhEuYmlnd29ybGQuTW92ZURpchIWCg5zZXJ2ZXJf",
-            "dGltZV9tcxgDIAEoAyK9AgoHTW92ZVJzcBIPCgdzdWNjZXNzGAEgASgIEhEK",
-            "CXBsYXllcl9pZBgCIAEoBBIJCgF4GAMgASgBEgkKAXoYBCABKAESCQoBeRgF",
-            "IAEoARIPCgdtZXNzYWdlGAYgASgJEhMKC2Fja190aW1lX21zGAcgASgDEhAK",
-            "CHNpbV90aWNrGAggASgDEhAKCGFja190aWNrGAkgASgDEiIKBXN0YXRlGAog",
-            "ASgOMhMuYmlnd29ybGQuTW92ZVN0YXRlEg8KB3ZveGVsX2sYCyABKAUSEAoI",
-            "YWlyYm9ybmUYDCABKAgSDQoFZGlyX3gYDSABKAESDQoFZGlyX3oYDiABKAES",
-            "EgoKY3VydmVfbm9ybRgPIAEoARIWCg5zdGF0ZV9zdGFydF9tcxgQIAEoAxIS",
-            "CgpmYWxsX3ZlbF95GBEgASgBIi8KCFNraWxsUmVxEhEKCXBsYXllcl9pZBgB",
-            "IAEoBBIQCghza2lsbF9pZBgCIAEoCSI/CghTa2lsbFJzcBIPCgdzdWNjZXNz",
-            "GAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdtZXNzYWdlGAMgASgJIiwK",
-            "EkNsaWVudEhlYXJ0YmVhdFJlcRIWCg5jbGllbnRfdGltZV9tcxgBIAEoAyJE",
-            "ChJDbGllbnRIZWFydGJlYXRSc3ASFgoOc2VydmVyX3RpbWVfbXMYASABKAMS",
-            "FgoOY2xpZW50X3RpbWVfbXMYAiABKAMiRwoSVmFsaWRhdGVBY2NvdW50UmVx",
-            "Eg4KBnJlcV9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEhAKCHBhc3N3b3Jk",
-            "GAMgASgJIkQKElZhbGlkYXRlQWNjb3VudFJzcBIOCgZyZXFfaWQYASABKAQS",
-            "DQoFdmFsaWQYAiABKAgSDwoHbWVzc2FnZRgDIAEoCSIgCg1Mb2FkUGxheWVy",
-            "UmVxEg8KB2FjY291bnQYASABKAkiewoNTG9hZFBsYXllclJzcBINCgVmb3Vu",
-            "ZBgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQSDwoHYWNjb3VudBgDIAEoCRIJ",
-            "CgF4GAQgASgBEgkKAXoYBSABKAESDwoHbWVzc2FnZRgGIAEoCRIQCghzY2Vu",
-            "ZV9pZBgHIAEoCSJYCgpQbGF5ZXJEYXRhEhEKCXBsYXllcl9pZBgBIAEoBBIP",
-            "CgdhY2NvdW50GAIgASgJEgkKAXgYAyABKAESCQoBehgEIAEoARIQCghzY2Vu",
-            "ZV9pZBgFIAEoCSJGCg1TYXZlUGxheWVyUmVxEg4KBnJlcV9pZBgBIAEoBBIl",
-            "CgdwbGF5ZXJzGAIgAygLMhQuYmlnd29ybGQuUGxheWVyRGF0YSJBCg1TYXZl",
-            "UGxheWVyUnNwEg4KBnJlcV9pZBgBIAEoBBIPCgdzdWNjZXNzGAIgASgIEg8K",
-            "B21lc3NhZ2UYAyABKAkiHQoLU2h1dGRvd25SZXESDgoGcmVhc29uGAEgASgJ",
-            "Ii8KC1NodXRkb3duUnNwEg8KB3N1Y2Nlc3MYASABKAgSDwoHbWVzc2FnZRgC",
-            "IAEoCSIgCg5TaHV0ZG93bk5vdGlmeRIOCgZyZWFzb24YASABKAkiIAoLU2h1",
-            "dGRvd25BY2sSEQoJc2VydmVyX2lkGAEgASgJIicKFFNlcnZlclNodXRkb3du",
-            "Tm90aWZ5Eg8KB21lc3NhZ2UYASABKAkiOAoLSWRlbnRpZnlSZXESKQoLc2Vy",
-            "dmVyX3R5cGUYASABKA4yFC5iaWd3b3JsZC5TZXJ2ZXJUeXBlKoABCgpTZXJ2",
-            "ZXJUeXBlEhIKDlNFUlZFUl9JTlZBTElEEAASEgoOU0VSVkVSX0NFTlRSQUwQ",
-            "ARIQCgxTRVJWRVJfV09STEQQAhISCg5TRVJWRVJfR0FURVdBWRADEhAKDFNF",
-            "UlZFUl9MT0dJThAEEhIKDlNFUlZFUl9EQlBST1hZEAUqggIKCU1vdmVTdGF0",
-            "ZRINCglNT1ZFX0lETEUQABINCglNT1ZFX1dBTEsQARIMCghNT1ZFX1JVThAC",
-            "Eg8KC01PVkVfU1BSSU5UEAMSEwoPTU9WRV9TVE9QX0xJR0hUEAQSEQoNTU9W",
-            "RV9TVE9QX01FRBAFEhIKDk1PVkVfU1RPUF9IQVJEEAYSEwoPTU9WRV9MQU5E",
-            "X0xJR0hUEAcSDQoJTU9WRV9ST0xMEAkSDQoJTU9WRV9EQVNIEAoSEAoMTU9W",
-            "RV9KVU1QX1VQEAsSDQoJTU9WRV9GQUxMEAwSEgoOTU9WRV9KVU1QX0RPV04Q",
-            "DSIECAgQCCoOTU9WRV9MQU5EX0hBUkRCNloSYmlnd29ybGQvY29tbW9uL3Bi",
-            "qgIfQmlnV29ybGRDbGllbnQuTmV0d29yay5Qcm90b2NvbGIGcHJvdG8z"));
+            "ZURpchIWCg5zZXJ2ZXJfdGltZV9tcxgDIAEoAyK9AgoHTW92ZVJzcBIPCgdz",
+            "dWNjZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIJCgF4GAMgASgBEgkK",
+            "AXoYBCABKAESCQoBeRgFIAEoARIPCgdtZXNzYWdlGAYgASgJEhMKC2Fja190",
+            "aW1lX21zGAcgASgDEhAKCHNpbV90aWNrGAggASgDEhAKCGFja190aWNrGAkg",
+            "ASgDEiIKBXN0YXRlGAogASgOMhMuYmlnd29ybGQuTW92ZVN0YXRlEg8KB3Zv",
+            "eGVsX2sYCyABKAUSEAoIYWlyYm9ybmUYDCABKAgSDQoFZGlyX3gYDSABKAES",
+            "DQoFZGlyX3oYDiABKAESEgoKY3VydmVfbm9ybRgPIAEoARIWCg5zdGF0ZV9z",
+            "dGFydF9tcxgQIAEoAxISCgpmYWxsX3ZlbF95GBEgASgBIi8KCFNraWxsUmVx",
+            "EhEKCXBsYXllcl9pZBgBIAEoBBIQCghza2lsbF9pZBgCIAEoCSI/CghTa2ls",
+            "bFJzcBIPCgdzdWNjZXNzGAEgASgIEhEKCXBsYXllcl9pZBgCIAEoBBIPCgdt",
+            "ZXNzYWdlGAMgASgJIiwKEkNsaWVudEhlYXJ0YmVhdFJlcRIWCg5jbGllbnRf",
+            "dGltZV9tcxgBIAEoAyJEChJDbGllbnRIZWFydGJlYXRSc3ASFgoOc2VydmVy",
+            "X3RpbWVfbXMYASABKAMSFgoOY2xpZW50X3RpbWVfbXMYAiABKAMiRwoSVmFs",
+            "aWRhdGVBY2NvdW50UmVxEg4KBnJlcV9pZBgBIAEoBBIPCgdhY2NvdW50GAIg",
+            "ASgJEhAKCHBhc3N3b3JkGAMgASgJIkQKElZhbGlkYXRlQWNjb3VudFJzcBIO",
+            "CgZyZXFfaWQYASABKAQSDQoFdmFsaWQYAiABKAgSDwoHbWVzc2FnZRgDIAEo",
+            "CSIgCg1Mb2FkUGxheWVyUmVxEg8KB2FjY291bnQYASABKAkiewoNTG9hZFBs",
+            "YXllclJzcBINCgVmb3VuZBgBIAEoCBIRCglwbGF5ZXJfaWQYAiABKAQSDwoH",
+            "YWNjb3VudBgDIAEoCRIJCgF4GAQgASgBEgkKAXoYBSABKAESDwoHbWVzc2Fn",
+            "ZRgGIAEoCRIQCghzY2VuZV9pZBgHIAEoCSJYCgpQbGF5ZXJEYXRhEhEKCXBs",
+            "YXllcl9pZBgBIAEoBBIPCgdhY2NvdW50GAIgASgJEgkKAXgYAyABKAESCQoB",
+            "ehgEIAEoARIQCghzY2VuZV9pZBgFIAEoCSJGCg1TYXZlUGxheWVyUmVxEg4K",
+            "BnJlcV9pZBgBIAEoBBIlCgdwbGF5ZXJzGAIgAygLMhQuYmlnd29ybGQuUGxh",
+            "eWVyRGF0YSJBCg1TYXZlUGxheWVyUnNwEg4KBnJlcV9pZBgBIAEoBBIPCgdz",
+            "dWNjZXNzGAIgASgIEg8KB21lc3NhZ2UYAyABKAkiHQoLU2h1dGRvd25SZXES",
+            "DgoGcmVhc29uGAEgASgJIi8KC1NodXRkb3duUnNwEg8KB3N1Y2Nlc3MYASAB",
+            "KAgSDwoHbWVzc2FnZRgCIAEoCSIgCg5TaHV0ZG93bk5vdGlmeRIOCgZyZWFz",
+            "b24YASABKAkiIAoLU2h1dGRvd25BY2sSEQoJc2VydmVyX2lkGAEgASgJIicK",
+            "FFNlcnZlclNodXRkb3duTm90aWZ5Eg8KB21lc3NhZ2UYASABKAkqgAEKClNl",
+            "cnZlclR5cGUSEgoOU0VSVkVSX0lOVkFMSUQQABISCg5TRVJWRVJfQ0VOVFJB",
+            "TBABEhAKDFNFUlZFUl9XT1JMRBACEhIKDlNFUlZFUl9HQVRFV0FZEAMSEAoM",
+            "U0VSVkVSX0xPR0lOEAQSEgoOU0VSVkVSX0RCUFJPWFkQBSqCAgoJTW92ZVN0",
+            "YXRlEg0KCU1PVkVfSURMRRAAEg0KCU1PVkVfV0FMSxABEgwKCE1PVkVfUlVO",
+            "EAISDwoLTU9WRV9TUFJJTlQQAxITCg9NT1ZFX1NUT1BfTElHSFQQBBIRCg1N",
+            "T1ZFX1NUT1BfTUVEEAUSEgoOTU9WRV9TVE9QX0hBUkQQBhITCg9NT1ZFX0xB",
+            "TkRfTElHSFQQBxINCglNT1ZFX1JPTEwQCRINCglNT1ZFX0RBU0gQChIQCgxN",
+            "T1ZFX0pVTVBfVVAQCxINCglNT1ZFX0ZBTEwQDBISCg5NT1ZFX0pVTVBfRE9X",
+            "ThANIgQICBAIKg5NT1ZFX0xBTkRfSEFSREI2WhJiaWd3b3JsZC9jb21tb24v",
+            "cGKqAh9CaWdXb3JsZENsaWVudC5OZXR3b3JrLlByb3RvY29sYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::BigWorldClient.Network.Protocol.ServerType), typeof(global::BigWorldClient.Network.Protocol.MoveState), }, null, new pbr::GeneratedClrTypeInfo[] {
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.RegisterReq), global::BigWorldClient.Network.Protocol.RegisterReq.Parser, new[]{ "ServerType", "ServerId", "ListenAddr" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.RegisterRsp), global::BigWorldClient.Network.Protocol.RegisterRsp.Parser, new[]{ "Success", "Message" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.HelloReq), global::BigWorldClient.Network.Protocol.HelloReq.Parser, new[]{ "ServerType", "ServerId", "ListenAddr", "Secret", "ProtocolVersion" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.HelloRsp), global::BigWorldClient.Network.Protocol.HelloRsp.Parser, new[]{ "Success", "Message", "Registered" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.HeartbeatReq), global::BigWorldClient.Network.Protocol.HeartbeatReq.Parser, new[]{ "ServerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.HeartbeatRsp), global::BigWorldClient.Network.Protocol.HeartbeatRsp.Parser, new[]{ "Success" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerListReq), global::BigWorldClient.Network.Protocol.ServerListReq.Parser, new[]{ "Type" }, null, null, null, null),
@@ -151,22 +163,24 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.GatewayAssignRsp), global::BigWorldClient.Network.Protocol.GatewayAssignRsp.Parser, new[]{ "ReqId", "Success", "GatewayAddr", "GatewayId", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.TokenVerifyReq), global::BigWorldClient.Network.Protocol.TokenVerifyReq.Parser, new[]{ "ReqId", "Token", "Account", "GatewayId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.TokenVerifyRsp), global::BigWorldClient.Network.Protocol.TokenVerifyRsp.Parser, new[]{ "ReqId", "Success", "Account", "PlayerId", "WorldAddr", "WorldId", "X", "Z", "Width", "Height", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginPrepareReq), global::BigWorldClient.Network.Protocol.LoginPrepareReq.Parser, new[]{ "ReqId", "Account" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginPrepareReq), global::BigWorldClient.Network.Protocol.LoginPrepareReq.Parser, new[]{ "ReqId", "Account", "SessionId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginPrepareRsp), global::BigWorldClient.Network.Protocol.LoginPrepareRsp.Parser, new[]{ "ReqId", "Success", "WorldId", "WorldAddr", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishReq), global::BigWorldClient.Network.Protocol.LoginFinishReq.Parser, new[]{ "PlayerId", "Success", "Account", "WorldId", "GatewayId", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishRsp), global::BigWorldClient.Network.Protocol.LoginFinishRsp.Parser, new[]{ "Success", "PlayerId", "Account", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ForceKickNotify), global::BigWorldClient.Network.Protocol.ForceKickNotify.Parser, new[]{ "PlayerId", "Account", "WorldId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishReq), global::BigWorldClient.Network.Protocol.LoginFinishReq.Parser, new[]{ "PlayerId", "Success", "Account", "WorldId", "GatewayId", "Message", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LoginFinishRsp), global::BigWorldClient.Network.Protocol.LoginFinishRsp.Parser, new[]{ "Success", "PlayerId", "Account", "Message", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ForceKickNotify), global::BigWorldClient.Network.Protocol.ForceKickNotify.Parser, new[]{ "PlayerId", "Account", "WorldId", "SessionId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.EnterSceneNotify), global::BigWorldClient.Network.Protocol.EnterSceneNotify.Parser, new[]{ "WorldId", "PlayerId", "X", "Z", "Width", "Height", "SceneId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutReq), global::BigWorldClient.Network.Protocol.LogoutReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutRsp), global::BigWorldClient.Network.Protocol.LogoutRsp.Parser, new[]{ "Success", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutBeginReq), global::BigWorldClient.Network.Protocol.LogoutBeginReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutBeginRsp), global::BigWorldClient.Network.Protocol.LogoutBeginRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupReq), global::BigWorldClient.Network.Protocol.LogoutCleanupReq.Parser, new[]{ "PlayerId", "GatewayId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupRsp), global::BigWorldClient.Network.Protocol.LogoutCleanupRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityReq), global::BigWorldClient.Network.Protocol.CreateEntityReq.Parser, new[]{ "Account" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityRsp), global::BigWorldClient.Network.Protocol.CreateEntityRsp.Parser, new[]{ "Success", "PlayerId", "Account", "X", "Z", "Width", "Height", "Message", "SceneId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityReq), global::BigWorldClient.Network.Protocol.DestroyEntityReq.Parser, new[]{ "PlayerId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityRsp), global::BigWorldClient.Network.Protocol.DestroyEntityRsp.Parser, new[]{ "Success", "PlayerId", "Message" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutBeginReq), global::BigWorldClient.Network.Protocol.LogoutBeginReq.Parser, new[]{ "PlayerId", "GatewayId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutBeginRsp), global::BigWorldClient.Network.Protocol.LogoutBeginRsp.Parser, new[]{ "Success", "PlayerId", "Message", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupReq), global::BigWorldClient.Network.Protocol.LogoutCleanupReq.Parser, new[]{ "PlayerId", "GatewayId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.LogoutCleanupRsp), global::BigWorldClient.Network.Protocol.LogoutCleanupRsp.Parser, new[]{ "Success", "PlayerId", "Message", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityReq), global::BigWorldClient.Network.Protocol.CreateEntityReq.Parser, new[]{ "Account", "GatewayId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.CreateEntityRsp), global::BigWorldClient.Network.Protocol.CreateEntityRsp.Parser, new[]{ "Success", "PlayerId", "Account", "X", "Z", "Width", "Height", "Message", "SceneId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityReq), global::BigWorldClient.Network.Protocol.DestroyEntityReq.Parser, new[]{ "PlayerId", "GatewayId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.DestroyEntityRsp), global::BigWorldClient.Network.Protocol.DestroyEntityRsp.Parser, new[]{ "Success", "PlayerId", "Message", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ResumeEntityReq), global::BigWorldClient.Network.Protocol.ResumeEntityReq.Parser, new[]{ "PlayerId", "GatewayId", "SessionId" }, null, null, null, null),
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ResumeEntityRsp), global::BigWorldClient.Network.Protocol.ResumeEntityRsp.Parser, new[]{ "Success", "Message", "PlayerId", "SessionId", "SceneId", "X", "Z", "Width", "Height" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.MoveDir), global::BigWorldClient.Network.Protocol.MoveDir.Parser, new[]{ "X", "Z" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.WalkStartReq), global::BigWorldClient.Network.Protocol.WalkStartReq.Parser, new[]{ "PlayerId", "Dir", "ServerTimeMs" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.RunStartReq), global::BigWorldClient.Network.Protocol.RunStartReq.Parser, new[]{ "PlayerId", "Dir", "ServerTimeMs" }, null, null, null, null),
@@ -193,8 +207,7 @@ namespace BigWorldClient.Network.Protocol {
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownRsp), global::BigWorldClient.Network.Protocol.ShutdownRsp.Parser, new[]{ "Success", "Message" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownNotify), global::BigWorldClient.Network.Protocol.ShutdownNotify.Parser, new[]{ "Reason" }, null, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ShutdownAck), global::BigWorldClient.Network.Protocol.ShutdownAck.Parser, new[]{ "ServerId" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerShutdownNotify), global::BigWorldClient.Network.Protocol.ServerShutdownNotify.Parser, new[]{ "Message" }, null, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.IdentifyReq), global::BigWorldClient.Network.Protocol.IdentifyReq.Parser, new[]{ "ServerType" }, null, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::BigWorldClient.Network.Protocol.ServerShutdownNotify), global::BigWorldClient.Network.Protocol.ServerShutdownNotify.Parser, new[]{ "Message" }, null, null, null, null)
           }));
     }
     #endregion
@@ -240,16 +253,16 @@ namespace BigWorldClient.Network.Protocol {
 
   #region Messages
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class RegisterReq : pb::IMessage<RegisterReq>
+  public sealed partial class HelloReq : pb::IMessage<HelloReq>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<RegisterReq> _parser = new pb::MessageParser<RegisterReq>(() => new RegisterReq());
+    private static readonly pb::MessageParser<HelloReq> _parser = new pb::MessageParser<HelloReq>(() => new HelloReq());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RegisterReq> Parser { get { return _parser; } }
+    public static pb::MessageParser<HelloReq> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -265,7 +278,7 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterReq() {
+    public HelloReq() {
       OnConstruction();
     }
 
@@ -273,17 +286,19 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterReq(RegisterReq other) : this() {
+    public HelloReq(HelloReq other) : this() {
       serverType_ = other.serverType_;
       serverId_ = other.serverId_;
       listenAddr_ = other.listenAddr_;
+      secret_ = other.secret_;
+      protocolVersion_ = other.protocolVersion_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterReq Clone() {
-      return new RegisterReq(this);
+    public HelloReq Clone() {
+      return new HelloReq(this);
     }
 
     /// <summary>Field number for the "server_type" field.</summary>
@@ -322,15 +337,39 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "secret" field.</summary>
+    public const int SecretFieldNumber = 4;
+    private string secret_ = "";
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RegisterReq);
+    public string Secret {
+      get { return secret_; }
+      set {
+        secret_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "protocol_version" field.</summary>
+    public const int ProtocolVersionFieldNumber = 5;
+    private uint protocolVersion_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public uint ProtocolVersion {
+      get { return protocolVersion_; }
+      set {
+        protocolVersion_ = value;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RegisterReq other) {
+    public override bool Equals(object other) {
+      return Equals(other as HelloReq);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(HelloReq other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -340,6 +379,8 @@ namespace BigWorldClient.Network.Protocol {
       if (ServerType != other.ServerType) return false;
       if (ServerId != other.ServerId) return false;
       if (ListenAddr != other.ListenAddr) return false;
+      if (Secret != other.Secret) return false;
+      if (ProtocolVersion != other.ProtocolVersion) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -350,6 +391,8 @@ namespace BigWorldClient.Network.Protocol {
       if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) hash ^= ServerType.GetHashCode();
       if (ServerId.Length != 0) hash ^= ServerId.GetHashCode();
       if (ListenAddr.Length != 0) hash ^= ListenAddr.GetHashCode();
+      if (Secret.Length != 0) hash ^= Secret.GetHashCode();
+      if (ProtocolVersion != 0) hash ^= ProtocolVersion.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -380,6 +423,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(ListenAddr);
       }
+      if (Secret.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Secret);
+      }
+      if (ProtocolVersion != 0) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -402,6 +453,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(ListenAddr);
       }
+      if (Secret.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(Secret);
+      }
+      if (ProtocolVersion != 0) {
+        output.WriteRawTag(40);
+        output.WriteUInt32(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -421,6 +480,12 @@ namespace BigWorldClient.Network.Protocol {
       if (ListenAddr.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(ListenAddr);
       }
+      if (Secret.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Secret);
+      }
+      if (ProtocolVersion != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt32Size(ProtocolVersion);
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -429,7 +494,7 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RegisterReq other) {
+    public void MergeFrom(HelloReq other) {
       if (other == null) {
         return;
       }
@@ -441,6 +506,12 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.ListenAddr.Length != 0) {
         ListenAddr = other.ListenAddr;
+      }
+      if (other.Secret.Length != 0) {
+        Secret = other.Secret;
+      }
+      if (other.ProtocolVersion != 0) {
+        ProtocolVersion = other.ProtocolVersion;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -471,6 +542,14 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 26: {
             ListenAddr = input.ReadString();
+            break;
+          }
+          case 34: {
+            Secret = input.ReadString();
+            break;
+          }
+          case 40: {
+            ProtocolVersion = input.ReadUInt32();
             break;
           }
         }
@@ -504,6 +583,14 @@ namespace BigWorldClient.Network.Protocol {
             ListenAddr = input.ReadString();
             break;
           }
+          case 34: {
+            Secret = input.ReadString();
+            break;
+          }
+          case 40: {
+            ProtocolVersion = input.ReadUInt32();
+            break;
+          }
         }
       }
     }
@@ -512,16 +599,16 @@ namespace BigWorldClient.Network.Protocol {
   }
 
   [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class RegisterRsp : pb::IMessage<RegisterRsp>
+  public sealed partial class HelloRsp : pb::IMessage<HelloRsp>
   #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
       , pb::IBufferMessage
   #endif
   {
-    private static readonly pb::MessageParser<RegisterRsp> _parser = new pb::MessageParser<RegisterRsp>(() => new RegisterRsp());
+    private static readonly pb::MessageParser<HelloRsp> _parser = new pb::MessageParser<HelloRsp>(() => new HelloRsp());
     private pb::UnknownFieldSet _unknownFields;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<RegisterRsp> Parser { get { return _parser; } }
+    public static pb::MessageParser<HelloRsp> Parser { get { return _parser; } }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
@@ -537,7 +624,7 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterRsp() {
+    public HelloRsp() {
       OnConstruction();
     }
 
@@ -545,16 +632,17 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterRsp(RegisterRsp other) : this() {
+    public HelloRsp(HelloRsp other) : this() {
       success_ = other.success_;
       message_ = other.message_;
+      registered_ = other.registered_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public RegisterRsp Clone() {
-      return new RegisterRsp(this);
+    public HelloRsp Clone() {
+      return new HelloRsp(this);
     }
 
     /// <summary>Field number for the "success" field.</summary>
@@ -581,15 +669,27 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "registered" field.</summary>
+    public const int RegisteredFieldNumber = 3;
+    private bool registered_;
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as RegisterRsp);
+    public bool Registered {
+      get { return registered_; }
+      set {
+        registered_ = value;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(RegisterRsp other) {
+    public override bool Equals(object other) {
+      return Equals(other as HelloRsp);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(HelloRsp other) {
       if (ReferenceEquals(other, null)) {
         return false;
       }
@@ -598,6 +698,7 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Success != other.Success) return false;
       if (Message != other.Message) return false;
+      if (Registered != other.Registered) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -607,6 +708,7 @@ namespace BigWorldClient.Network.Protocol {
       int hash = 1;
       if (Success != false) hash ^= Success.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (Registered != false) hash ^= Registered.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -633,6 +735,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(Message);
       }
+      if (Registered != false) {
+        output.WriteRawTag(24);
+        output.WriteBool(Registered);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -651,6 +757,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(Message);
       }
+      if (Registered != false) {
+        output.WriteRawTag(24);
+        output.WriteBool(Registered);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -667,6 +777,9 @@ namespace BigWorldClient.Network.Protocol {
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
       }
+      if (Registered != false) {
+        size += 1 + 1;
+      }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
       }
@@ -675,7 +788,7 @@ namespace BigWorldClient.Network.Protocol {
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(RegisterRsp other) {
+    public void MergeFrom(HelloRsp other) {
       if (other == null) {
         return;
       }
@@ -684,6 +797,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.Registered != false) {
+        Registered = other.Registered;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -712,6 +828,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 24: {
+            Registered = input.ReadBool();
+            break;
+          }
         }
       }
     #endif
@@ -737,6 +857,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 18: {
             Message = input.ReadString();
+            break;
+          }
+          case 24: {
+            Registered = input.ReadBool();
             break;
           }
         }
@@ -4174,6 +4298,7 @@ namespace BigWorldClient.Network.Protocol {
     public LoginPrepareReq(LoginPrepareReq other) : this() {
       reqId_ = other.reqId_;
       account_ = other.account_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -4207,6 +4332,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -4224,6 +4361,7 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (ReqId != other.ReqId) return false;
       if (Account != other.Account) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -4233,6 +4371,7 @@ namespace BigWorldClient.Network.Protocol {
       int hash = 1;
       if (ReqId != 0UL) hash ^= ReqId.GetHashCode();
       if (Account.Length != 0) hash ^= Account.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -4259,6 +4398,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(Account);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -4277,6 +4420,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(Account);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -4292,6 +4439,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Account.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Account);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -4310,6 +4460,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Account.Length != 0) {
         Account = other.Account;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -4338,6 +4491,10 @@ namespace BigWorldClient.Network.Protocol {
             Account = input.ReadString();
             break;
           }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -4363,6 +4520,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 18: {
             Account = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -4759,6 +4920,7 @@ namespace BigWorldClient.Network.Protocol {
       worldId_ = other.worldId_;
       gatewayId_ = other.gatewayId_;
       message_ = other.message_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -4840,6 +5002,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 7;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -4861,6 +5035,7 @@ namespace BigWorldClient.Network.Protocol {
       if (WorldId != other.WorldId) return false;
       if (GatewayId != other.GatewayId) return false;
       if (Message != other.Message) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -4874,6 +5049,7 @@ namespace BigWorldClient.Network.Protocol {
       if (WorldId.Length != 0) hash ^= WorldId.GetHashCode();
       if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -4916,6 +5092,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(50);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -4950,6 +5130,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(50);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -4977,6 +5161,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -5007,6 +5194,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -5051,6 +5241,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 58: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -5092,6 +5286,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 50: {
             Message = input.ReadString();
+            break;
+          }
+          case 58: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -5140,6 +5338,7 @@ namespace BigWorldClient.Network.Protocol {
       playerId_ = other.playerId_;
       account_ = other.account_;
       message_ = other.message_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -5197,6 +5396,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 5;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -5216,6 +5427,7 @@ namespace BigWorldClient.Network.Protocol {
       if (PlayerId != other.PlayerId) return false;
       if (Account != other.Account) return false;
       if (Message != other.Message) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -5227,6 +5439,7 @@ namespace BigWorldClient.Network.Protocol {
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (Account.Length != 0) hash ^= Account.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -5261,6 +5474,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(34);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -5287,6 +5504,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(34);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -5308,6 +5529,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -5332,6 +5556,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -5368,6 +5595,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 42: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -5401,6 +5632,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 34: {
             Message = input.ReadString();
+            break;
+          }
+          case 42: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -5448,6 +5683,7 @@ namespace BigWorldClient.Network.Protocol {
       playerId_ = other.playerId_;
       account_ = other.account_;
       worldId_ = other.worldId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -5493,6 +5729,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 4;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -5511,6 +5759,7 @@ namespace BigWorldClient.Network.Protocol {
       if (PlayerId != other.PlayerId) return false;
       if (Account != other.Account) return false;
       if (WorldId != other.WorldId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -5521,6 +5770,7 @@ namespace BigWorldClient.Network.Protocol {
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (Account.Length != 0) hash ^= Account.GetHashCode();
       if (WorldId.Length != 0) hash ^= WorldId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -5551,6 +5801,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(WorldId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -5573,6 +5827,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(WorldId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -5591,6 +5849,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (WorldId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(WorldId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -5612,6 +5873,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.WorldId.Length != 0) {
         WorldId = other.WorldId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -5644,6 +5908,10 @@ namespace BigWorldClient.Network.Protocol {
             WorldId = input.ReadString();
             break;
           }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -5673,6 +5941,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 26: {
             WorldId = input.ReadString();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -6571,6 +6843,8 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public LogoutBeginReq(LogoutBeginReq other) : this() {
       playerId_ = other.playerId_;
+      gatewayId_ = other.gatewayId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -6592,6 +6866,30 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "gateway_id" field.</summary>
+    public const int GatewayIdFieldNumber = 2;
+    private string gatewayId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string GatewayId {
+      get { return gatewayId_; }
+      set {
+        gatewayId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -6608,6 +6906,8 @@ namespace BigWorldClient.Network.Protocol {
         return true;
       }
       if (PlayerId != other.PlayerId) return false;
+      if (GatewayId != other.GatewayId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -6616,6 +6916,8 @@ namespace BigWorldClient.Network.Protocol {
     public override int GetHashCode() {
       int hash = 1;
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
+      if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -6638,6 +6940,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(8);
         output.WriteUInt64(PlayerId);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -6652,6 +6962,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(8);
         output.WriteUInt64(PlayerId);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -6664,6 +6982,12 @@ namespace BigWorldClient.Network.Protocol {
       int size = 0;
       if (PlayerId != 0UL) {
         size += 1 + pb::CodedOutputStream.ComputeUInt64Size(PlayerId);
+      }
+      if (GatewayId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6679,6 +7003,12 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.PlayerId != 0UL) {
         PlayerId = other.PlayerId;
+      }
+      if (other.GatewayId.Length != 0) {
+        GatewayId = other.GatewayId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -6703,6 +7033,14 @@ namespace BigWorldClient.Network.Protocol {
             PlayerId = input.ReadUInt64();
             break;
           }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -6724,6 +7062,14 @@ namespace BigWorldClient.Network.Protocol {
             break;
           case 8: {
             PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -6771,6 +7117,7 @@ namespace BigWorldClient.Network.Protocol {
       success_ = other.success_;
       playerId_ = other.playerId_;
       message_ = other.message_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -6816,6 +7163,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 4;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -6834,6 +7193,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != other.Success) return false;
       if (PlayerId != other.PlayerId) return false;
       if (Message != other.Message) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -6844,6 +7204,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != false) hash ^= Success.GetHashCode();
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -6874,6 +7235,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -6896,6 +7261,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -6914,6 +7283,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -6935,6 +7307,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -6967,6 +7342,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -6996,6 +7375,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 26: {
             Message = input.ReadString();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -7042,6 +7425,7 @@ namespace BigWorldClient.Network.Protocol {
     public LogoutCleanupReq(LogoutCleanupReq other) : this() {
       playerId_ = other.playerId_;
       gatewayId_ = other.gatewayId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -7075,6 +7459,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -7092,6 +7488,7 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (PlayerId != other.PlayerId) return false;
       if (GatewayId != other.GatewayId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -7101,6 +7498,7 @@ namespace BigWorldClient.Network.Protocol {
       int hash = 1;
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -7127,6 +7525,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(GatewayId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -7145,6 +7547,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(18);
         output.WriteString(GatewayId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -7160,6 +7566,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (GatewayId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -7178,6 +7587,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.GatewayId.Length != 0) {
         GatewayId = other.GatewayId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -7206,6 +7618,10 @@ namespace BigWorldClient.Network.Protocol {
             GatewayId = input.ReadString();
             break;
           }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -7231,6 +7647,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 18: {
             GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -7278,6 +7698,7 @@ namespace BigWorldClient.Network.Protocol {
       success_ = other.success_;
       playerId_ = other.playerId_;
       message_ = other.message_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -7323,6 +7744,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 4;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -7341,6 +7774,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != other.Success) return false;
       if (PlayerId != other.PlayerId) return false;
       if (Message != other.Message) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -7351,6 +7785,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != false) hash ^= Success.GetHashCode();
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -7381,6 +7816,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -7403,6 +7842,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -7421,6 +7864,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -7442,6 +7888,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -7474,6 +7923,10 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -7503,6 +7956,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 26: {
             Message = input.ReadString();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -7548,6 +8005,8 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public CreateEntityReq(CreateEntityReq other) : this() {
       account_ = other.account_;
+      gatewayId_ = other.gatewayId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -7569,6 +8028,30 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "gateway_id" field.</summary>
+    public const int GatewayIdFieldNumber = 2;
+    private string gatewayId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string GatewayId {
+      get { return gatewayId_; }
+      set {
+        gatewayId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -7585,6 +8068,8 @@ namespace BigWorldClient.Network.Protocol {
         return true;
       }
       if (Account != other.Account) return false;
+      if (GatewayId != other.GatewayId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -7593,6 +8078,8 @@ namespace BigWorldClient.Network.Protocol {
     public override int GetHashCode() {
       int hash = 1;
       if (Account.Length != 0) hash ^= Account.GetHashCode();
+      if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -7615,6 +8102,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(10);
         output.WriteString(Account);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -7629,6 +8124,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(10);
         output.WriteString(Account);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -7641,6 +8144,12 @@ namespace BigWorldClient.Network.Protocol {
       int size = 0;
       if (Account.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Account);
+      }
+      if (GatewayId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -7656,6 +8165,12 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Account.Length != 0) {
         Account = other.Account;
+      }
+      if (other.GatewayId.Length != 0) {
+        GatewayId = other.GatewayId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -7680,6 +8195,14 @@ namespace BigWorldClient.Network.Protocol {
             Account = input.ReadString();
             break;
           }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -7701,6 +8224,14 @@ namespace BigWorldClient.Network.Protocol {
             break;
           case 10: {
             Account = input.ReadString();
+            break;
+          }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -7754,6 +8285,7 @@ namespace BigWorldClient.Network.Protocol {
       height_ = other.height_;
       message_ = other.message_;
       sceneId_ = other.sceneId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -7871,6 +8403,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 10;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -7895,6 +8439,7 @@ namespace BigWorldClient.Network.Protocol {
       if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Height, other.Height)) return false;
       if (Message != other.Message) return false;
       if (SceneId != other.SceneId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -7911,6 +8456,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Height != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Height);
       if (Message.Length != 0) hash ^= Message.GetHashCode();
       if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -7965,6 +8511,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(74);
         output.WriteString(SceneId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(82);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -8011,6 +8561,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(74);
         output.WriteString(SceneId);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(82);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -8047,6 +8601,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (SceneId.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -8086,6 +8643,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.SceneId.Length != 0) {
         SceneId = other.SceneId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -8142,6 +8702,10 @@ namespace BigWorldClient.Network.Protocol {
             SceneId = input.ReadString();
             break;
           }
+          case 82: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -8195,6 +8759,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 74: {
             SceneId = input.ReadString();
+            break;
+          }
+          case 82: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -8240,6 +8808,8 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public DestroyEntityReq(DestroyEntityReq other) : this() {
       playerId_ = other.playerId_;
+      gatewayId_ = other.gatewayId_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -8261,6 +8831,30 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "gateway_id" field.</summary>
+    public const int GatewayIdFieldNumber = 2;
+    private string gatewayId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string GatewayId {
+      get { return gatewayId_; }
+      set {
+        gatewayId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -8277,6 +8871,8 @@ namespace BigWorldClient.Network.Protocol {
         return true;
       }
       if (PlayerId != other.PlayerId) return false;
+      if (GatewayId != other.GatewayId) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -8285,6 +8881,8 @@ namespace BigWorldClient.Network.Protocol {
     public override int GetHashCode() {
       int hash = 1;
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
+      if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -8307,6 +8905,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(8);
         output.WriteUInt64(PlayerId);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -8321,6 +8927,14 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(8);
         output.WriteUInt64(PlayerId);
       }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -8333,6 +8947,12 @@ namespace BigWorldClient.Network.Protocol {
       int size = 0;
       if (PlayerId != 0UL) {
         size += 1 + pb::CodedOutputStream.ComputeUInt64Size(PlayerId);
+      }
+      if (GatewayId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -8348,6 +8968,12 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.PlayerId != 0UL) {
         PlayerId = other.PlayerId;
+      }
+      if (other.GatewayId.Length != 0) {
+        GatewayId = other.GatewayId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -8372,6 +8998,14 @@ namespace BigWorldClient.Network.Protocol {
             PlayerId = input.ReadUInt64();
             break;
           }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
         }
       }
     #endif
@@ -8393,6 +9027,14 @@ namespace BigWorldClient.Network.Protocol {
             break;
           case 8: {
             PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -8440,6 +9082,7 @@ namespace BigWorldClient.Network.Protocol {
       success_ = other.success_;
       playerId_ = other.playerId_;
       message_ = other.message_;
+      sessionId_ = other.sessionId_;
       _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
     }
 
@@ -8485,6 +9128,18 @@ namespace BigWorldClient.Network.Protocol {
       }
     }
 
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 4;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public override bool Equals(object other) {
@@ -8503,6 +9158,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != other.Success) return false;
       if (PlayerId != other.PlayerId) return false;
       if (Message != other.Message) return false;
+      if (SessionId != other.SessionId) return false;
       return Equals(_unknownFields, other._unknownFields);
     }
 
@@ -8513,6 +9169,7 @@ namespace BigWorldClient.Network.Protocol {
       if (Success != false) hash ^= Success.GetHashCode();
       if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
       if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
       if (_unknownFields != null) {
         hash ^= _unknownFields.GetHashCode();
       }
@@ -8543,6 +9200,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(output);
       }
@@ -8565,6 +9226,10 @@ namespace BigWorldClient.Network.Protocol {
         output.WriteRawTag(26);
         output.WriteString(Message);
       }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
       if (_unknownFields != null) {
         _unknownFields.WriteTo(ref output);
       }
@@ -8583,6 +9248,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (Message.Length != 0) {
         size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
       }
       if (_unknownFields != null) {
         size += _unknownFields.CalculateSize();
@@ -8604,6 +9272,9 @@ namespace BigWorldClient.Network.Protocol {
       }
       if (other.Message.Length != 0) {
         Message = other.Message;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
       }
       _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
     }
@@ -8634,6 +9305,10 @@ namespace BigWorldClient.Network.Protocol {
           }
           case 26: {
             Message = input.ReadString();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
             break;
           }
         }
@@ -8667,6 +9342,776 @@ namespace BigWorldClient.Network.Protocol {
             Message = input.ReadString();
             break;
           }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ResumeEntityReq : pb::IMessage<ResumeEntityReq>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ResumeEntityReq> _parser = new pb::MessageParser<ResumeEntityReq>(() => new ResumeEntityReq());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ResumeEntityReq> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[29]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityReq() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityReq(ResumeEntityReq other) : this() {
+      playerId_ = other.playerId_;
+      gatewayId_ = other.gatewayId_;
+      sessionId_ = other.sessionId_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityReq Clone() {
+      return new ResumeEntityReq(this);
+    }
+
+    /// <summary>Field number for the "player_id" field.</summary>
+    public const int PlayerIdFieldNumber = 1;
+    private ulong playerId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong PlayerId {
+      get { return playerId_; }
+      set {
+        playerId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "gateway_id" field.</summary>
+    public const int GatewayIdFieldNumber = 2;
+    private string gatewayId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string GatewayId {
+      get { return gatewayId_; }
+      set {
+        gatewayId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 3;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ResumeEntityReq);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ResumeEntityReq other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (PlayerId != other.PlayerId) return false;
+      if (GatewayId != other.GatewayId) return false;
+      if (SessionId != other.SessionId) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
+      if (GatewayId.Length != 0) hash ^= GatewayId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (PlayerId != 0UL) {
+        output.WriteRawTag(8);
+        output.WriteUInt64(PlayerId);
+      }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (PlayerId != 0UL) {
+        output.WriteRawTag(8);
+        output.WriteUInt64(PlayerId);
+      }
+      if (GatewayId.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(26);
+        output.WriteString(SessionId);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (PlayerId != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(PlayerId);
+      }
+      if (GatewayId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(GatewayId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ResumeEntityReq other) {
+      if (other == null) {
+        return;
+      }
+      if (other.PlayerId != 0UL) {
+        PlayerId = other.PlayerId;
+      }
+      if (other.GatewayId.Length != 0) {
+        GatewayId = other.GatewayId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 18: {
+            GatewayId = input.ReadString();
+            break;
+          }
+          case 26: {
+            SessionId = input.ReadString();
+            break;
+          }
+        }
+      }
+    }
+    #endif
+
+  }
+
+  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
+  public sealed partial class ResumeEntityRsp : pb::IMessage<ResumeEntityRsp>
+  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      , pb::IBufferMessage
+  #endif
+  {
+    private static readonly pb::MessageParser<ResumeEntityRsp> _parser = new pb::MessageParser<ResumeEntityRsp>(() => new ResumeEntityRsp());
+    private pb::UnknownFieldSet _unknownFields;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pb::MessageParser<ResumeEntityRsp> Parser { get { return _parser; } }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public static pbr::MessageDescriptor Descriptor {
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[30]; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    pbr::MessageDescriptor pb::IMessage.Descriptor {
+      get { return Descriptor; }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityRsp() {
+      OnConstruction();
+    }
+
+    partial void OnConstruction();
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityRsp(ResumeEntityRsp other) : this() {
+      success_ = other.success_;
+      message_ = other.message_;
+      playerId_ = other.playerId_;
+      sessionId_ = other.sessionId_;
+      sceneId_ = other.sceneId_;
+      x_ = other.x_;
+      z_ = other.z_;
+      width_ = other.width_;
+      height_ = other.height_;
+      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ResumeEntityRsp Clone() {
+      return new ResumeEntityRsp(this);
+    }
+
+    /// <summary>Field number for the "success" field.</summary>
+    public const int SuccessFieldNumber = 1;
+    private bool success_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Success {
+      get { return success_; }
+      set {
+        success_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "message" field.</summary>
+    public const int MessageFieldNumber = 2;
+    private string message_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string Message {
+      get { return message_; }
+      set {
+        message_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "player_id" field.</summary>
+    public const int PlayerIdFieldNumber = 3;
+    private ulong playerId_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public ulong PlayerId {
+      get { return playerId_; }
+      set {
+        playerId_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "session_id" field.</summary>
+    public const int SessionIdFieldNumber = 4;
+    private string sessionId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SessionId {
+      get { return sessionId_; }
+      set {
+        sessionId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "scene_id" field.</summary>
+    public const int SceneIdFieldNumber = 5;
+    private string sceneId_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public string SceneId {
+      get { return sceneId_; }
+      set {
+        sceneId_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "x" field.</summary>
+    public const int XFieldNumber = 6;
+    private double x_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double X {
+      get { return x_; }
+      set {
+        x_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "z" field.</summary>
+    public const int ZFieldNumber = 7;
+    private double z_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Z {
+      get { return z_; }
+      set {
+        z_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "width" field.</summary>
+    public const int WidthFieldNumber = 8;
+    private double width_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Width {
+      get { return width_; }
+      set {
+        width_ = value;
+      }
+    }
+
+    /// <summary>Field number for the "height" field.</summary>
+    public const int HeightFieldNumber = 9;
+    private double height_;
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public double Height {
+      get { return height_; }
+      set {
+        height_ = value;
+      }
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override bool Equals(object other) {
+      return Equals(other as ResumeEntityRsp);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public bool Equals(ResumeEntityRsp other) {
+      if (ReferenceEquals(other, null)) {
+        return false;
+      }
+      if (ReferenceEquals(other, this)) {
+        return true;
+      }
+      if (Success != other.Success) return false;
+      if (Message != other.Message) return false;
+      if (PlayerId != other.PlayerId) return false;
+      if (SessionId != other.SessionId) return false;
+      if (SceneId != other.SceneId) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(X, other.X)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Z, other.Z)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Width, other.Width)) return false;
+      if (!pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.Equals(Height, other.Height)) return false;
+      return Equals(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override int GetHashCode() {
+      int hash = 1;
+      if (Success != false) hash ^= Success.GetHashCode();
+      if (Message.Length != 0) hash ^= Message.GetHashCode();
+      if (PlayerId != 0UL) hash ^= PlayerId.GetHashCode();
+      if (SessionId.Length != 0) hash ^= SessionId.GetHashCode();
+      if (SceneId.Length != 0) hash ^= SceneId.GetHashCode();
+      if (X != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(X);
+      if (Z != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Z);
+      if (Width != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Width);
+      if (Height != 0D) hash ^= pbc::ProtobufEqualityComparers.BitwiseDoubleEqualityComparer.GetHashCode(Height);
+      if (_unknownFields != null) {
+        hash ^= _unknownFields.GetHashCode();
+      }
+      return hash;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public override string ToString() {
+      return pb::JsonFormatter.ToDiagnosticString(this);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void WriteTo(pb::CodedOutputStream output) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      output.WriteRawMessage(this);
+    #else
+      if (Success != false) {
+        output.WriteRawTag(8);
+        output.WriteBool(Success);
+      }
+      if (Message.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(Message);
+      }
+      if (PlayerId != 0UL) {
+        output.WriteRawTag(24);
+        output.WriteUInt64(PlayerId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SceneId);
+      }
+      if (X != 0D) {
+        output.WriteRawTag(49);
+        output.WriteDouble(X);
+      }
+      if (Z != 0D) {
+        output.WriteRawTag(57);
+        output.WriteDouble(Z);
+      }
+      if (Width != 0D) {
+        output.WriteRawTag(65);
+        output.WriteDouble(Width);
+      }
+      if (Height != 0D) {
+        output.WriteRawTag(73);
+        output.WriteDouble(Height);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(output);
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
+      if (Success != false) {
+        output.WriteRawTag(8);
+        output.WriteBool(Success);
+      }
+      if (Message.Length != 0) {
+        output.WriteRawTag(18);
+        output.WriteString(Message);
+      }
+      if (PlayerId != 0UL) {
+        output.WriteRawTag(24);
+        output.WriteUInt64(PlayerId);
+      }
+      if (SessionId.Length != 0) {
+        output.WriteRawTag(34);
+        output.WriteString(SessionId);
+      }
+      if (SceneId.Length != 0) {
+        output.WriteRawTag(42);
+        output.WriteString(SceneId);
+      }
+      if (X != 0D) {
+        output.WriteRawTag(49);
+        output.WriteDouble(X);
+      }
+      if (Z != 0D) {
+        output.WriteRawTag(57);
+        output.WriteDouble(Z);
+      }
+      if (Width != 0D) {
+        output.WriteRawTag(65);
+        output.WriteDouble(Width);
+      }
+      if (Height != 0D) {
+        output.WriteRawTag(73);
+        output.WriteDouble(Height);
+      }
+      if (_unknownFields != null) {
+        _unknownFields.WriteTo(ref output);
+      }
+    }
+    #endif
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public int CalculateSize() {
+      int size = 0;
+      if (Success != false) {
+        size += 1 + 1;
+      }
+      if (Message.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(Message);
+      }
+      if (PlayerId != 0UL) {
+        size += 1 + pb::CodedOutputStream.ComputeUInt64Size(PlayerId);
+      }
+      if (SessionId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SessionId);
+      }
+      if (SceneId.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(SceneId);
+      }
+      if (X != 0D) {
+        size += 1 + 8;
+      }
+      if (Z != 0D) {
+        size += 1 + 8;
+      }
+      if (Width != 0D) {
+        size += 1 + 8;
+      }
+      if (Height != 0D) {
+        size += 1 + 8;
+      }
+      if (_unknownFields != null) {
+        size += _unknownFields.CalculateSize();
+      }
+      return size;
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(ResumeEntityRsp other) {
+      if (other == null) {
+        return;
+      }
+      if (other.Success != false) {
+        Success = other.Success;
+      }
+      if (other.Message.Length != 0) {
+        Message = other.Message;
+      }
+      if (other.PlayerId != 0UL) {
+        PlayerId = other.PlayerId;
+      }
+      if (other.SessionId.Length != 0) {
+        SessionId = other.SessionId;
+      }
+      if (other.SceneId.Length != 0) {
+        SceneId = other.SceneId;
+      }
+      if (other.X != 0D) {
+        X = other.X;
+      }
+      if (other.Z != 0D) {
+        Z = other.Z;
+      }
+      if (other.Width != 0D) {
+        Width = other.Width;
+      }
+      if (other.Height != 0D) {
+        Height = other.Height;
+      }
+      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
+    }
+
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    public void MergeFrom(pb::CodedInputStream input) {
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+      input.ReadRawMessage(this);
+    #else
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
+            break;
+          case 8: {
+            Success = input.ReadBool();
+            break;
+          }
+          case 18: {
+            Message = input.ReadString();
+            break;
+          }
+          case 24: {
+            PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
+          case 42: {
+            SceneId = input.ReadString();
+            break;
+          }
+          case 49: {
+            X = input.ReadDouble();
+            break;
+          }
+          case 57: {
+            Z = input.ReadDouble();
+            break;
+          }
+          case 65: {
+            Width = input.ReadDouble();
+            break;
+          }
+          case 73: {
+            Height = input.ReadDouble();
+            break;
+          }
+        }
+      }
+    #endif
+    }
+
+    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
+    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
+      uint tag;
+      while ((tag = input.ReadTag()) != 0) {
+      if ((tag & 7) == 4) {
+        // Abort on any end group tag.
+        return;
+      }
+      switch(tag) {
+          default:
+            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
+            break;
+          case 8: {
+            Success = input.ReadBool();
+            break;
+          }
+          case 18: {
+            Message = input.ReadString();
+            break;
+          }
+          case 24: {
+            PlayerId = input.ReadUInt64();
+            break;
+          }
+          case 34: {
+            SessionId = input.ReadString();
+            break;
+          }
+          case 42: {
+            SceneId = input.ReadString();
+            break;
+          }
+          case 49: {
+            X = input.ReadDouble();
+            break;
+          }
+          case 57: {
+            Z = input.ReadDouble();
+            break;
+          }
+          case 65: {
+            Width = input.ReadDouble();
+            break;
+          }
+          case 73: {
+            Height = input.ReadDouble();
+            break;
+          }
         }
       }
     }
@@ -8693,7 +10138,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[29]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[31]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -8931,7 +10376,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[30]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[32]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -9215,7 +10660,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[31]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[33]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -9496,7 +10941,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[32]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[34]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -9777,7 +11222,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[33]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[35]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -10058,7 +11503,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[34]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[36]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -10339,7 +11784,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[35]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[37]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -10620,7 +12065,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[36]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[38]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -10895,7 +12340,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[37]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[39]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -11130,7 +12575,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[38]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[40]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -11416,7 +12861,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[39]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[41]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -12215,7 +13660,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[40]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[42]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -12450,7 +13895,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[41]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[43]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -12722,7 +14167,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[42]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[44]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -12920,7 +14365,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[43]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[45]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -13161,7 +14606,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[44]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[46]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -13433,7 +14878,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[45]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[47]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -13710,7 +15155,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[46]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[48]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -13908,7 +15353,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[47]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[49]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -14331,7 +15776,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[48]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[50]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -14677,7 +16122,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[49]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[51]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -14904,7 +16349,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[50]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[52]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -15179,7 +16624,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[51]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[53]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -15377,7 +16822,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[52]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[54]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -15612,7 +17057,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[53]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[55]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -15810,7 +17255,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[54]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[56]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -16008,7 +17453,7 @@ namespace BigWorldClient.Network.Protocol {
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
     public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[55]; }
+      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[57]; }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -16182,208 +17627,6 @@ namespace BigWorldClient.Network.Protocol {
             break;
           case 10: {
             Message = input.ReadString();
-            break;
-          }
-        }
-      }
-    }
-    #endif
-
-  }
-
-  /// <summary>
-  /// IdentifyReq is the first message a server sends on any server-to-server
-  /// connection it initiates, so the accepting side knows the peer's type.
-  /// </summary>
-  [global::System.Diagnostics.DebuggerDisplayAttribute("{ToString(),nq}")]
-  public sealed partial class IdentifyReq : pb::IMessage<IdentifyReq>
-  #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      , pb::IBufferMessage
-  #endif
-  {
-    private static readonly pb::MessageParser<IdentifyReq> _parser = new pb::MessageParser<IdentifyReq>(() => new IdentifyReq());
-    private pb::UnknownFieldSet _unknownFields;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pb::MessageParser<IdentifyReq> Parser { get { return _parser; } }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public static pbr::MessageDescriptor Descriptor {
-      get { return global::BigWorldClient.Network.Protocol.BigworldReflection.Descriptor.MessageTypes[56]; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    pbr::MessageDescriptor pb::IMessage.Descriptor {
-      get { return Descriptor; }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public IdentifyReq() {
-      OnConstruction();
-    }
-
-    partial void OnConstruction();
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public IdentifyReq(IdentifyReq other) : this() {
-      serverType_ = other.serverType_;
-      _unknownFields = pb::UnknownFieldSet.Clone(other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public IdentifyReq Clone() {
-      return new IdentifyReq(this);
-    }
-
-    /// <summary>Field number for the "server_type" field.</summary>
-    public const int ServerTypeFieldNumber = 1;
-    private global::BigWorldClient.Network.Protocol.ServerType serverType_ = global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid;
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public global::BigWorldClient.Network.Protocol.ServerType ServerType {
-      get { return serverType_; }
-      set {
-        serverType_ = value;
-      }
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override bool Equals(object other) {
-      return Equals(other as IdentifyReq);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public bool Equals(IdentifyReq other) {
-      if (ReferenceEquals(other, null)) {
-        return false;
-      }
-      if (ReferenceEquals(other, this)) {
-        return true;
-      }
-      if (ServerType != other.ServerType) return false;
-      return Equals(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override int GetHashCode() {
-      int hash = 1;
-      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) hash ^= ServerType.GetHashCode();
-      if (_unknownFields != null) {
-        hash ^= _unknownFields.GetHashCode();
-      }
-      return hash;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public override string ToString() {
-      return pb::JsonFormatter.ToDiagnosticString(this);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void WriteTo(pb::CodedOutputStream output) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      output.WriteRawMessage(this);
-    #else
-      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
-        output.WriteRawTag(8);
-        output.WriteEnum((int) ServerType);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(output);
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalWriteTo(ref pb::WriteContext output) {
-      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
-        output.WriteRawTag(8);
-        output.WriteEnum((int) ServerType);
-      }
-      if (_unknownFields != null) {
-        _unknownFields.WriteTo(ref output);
-      }
-    }
-    #endif
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public int CalculateSize() {
-      int size = 0;
-      if (ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
-        size += 1 + pb::CodedOutputStream.ComputeEnumSize((int) ServerType);
-      }
-      if (_unknownFields != null) {
-        size += _unknownFields.CalculateSize();
-      }
-      return size;
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(IdentifyReq other) {
-      if (other == null) {
-        return;
-      }
-      if (other.ServerType != global::BigWorldClient.Network.Protocol.ServerType.ServerInvalid) {
-        ServerType = other.ServerType;
-      }
-      _unknownFields = pb::UnknownFieldSet.MergeFrom(_unknownFields, other._unknownFields);
-    }
-
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    public void MergeFrom(pb::CodedInputStream input) {
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-      input.ReadRawMessage(this);
-    #else
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, input);
-            break;
-          case 8: {
-            ServerType = (global::BigWorldClient.Network.Protocol.ServerType) input.ReadEnum();
-            break;
-          }
-        }
-      }
-    #endif
-    }
-
-    #if !GOOGLE_PROTOBUF_REFSTRUCT_COMPATIBILITY_MODE
-    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
-    [global::System.CodeDom.Compiler.GeneratedCode("protoc", null)]
-    void pb::IBufferMessage.InternalMergeFrom(ref pb::ParseContext input) {
-      uint tag;
-      while ((tag = input.ReadTag()) != 0) {
-      if ((tag & 7) == 4) {
-        // Abort on any end group tag.
-        return;
-      }
-      switch(tag) {
-          default:
-            _unknownFields = pb::UnknownFieldSet.MergeFieldFrom(_unknownFields, ref input);
-            break;
-          case 8: {
-            ServerType = (global::BigWorldClient.Network.Protocol.ServerType) input.ReadEnum();
             break;
           }
         }

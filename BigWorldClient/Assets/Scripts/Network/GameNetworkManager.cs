@@ -162,6 +162,14 @@ namespace BigWorldClient.Network
                     StartReconnect();
                     break;
 
+                case SessionEventKind.Kicked:
+                    StopHeartbeat();
+                    StopReconnect();
+                    _reconnecting = false;
+                    _reconnect = null;
+                    UIEventBus.Publish(new SessionEndedEvent { Reason = "kicked" });
+                    ReopenLoginWithMessage(string.IsNullOrEmpty(evt.Message) ? "account logged in elsewhere" : evt.Message);
+                    break;
                 case SessionEventKind.LoggedOut:
                     StopHeartbeat();
                     StopReconnect();
@@ -203,14 +211,28 @@ namespace BigWorldClient.Network
 
         private IEnumerator ReconnectRoutine()
         {
+            const float attemptTimeoutSeconds = 20f;
             for (int attempt = 1; attempt <= _maxReconnectAttempts; attempt++)
             {
                 float delay = Mathf.Min(_reconnectBaseDelaySeconds * (1 << Mathf.Min(attempt - 1, 4)), _reconnectMaxDelaySeconds);
                 Debug.Log($"[GameNetworkManager] reconnect {attempt}/{_maxReconnectAttempts} in {delay:F0}s");
                 yield return new WaitForSecondsRealtime(delay);
+
                 _attemptResolved = false;
+                _attemptSucceeded = false;
                 _session.BeginLogin(_lastHost, _lastPort, _lastUsername, _lastPassword);
-                while (!_attemptResolved) yield return null;
+
+                float startedAt = Time.realtimeSinceStartup;
+                while (!_attemptResolved && Time.realtimeSinceStartup - startedAt < attemptTimeoutSeconds)
+                    yield return null;
+
+                if (!_attemptResolved)
+                {
+                    _session.Abort("reconnect attempt timeout");
+                    _attemptResolved = true;
+                    _attemptSucceeded = false;
+                }
+
                 if (_attemptSucceeded)
                 {
                     _reconnecting = false;
@@ -218,12 +240,12 @@ namespace BigWorldClient.Network
                     yield break;
                 }
             }
+
             _reconnecting = false;
             _reconnect = null;
             UIEventBus.Publish(new SessionEndedEvent { Reason = "reconnect_failed" });
-            ReopenLoginWithMessage("自动重连失败，请重新登录");
+            ReopenLoginWithMessage("reconnect failed");
         }
-
         private void StopReconnect()
         {
             if (_reconnect != null)
@@ -240,7 +262,7 @@ namespace BigWorldClient.Network
             long timeoutMs = intervalMs * 3 + 2000;
             while (true)
             {
-                yield return new WaitForSeconds(_heartbeatIntervalSeconds);
+                yield return new WaitForSecondsRealtime(_heartbeatIntervalSeconds);
                 if (_session == null) yield break;
                 if (_session.HeartbeatRspAgeMs > timeoutMs)
                 {
