@@ -24,7 +24,7 @@ var usedTokens = struct {
 	seen map[string]int64
 }{seen: make(map[string]int64)}
 
-func NewSessionId() string {
+func NewSessionID() string {
 	var b [16]byte
 	if _, err := rand.Read(b[:]); err != nil {
 		return fmt.Sprintf("sess-%d", time.Now().UnixNano())

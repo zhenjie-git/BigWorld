@@ -25,10 +25,12 @@ func (cs *centralServer) HandlePeerHello(conn *common.ConnWrapper, req *common.H
 			ServerId:   req.ServerId,
 			ListenAddr: req.ListenAddr,
 		},
-		conn:   conn,
-		lastHB: time.Now().Unix(),
+		conn:           conn,
+		lastHB:         time.Now().Unix(),
+		assignedScenes: make(map[string]bool),
 	}
 	cs.connToID[conn] = req.ServerId
+	cs.RebalanceScenes()
 
 	log.Printf("[central] server registered: %s (%s) at %s",
 		req.ServerId, req.ServerType, req.ListenAddr)
@@ -41,9 +43,22 @@ func (cs *centralServer) HandlePeerHello(conn *common.ConnWrapper, req *common.H
 		}
 		notifyData, _ := common.MarshalHelper(&entry)
 		for _, rec := range cs.servers {
-			if rec.info.ServerType == common.ServerGateway {
-				rec.conn.Send(common.Message{Type: common.Ct2Gw_NewWorldNotify, Data: notifyData})
+			if rec.info.ServerId == req.ServerId {
+				continue
 			}
+			switch rec.info.ServerType {
+			case common.ServerGateway:
+				rec.conn.Send(common.Message{Type: common.Ct2Gw_NewWorldNotify, Data: notifyData})
+			case common.ServerWorld:
+				rec.conn.Send(common.Message{Type: common.Ct2Wd_NewWorldNotify, Data: notifyData})
+			}
+		}
+		for _, rec := range cs.servers {
+			if rec.info.ServerType != common.ServerWorld || rec.info.ServerId == req.ServerId {
+				continue
+			}
+			existingData, _ := common.MarshalHelper(&rec.info)
+			conn.Send(common.Message{Type: common.Ct2Wd_NewWorldNotify, Data: existingData})
 		}
 	}
 
@@ -63,7 +78,7 @@ func (cs *centralServer) HandlePeerHello(conn *common.ConnWrapper, req *common.H
 
 	return &common.HelloRsp{Success: true, Message: "registered", Registered: true}
 }
-func (cs *centralServer) HandleHeartbeat(conn *common.ConnWrapper, req *common.HeartbeatReq) {
+func (cs *centralServer) HandleHeartbeatReq(conn *common.ConnWrapper, req *common.HeartbeatReq) {
 	if id := cs.connToID[conn]; id == "" || id != req.ServerId {
 		return
 	}
@@ -75,7 +90,7 @@ func (cs *centralServer) HandleHeartbeat(conn *common.ConnWrapper, req *common.H
 	common.SendMsg(conn, common.Ct2Srv_HeartbeatRsp, &rsp)
 }
 
-func (cs *centralServer) HandleServerList(conn *common.ConnWrapper, req *common.ServerListReq) {
+func (cs *centralServer) HandleServerListReq(conn *common.ConnWrapper, req *common.ServerListReq) {
 	var entries []*common.ServerEntry
 	for _, rec := range cs.servers {
 		if req.Type == 0 || rec.info.ServerType == req.Type {

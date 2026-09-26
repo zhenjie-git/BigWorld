@@ -5,9 +5,10 @@
 - 生成文件(protoc/flatc 产物、Unity 生成代码)和第三方库不在此约束内。
 
 ## 命名
-- Go:导出标识符(类型、函数、方法、常量、包级变量)首字母大写;局部变量和参数首字母小写驼峰。
+- Go:导出标识符(类型、函数、方法、常量、包级变量)首字母大写;局部变量和参数首字母小写驼峰;初始词全大写(自研代码一律 `PlayerID`/`ServerID`/`sceneID`,proto/flatbuffers 生成代码保持生成器的 `Id` 风格不改)。
 - C#:类型和公开成员 PascalCase;局部变量和参数 camelCase。
 - 协议号前缀 `源2目标_`(如 `Lg2Db_`、`Gw2Ct_`、`Cli2Wd_`)承载消息方向语义。
+- Go 方法名一律 PascalCase(导出类型上的真私有方法除外,如 `markClosed`);包级函数导出 Pascal、包内私有小驼峰;消息处理器命名 `Handle<来源前缀><消息类型全名>`(来源前缀 Central/Client/World/Peer/Db 等在多来源时使用,消息类型含 Req/Rsp/Notify/Ack 后缀);单消费者事件循环下函数名不带 `Locked` 后缀。
 
 ## 服务器架构(单消费者事件循环)
 - 每进程一个 `EventLoop`:读 goroutine 只解析入队,主循环串行消费,游戏状态无锁。

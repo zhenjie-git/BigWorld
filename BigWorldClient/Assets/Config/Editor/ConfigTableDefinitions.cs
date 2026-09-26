@@ -33,6 +33,7 @@ namespace BigWorldClient
             GameConfigFolder = "Player",
             RowsAsEntries = false,
             TableObjectType = typeof(PlayerConfigMsgT),
+            TableStructType = typeof(PlayerConfigMsg),
             Validate = ValidatePlayerConfig,
         };
 
@@ -48,6 +49,7 @@ namespace BigWorldClient
             RowsAsEntries = true,
             ToggleLabel = "生成位移曲线",
             TableObjectType = typeof(StateConfigMsgT),
+            TableStructType = typeof(StateConfigMsg),
             EntryObjectType = typeof(StateConfigEntryT),
             Validate = ValidateStateConfig,
             PreProcess = GenerateCurves,
@@ -64,6 +66,7 @@ namespace BigWorldClient
             GameConfigFolder = "StateTransitionTable",
             RowsAsEntries = true,
             TableObjectType = typeof(TransitionTableMsgT),
+            TableStructType = typeof(TransitionTableMsg),
             EntryObjectType = typeof(TransitionEntryT),
             PostParse = MatrixToAllowedTargets,
             Validate = ValidateTransitionTable,
@@ -80,6 +83,7 @@ namespace BigWorldClient
             GameConfigFolder = "UI",
             RowsAsEntries = true,
             TableObjectType = typeof(PanelConfigMsgT),
+            TableStructType = typeof(PanelConfigMsg),
             EntryObjectType = typeof(PanelConfigEntryT),
             Validate = ValidatePanelConfig,
         };
@@ -95,6 +99,7 @@ namespace BigWorldClient
             GameConfigFolder = "Scene",
             RowsAsEntries = true,
             TableObjectType = typeof(SceneConfigMsgT),
+            TableStructType = typeof(SceneConfigMsg),
             EntryObjectType = typeof(SceneConfigEntryT),
             Validate = ValidateSceneConfig,
         };

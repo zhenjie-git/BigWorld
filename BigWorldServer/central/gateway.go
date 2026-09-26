@@ -8,13 +8,13 @@ import (
 	"bigworld/common"
 )
 
-func (cs *centralServer) senderID(conn *common.ConnWrapper) string {
+func (cs *centralServer) SenderID(conn *common.ConnWrapper) string {
 	return cs.connToID[conn]
 }
 
 func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *common.LoginPrepareReq) {
 	log.Printf("[central] login prepare request: reqID=%d account=%s gateway=%s session=%s",
-		req.ReqId, req.Account, cs.senderID(conn), req.SessionId)
+		req.ReqId, req.Account, cs.SenderID(conn), req.SessionId)
 
 	if cs.IsShuttingDown() {
 		common.SendMsg(conn, common.Ct2Gw_LoginPrepareRsp, &common.LoginPrepareRsp{
@@ -45,10 +45,10 @@ func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *co
 		return
 	}
 
-	sender := cs.senderID(conn)
-	if sender == "" || sender != state.GatewayId {
+	sender := cs.SenderID(conn)
+	if sender == "" || sender != state.GatewayID {
 		log.Printf("[central] rejecting login prepare for account %s: gateway %s != assigned %s",
-			req.Account, sender, state.GatewayId)
+			req.Account, sender, state.GatewayID)
 		common.SendMsg(conn, common.Ct2Gw_LoginPrepareRsp, &common.LoginPrepareRsp{
 			ReqId:   req.ReqId,
 			Success: false,
@@ -67,11 +67,11 @@ func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *co
 		return
 	}
 
-	if state.SessionId == "" {
-		state.SessionId = req.SessionId
-	} else if req.SessionId != "" && state.SessionId != req.SessionId {
+	if state.SessionID == "" {
+		state.SessionID = req.SessionId
+	} else if req.SessionId != "" && state.SessionID != req.SessionId {
 		log.Printf("[central] rejecting login prepare for account %s: session %s != %s",
-			req.Account, req.SessionId, state.SessionId)
+			req.Account, req.SessionId, state.SessionID)
 		common.SendMsg(conn, common.Ct2Gw_LoginPrepareRsp, &common.LoginPrepareRsp{
 			ReqId:   req.ReqId,
 			Success: false,
@@ -80,7 +80,7 @@ func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *co
 		return
 	}
 
-	worldID, worldAddr := cs.pickWorldLocked(state.WorldId)
+	worldID, worldAddr := cs.PickWorldForLogin(state.WorldID, state.SceneID)
 
 	if worldID == "" {
 		log.Printf("[central] no world server available for account %s", req.Account)
@@ -92,11 +92,11 @@ func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *co
 		return
 	}
 
-	state.WorldId = worldID
+	state.WorldID = worldID
 	cs.loginDeadlines[req.Account] = time.Now().Add(loginFinishTimeout)
 
-	log.Printf("[central] login prepared: account=%s gateway=%s world=%s",
-		req.Account, state.GatewayId, worldID)
+	log.Printf("[central] login prepared: account=%s gateway=%s world=%s scene=%s",
+		req.Account, state.GatewayID, worldID, state.SceneID)
 
 	common.SendMsg(conn, common.Ct2Gw_LoginPrepareRsp, &common.LoginPrepareRsp{
 		ReqId:     req.ReqId,
@@ -109,7 +109,7 @@ func (cs *centralServer) HandleLoginPrepareReq(conn *common.ConnWrapper, req *co
 
 func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *common.LoginFinishReq) {
 	log.Printf("[central] login finish request: account=%s player=%d success=%v gateway=%s session=%s",
-		req.Account, req.PlayerId, req.Success, cs.senderID(conn), req.SessionId)
+		req.Account, req.PlayerId, req.Success, cs.SenderID(conn), req.SessionId)
 
 	rsp := common.LoginFinishRsp{
 		PlayerId:  req.PlayerId,
@@ -126,15 +126,15 @@ func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *com
 		return
 	}
 
-	sender := cs.senderID(conn)
-	if sender == "" || sender != state.GatewayId {
+	sender := cs.SenderID(conn)
+	if sender == "" || sender != state.GatewayID {
 		rsp.Success = false
 		rsp.Message = "gateway assignment mismatch"
 		common.SendMsg(conn, common.Ct2Gw_LoginFinishRsp, &rsp)
 		return
 	}
 
-	if req.SessionId != "" && state.SessionId != "" && state.SessionId != req.SessionId {
+	if req.SessionId != "" && state.SessionID != "" && state.SessionID != req.SessionId {
 		rsp.Success = false
 		rsp.Message = "session mismatch"
 		common.SendMsg(conn, common.Ct2Gw_LoginFinishRsp, &rsp)
@@ -151,18 +151,18 @@ func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *com
 		}
 
 		state.Status = AccountOnline
-		state.PlayerId = req.PlayerId
-		state.WorldId = req.WorldId
+		state.PlayerID = req.PlayerId
+		state.WorldID = req.WorldId
 		if req.SessionId != "" {
-			state.SessionId = req.SessionId
+			state.SessionID = req.SessionId
 		}
 
 		cs.onlinePlayers[req.PlayerId] = &onlinePlayer{
-			PlayerId:  req.PlayerId,
+			PlayerID:  req.PlayerId,
 			Account:   req.Account,
-			WorldId:   req.WorldId,
-			GatewayId: sender,
-			SessionId: state.SessionId,
+			WorldID:   req.WorldId,
+			GatewayID: sender,
+			SessionID: state.SessionID,
 		}
 		delete(cs.loginDeadlines, req.Account)
 		delete(cs.forceKickDeadlines, req.PlayerId)
@@ -170,9 +170,9 @@ func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *com
 		rsp.Success = true
 		rsp.Message = "login complete"
 		log.Printf("[central] player %d (account=%s) now online via gateway %s world %s session %s",
-			req.PlayerId, req.Account, sender, req.WorldId, state.SessionId)
+			req.PlayerId, req.Account, sender, req.WorldId, state.SessionID)
 	} else {
-		if state.SessionId == "" || state.SessionId == req.SessionId {
+		if state.SessionID == "" || state.SessionID == req.SessionId {
 			delete(cs.accountStates, req.Account)
 			delete(cs.loginDeadlines, req.Account)
 		}
@@ -185,7 +185,7 @@ func (cs *centralServer) HandleLoginFinishReq(conn *common.ConnWrapper, req *com
 }
 
 func (cs *centralServer) HandleLogoutBeginReq(conn *common.ConnWrapper, req *common.LogoutBeginReq) {
-	sender := cs.senderID(conn)
+	sender := cs.SenderID(conn)
 	rsp := common.LogoutBeginRsp{
 		Success:   true,
 		PlayerId:  req.PlayerId,
@@ -194,7 +194,7 @@ func (cs *centralServer) HandleLogoutBeginReq(conn *common.ConnWrapper, req *com
 	}
 
 	if player, ok := cs.onlinePlayers[req.PlayerId]; ok {
-		if sender == "" || player.GatewayId != sender || player.SessionId != req.SessionId {
+		if sender == "" || player.GatewayID != sender || player.SessionID != req.SessionId {
 			rsp.Success = false
 			rsp.Message = "stale logout session"
 			common.SendMsg(conn, common.Ct2Gw_LogoutBeginRsp, &rsp)
@@ -208,14 +208,14 @@ func (cs *centralServer) HandleLogoutBeginReq(conn *common.ConnWrapper, req *com
 }
 
 func (cs *centralServer) HandleLogoutCleanupReq(conn *common.ConnWrapper, req *common.LogoutCleanupReq) {
-	sender := cs.senderID(conn)
+	sender := cs.SenderID(conn)
 	player, exists := cs.onlinePlayers[req.PlayerId]
 	ok := false
 	account := ""
 
 	if exists {
 		account = player.Account
-		if sender == "" || player.GatewayId != sender || player.SessionId != req.SessionId {
+		if sender == "" || player.GatewayID != sender || player.SessionID != req.SessionId {
 			common.SendMsg(conn, common.Ct2Gw_LogoutCleanupRsp, &common.LogoutCleanupRsp{
 				Success:   false,
 				PlayerId:  req.PlayerId,
@@ -226,7 +226,7 @@ func (cs *centralServer) HandleLogoutCleanupReq(conn *common.ConnWrapper, req *c
 			return
 		}
 
-		if state, stExists := cs.accountStates[account]; stExists && state.PlayerId == req.PlayerId && state.Status != AccountWaitingKick {
+		if state, stExists := cs.accountStates[account]; stExists && state.PlayerID == req.PlayerId && state.Status != AccountWaitingKick {
 			delete(cs.accountStates, account)
 			delete(cs.loginDeadlines, account)
 		}
@@ -277,7 +277,7 @@ func (cs *centralServer) HandleForceKickTimeout(playerID uint64, kickedGatewayId
 		return
 	}
 
-	if player.GatewayId != kickedGatewayId || (kickedSessionId != "" && player.SessionId != kickedSessionId) {
+	if player.GatewayID != kickedGatewayId || (kickedSessionId != "" && player.SessionID != kickedSessionId) {
 		delete(cs.forceKickDeadlines, playerID)
 		log.Printf("[central] force-kick timeout for player %d ignored (ownership changed)", playerID)
 		return
@@ -285,7 +285,7 @@ func (cs *centralServer) HandleForceKickTimeout(playerID uint64, kickedGatewayId
 
 	account := player.Account
 
-	if state, ok := cs.accountStates[account]; ok && state.PlayerId == playerID && state.Status != AccountWaitingKick {
+	if state, ok := cs.accountStates[account]; ok && state.PlayerID == playerID && state.Status != AccountWaitingKick {
 		delete(cs.accountStates, account)
 		delete(cs.loginDeadlines, account)
 	}

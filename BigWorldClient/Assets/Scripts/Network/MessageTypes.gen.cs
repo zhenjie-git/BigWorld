@@ -59,5 +59,21 @@ namespace BigWorldClient.Network
         public const int Cli2Wd_MoveDirChangeReq = 58;
         public const int Gw2Wd_ResumeEntityReq = 60;
         public const int Wd2Gw_ResumeEntityRsp = 61;
+        public const int Ct2Wd_NewWorldNotify = 62;
+        public const int Ct2Wd_WorldOfflineNotify = 63;
+        public const int Wd2Wd_HeartbeatReq = 64;
+        public const int Wd2Wd_HeartbeatRsp = 65;
+        public const int Wd2Ct_TransferPrepareReq = 66;
+        public const int Ct2Wd_TransferIncomingNotify = 67;
+        public const int Wd2Ct_TransferIncomingAck = 68;
+        public const int Ct2Wd_TransferPrepareRsp = 69;
+        public const int Wd2Ct_TransferAbortReq = 70;
+        public const int Wd2Ct_TransferReadyReq = 71;
+        public const int Ct2Wd_TransferFinishNotify = 72;
+        public const int Wd2Wd_TransferEntityReq = 73;
+        public const int Wd2Wd_TransferEntityRsp = 74;
+        public const int Ct2Gw_TransferCommitNotify = 75;
+        public const int Ct2Wd_SceneAssignNotify = 76;
+        public const int Wd2Ct_SceneAssignAck = 77;
     }
 }

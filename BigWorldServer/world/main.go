@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"bigworld/common"
@@ -9,8 +10,11 @@ import (
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	cfg := common.MustLoadServerConfig("common/config.json", "world")
-	ws := NewWorldServer(cfg.Name)
+	serverKey := flag.String("server", "world", "server config key")
+	configPath := flag.String("config", "common/config.json", "config file path")
+	flag.Parse()
+	cfg := common.MustLoadServerConfig(*configPath, *serverKey)
+	ws := NewWorldServer(cfg.Name, cfg)
 	if err := ws.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}

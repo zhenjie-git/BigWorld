@@ -28,6 +28,7 @@ type validatePending struct {
 	conn     *common.ConnWrapper
 	req      *common.LoginReq
 	reqID    uint64
+	sceneID  string
 	deadline time.Time
 }
 
@@ -52,7 +53,7 @@ func NewLoginServer(id string) *loginServer {
 		validatePendings: make(map[uint64]*validatePending),
 	}
 
-	common.Register(ls.Router(common.SrcClient), common.Cli2Lg_LoginReq, ls.HandleAccountLogin)
+	common.Register(ls.Router(common.SrcClient), common.Cli2Lg_LoginReq, ls.HandleClientLoginReq)
 
 	cr := ls.Router(common.SrcCentral)
 	common.Register(cr, common.Ct2Lg_GatewayAssignRsp, ls.HandleGatewayAssignRsp)
@@ -85,7 +86,7 @@ func (ls *loginServer) OnTick() {
 
 func (ls *loginServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.HeartbeatRsp) {}
 
-func (ls *loginServer) HandleAccountLogin(conn *common.ConnWrapper, req *common.LoginReq) {
+func (ls *loginServer) HandleClientLoginReq(conn *common.ConnWrapper, req *common.LoginReq) {
 	log.Printf("[login] login attempt: account=%s", req.Account)
 
 	if ls.dbConn == nil {
@@ -127,6 +128,7 @@ func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 		return
 	}
 
+	pending.sceneID = rsp.SceneId
 	ls.reqCounter++
 	gwReqID := ls.reqCounter
 	gwPending := &gatewayPending{
@@ -137,7 +139,7 @@ func (ls *loginServer) HandleValidateAccountRsp(_ *common.ConnWrapper, rsp *comm
 	}
 	ls.pendings[gwReqID] = gwPending
 
-	assignReq := common.GatewayAssignReq{ReqId: gwReqID, ServerId: ls.ServerId, Account: pending.req.Account}
+	assignReq := common.GatewayAssignReq{ReqId: gwReqID, ServerId: ls.ServerID, Account: pending.req.Account, SceneId: pending.sceneID}
 	ls.SendToCentralMsg(common.Lg2Ct_GatewayAssignReq, &assignReq)
 	log.Printf("[login] account=%s validated, requested gateway assignment (reqID=%d)", pending.req.Account, gwReqID)
 }
@@ -203,11 +205,11 @@ func (ls *loginServer) HandleGatewayAssignTimeout(reqID uint64) {
 
 func (ls *loginServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
 	if !rsp.Success {
-		log.Printf("[login %s] hello rejected: %s", ls.ServerId, rsp.Message)
+		log.Printf("[login %s] hello rejected: %s", ls.ServerID, rsp.Message)
 		return
 	}
 	if rsp.Success {
-		log.Printf("[login %s] registered: %s", ls.ServerId, rsp.Message)
+		log.Printf("[login %s] registered: %s", ls.ServerID, rsp.Message)
 
 		ls.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerDbProxy})
 	}
@@ -224,8 +226,8 @@ func (ls *loginServer) HandleCentralNewDbProxy(_ *common.ConnWrapper, entry *com
 }
 
 func (ls *loginServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
-	log.Printf("[login %s] shutdown requested: %s", ls.ServerId, notify.Reason)
-	ls.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ls.ServerId})
+	log.Printf("[login %s] shutdown requested: %s", ls.ServerID, notify.Reason)
+	ls.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ls.ServerID})
 	go ls.Stop()
 }
 
@@ -259,7 +261,7 @@ func (ls *loginServer) DbConnectLoop() {
 	for {
 		select {
 		case <-ls.Done():
-			ls.setDBConnecting(false)
+			ls.SetDBConnecting(false)
 			return
 		default:
 		}
@@ -268,13 +270,13 @@ func (ls *loginServer) DbConnectLoop() {
 		dbID, dbAddr := ls.dbID, ls.dbAddr
 		ls.dbMu.Unlock()
 		if dbAddr == "" {
-			ls.setDBConnecting(false)
+			ls.SetDBConnecting(false)
 			return
 		}
 
 		conn, err := net.DialTimeout("tcp", dbAddr, 5*time.Second)
 		if err != nil {
-			log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v, retry in %v", ls.ServerId, dbID, dbAddr, err, backoff)
+			log.Printf("[login %s] failed to connect to dbproxy %s at %s: %v, retry in %v", ls.ServerID, dbID, dbAddr, err, backoff)
 			select {
 			case <-ls.Done():
 				return
@@ -290,22 +292,22 @@ func (ls *loginServer) DbConnectLoop() {
 		posted := ls.Loop.Post(common.Event{Kind: common.EventDefer, Fn: func() {
 			if ls.dbConn != nil {
 				_ = conn.Close()
-				ls.setDBConnecting(false)
+				ls.SetDBConnecting(false)
 				result <- true
 				return
 			}
 			cw := common.NewConnWrapper(conn)
 			cw.PeerType = common.ServerDbProxy
 			ls.dbConn = cw
-			ls.setDBConnecting(false)
-			log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerId, dbID, dbAddr)
+			ls.SetDBConnecting(false)
+			log.Printf("[login %s] connected to dbproxy %s at %s", ls.ServerID, dbID, dbAddr)
 			ls.SendHello(cw)
 			go ls.DbReadLoop(cw)
 			result <- true
 		}})
 		if !posted {
 			_ = conn.Close()
-			ls.setDBConnecting(false)
+			ls.SetDBConnecting(false)
 			return
 		}
 		if <-result {
@@ -314,7 +316,7 @@ func (ls *loginServer) DbConnectLoop() {
 	}
 }
 
-func (ls *loginServer) setDBConnecting(value bool) {
+func (ls *loginServer) SetDBConnecting(value bool) {
 	ls.dbMu.Lock()
 	ls.dbConnecting = value
 	ls.dbMu.Unlock()
@@ -323,7 +325,7 @@ func (ls *loginServer) setDBConnecting(value bool) {
 func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 	defer func() {
 		if r := recover(); r != nil {
-			log.Printf("[login %s] DbReadLoop panic recovered: %v", ls.ServerId, r)
+			log.Printf("[login %s] DbReadLoop panic recovered: %v", ls.ServerID, r)
 		}
 	}()
 	for {
@@ -333,9 +335,9 @@ func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 				if ls.dbConn == cw {
 					_ = ls.dbConn.Close()
 					ls.dbConn = nil
-					log.Printf("[login %s] dbproxy connection lost: %v", ls.ServerId, err)
+					log.Printf("[login %s] dbproxy connection lost: %v", ls.ServerID, err)
 				}
-				ls.setDBConnecting(false)
+				ls.SetDBConnecting(false)
 				ls.ConnectToDb(ls.dbID, ls.dbAddr)
 			})
 			return
@@ -346,7 +348,7 @@ func (ls *loginServer) DbReadLoop(cw *common.ConnWrapper) {
 				if ls.dbConn == cw {
 					ls.dbConn = nil
 				}
-				ls.setDBConnecting(false)
+				ls.SetDBConnecting(false)
 				ls.ConnectToDb(ls.dbID, ls.dbAddr)
 			})
 			return

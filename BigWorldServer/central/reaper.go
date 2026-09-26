@@ -3,6 +3,8 @@ package main
 import (
 	"log"
 	"time"
+
+	"bigworld/common"
 )
 
 func (cs *centralServer) ReapStale(timeout time.Duration) {
@@ -25,21 +27,37 @@ func (cs *centralServer) CleanupServer(id string) {
 		delete(cs.connToID, rec.conn)
 		_ = rec.conn.Close()
 	}
+	cs.RebalanceScenes()
+	for _, tr := range cs.transfers {
+		if tr.FromWorldID == id || tr.ToWorldID == id {
+			cs.FinishTransfer(tr, false, "world offline")
+		}
+	}
+
+	if rec.info.ServerType == common.ServerWorld {
+		entry := common.ServerEntry{ServerType: common.ServerWorld, ServerId: id, ListenAddr: rec.info.ListenAddr}
+		notifyData, _ := common.MarshalHelper(&entry)
+		for _, other := range cs.servers {
+			if other.info.ServerType == common.ServerWorld && other.info.ServerId != id {
+				other.conn.Send(common.Message{Type: common.Ct2Wd_WorldOfflineNotify, Data: notifyData})
+			}
+		}
+	}
 
 	for pid, p := range cs.onlinePlayers {
-		if p.GatewayId != id {
+		if p.GatewayID != id {
 			continue
 		}
 		delete(cs.onlinePlayers, pid)
 		delete(cs.forceKickDeadlines, pid)
-		if state, ok := cs.accountStates[p.Account]; ok && state.PlayerId == pid {
+		if state, ok := cs.accountStates[p.Account]; ok && state.PlayerID == pid {
 			delete(cs.accountStates, p.Account)
 			delete(cs.loginDeadlines, p.Account)
 		}
 	}
 
 	for acct, st := range cs.accountStates {
-		if st.GatewayId == id {
+		if st.GatewayID == id {
 			delete(cs.accountStates, acct)
 			delete(cs.loginDeadlines, acct)
 		}

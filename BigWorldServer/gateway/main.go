@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"log"
 
 	"bigworld/common"
@@ -9,7 +10,9 @@ import (
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	cfg := common.MustLoadServerConfig("common/config.json", "gateway")
+	configPath := flag.String("config", "common/config.json", "config file path")
+	flag.Parse()
+	cfg := common.MustLoadServerConfig(*configPath, "gateway")
 	gs := NewGatewayServer(cfg.Name)
 	if err := gs.Listen(cfg.ListenAddr); err != nil {
 		log.Fatalf("failed to listen: %v", err)

@@ -137,6 +137,7 @@ namespace BigWorldClient.Network
                     break;
 
                 case SessionEventKind.SceneTransfer:
+                    _session?.ClearMoveResponses();
                     _serverSpawnPos = new Vector3((float)evt.Player.X, 0f, (float)evt.Player.Z);
                     _hasServerSpawn = true;
                     _serverSceneId = evt.Player.SceneId;

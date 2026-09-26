@@ -24,6 +24,8 @@ message HelloReq {
   string     listen_addr      = 3;
   string     secret           = 4;
   uint32     protocol_version = 5;
+  repeated string scene_ids    = 6;
+  bool            default_host = 7;
 }
 
 message HelloRsp {
@@ -81,6 +83,7 @@ message GatewayAssignReq {
   uint64 req_id    = 1;
   string server_id = 2;
   string account   = 3;
+  string scene_id  = 4;
 }
 
 message GatewayAssignRsp {
@@ -134,6 +137,7 @@ message LoginFinishReq {
   string gateway_id = 5;
   string message    = 6;
   string session_id = 7;
+  string scene_id   = 8;
 }
 
 message LoginFinishRsp {
@@ -392,6 +396,7 @@ message ValidateAccountRsp {
   uint64 req_id  = 1;
   bool   valid   = 2;
   string message = 3;
+  string scene_id = 4;
 }
 
 // 玩家载入（world -> dbproxy）。
@@ -452,4 +457,117 @@ message ShutdownAck {
 
 message ServerShutdownNotify {
   string message = 1;
+}
+
+// --- Cross-world transfer (central authorized, world-to-world data path) ---
+
+message TransferPrepareReq {
+  uint64 req_id        = 1;
+  string account       = 2;
+  uint64 player_id     = 3;
+  string gateway_id    = 4;
+  string session_id    = 5;
+  string from_scene_id = 6;
+  string to_scene_id   = 7;
+  double to_x          = 8;
+  double to_z          = 9;
+}
+
+message TransferIncomingNotify {
+  string transfer_id   = 1;
+  uint64 player_id     = 2;
+  string account       = 3;
+  string gateway_id    = 4;
+  string session_id    = 5;
+  string from_world_id = 6;
+  string from_scene_id = 7;
+  string to_scene_id   = 8;
+  double to_x          = 9;
+  double to_z          = 10;
+}
+
+message TransferIncomingAck {
+  string transfer_id = 1;
+  bool   success     = 2;
+  string message     = 3;
+}
+
+message TransferPrepareRsp {
+  uint64 req_id         = 1;
+  bool   success        = 2;
+  string message        = 3;
+  string transfer_id    = 4;
+  string to_world_id    = 5;
+  string to_world_addr  = 6;
+  string to_scene_id    = 7;
+  double to_x           = 8;
+  double to_z           = 9;
+}
+
+message TransferAbortReq {
+  string transfer_id = 1;
+  string reason      = 2;
+}
+
+message TransferReadyReq {
+  string transfer_id = 1;
+  bool   success     = 2;
+  string message     = 3;
+  double x           = 4;
+  double z           = 5;
+  double width       = 6;
+  double height      = 7;
+}
+
+message TransferFinishNotify {
+  string transfer_id = 1;
+  bool   success     = 2;
+}
+
+message TransferEntityReq {
+  string transfer_id   = 1;
+  uint64 player_id     = 2;
+  string account       = 3;
+  string gateway_id    = 4;
+  string session_id    = 5;
+  string from_world_id = 6;
+  string from_scene_id = 7;
+  string to_scene_id   = 8;
+  double x             = 9;
+  double z             = 10;
+}
+
+message TransferEntityRsp {
+  string transfer_id = 1;
+  bool   success     = 2;
+  string message     = 3;
+  double x           = 4;
+  double z           = 5;
+  double width       = 6;
+  double height      = 7;
+}
+
+message TransferCommitNotify {
+  string transfer_id = 1;
+  uint64 player_id   = 2;
+  string account     = 3;
+  string session_id  = 4;
+  string world_id    = 5;
+  string scene_id    = 6;
+  double x           = 7;
+  double z           = 8;
+  double width       = 9;
+  double height      = 10;
+}
+
+// --- Scene assignment (central -> world) ---
+
+message SceneAssignNotify {
+  repeated string add_scenes    = 1;
+  repeated string remove_scenes = 2;
+}
+
+message SceneAssignAck {
+  repeated string scene_ids = 1;
+  string message            = 2;
 }

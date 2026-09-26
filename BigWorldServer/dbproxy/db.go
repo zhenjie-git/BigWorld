@@ -162,15 +162,15 @@ func (p *playerDB) SavePlayers(players []*common.PlayerData) error {
 // ValidateAccount checks the credentials against the accounts table.
 // NOTE: passwords are stored in plaintext to match the previous hardcoded
 // table; production should hash (e.g. bcrypt).
-func (p *playerDB) ValidateAccount(account, password string) (bool, error) {
-	var n int
-	err := p.db.QueryRow("SELECT 1 FROM accounts WHERE account = ? AND password = ?", account, password).Scan(&n)
+func (p *playerDB) ValidateAccount(account, password string) (bool, string, error) {
+	var scene string
+	err := p.db.QueryRow(`SELECT COALESCE(pl.scene, '') FROM accounts a LEFT JOIN players pl ON pl.account = a.account WHERE a.account = ? AND a.password = ?`, account, password).Scan(&scene)
 	switch err {
 	case nil:
-		return true, nil
+		return true, scene, nil
 	case sql.ErrNoRows:
-		return false, nil
+		return false, "", nil
 	default:
-		return false, fmt.Errorf("validate account: %w", err)
+		return false, "", fmt.Errorf("validate account: %w", err)
 	}
 }

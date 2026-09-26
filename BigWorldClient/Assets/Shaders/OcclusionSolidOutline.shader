@@ -23,7 +23,7 @@ Shader "Custom/Standard_WithXRayOcclusion"
         Pass
         {
             Name "XRAY"
-            ZTest GEqual  // 核心：深度大于等于当前深度时才绘制（即被遮挡时）
+            ZTest Greater  // 核心：深度大于当前深度时才绘制（即被遮挡时）
             ZWrite Off    // 不写入深度
             Cull Front    // 剔除正面，显示模型内部，不用把模型放大
             

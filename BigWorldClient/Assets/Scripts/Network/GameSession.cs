@@ -128,6 +128,11 @@ namespace BigWorldClient.Network
 
         public bool TryDequeueMove(out MoveRspInfo info) => _moveResponses.TryDequeue(out info);
 
+        public void ClearMoveResponses()
+        {
+            while (_moveResponses.TryDequeue(out _)) { }
+        }
+
         public long HeartbeatRspAgeMs
         {
             get

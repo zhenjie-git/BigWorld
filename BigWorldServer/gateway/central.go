@@ -10,7 +10,7 @@ import (
 func (gs *gatewayServer) SendLogoutCleanupRaw(playerID uint64, sessionID string) {
 	req := common.LogoutCleanupReq{
 		PlayerId:  playerID,
-		GatewayId: gs.ServerId,
+		GatewayId: gs.ServerID,
 		SessionId: sessionID,
 	}
 	gs.SendToCentralMsg(common.Gw2Ct_LogoutCleanupReq, &req)
@@ -47,20 +47,20 @@ func (gs *gatewayServer) HandleCentralLoginPrepareRsp(_ *common.ConnWrapper, rsp
 	}
 
 	log.Printf("[gateway] login prepared: account=%s world=%s session=%s",
-		pending.Account, rsp.WorldId, pending.SessionId)
+		pending.Account, rsp.WorldId, pending.SessionID)
 
-	pending.WorldId = rsp.WorldId
+	pending.WorldID = rsp.WorldId
 	pending.WorldAddr = rsp.WorldAddr
 	pending.State = sessionCreating
 	pending.Deadline = time.Now().Add(createEntityTimeout)
 
 	createReq := common.CreateEntityReq{
 		Account:   pending.Account,
-		GatewayId: gs.ServerId,
-		SessionId: pending.SessionId,
+		GatewayId: gs.ServerID,
+		SessionId: pending.SessionID,
 	}
 	if err := gs.ForwardMsgToWorld(rsp.WorldId, common.Gw2Wd_CreateEntityReq, &createReq); err != nil {
-		gs.SendLoginFinishFailure(pending.Account, pending.SessionId, "world unavailable")
+		gs.SendLoginFinishFailure(pending.Account, pending.SessionID, "world unavailable")
 		gs.FailSession(pending, "world unavailable")
 	}
 }
@@ -70,7 +70,7 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 	if session == nil {
 		return
 	}
-	if rsp.SessionId != "" && session.SessionId != "" && rsp.SessionId != session.SessionId {
+	if rsp.SessionId != "" && session.SessionID != "" && rsp.SessionId != session.SessionID {
 		return
 	}
 	if session.State != sessionFinishing && session.State != sessionResuming {
@@ -87,11 +87,11 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 		if conn != nil {
 			gs.FailClientLogin(conn, rsp.Message)
 		}
-		if session.PlayerId != 0 && session.WorldId != "" {
-			owner := gs.byPlayer[session.PlayerId]
+		if session.PlayerID != 0 && session.WorldID != "" {
+			owner := gs.byPlayer[session.PlayerID]
 			if owner == nil || owner == session {
 				gs.AttachPlayer(session)
-				gs.EnterDestroy(session, session.WorldId)
+				gs.EnterDestroy(session, session.WorldID)
 				return
 			}
 		}
@@ -100,7 +100,7 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 	}
 
 	if rsp.PlayerId != 0 {
-		session.PlayerId = rsp.PlayerId
+		session.PlayerID = rsp.PlayerId
 	}
 
 	if session.State == sessionResuming {
@@ -108,11 +108,11 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 		session.State = sessionResumingWorld
 		session.Deadline = time.Now().Add(createEntityTimeout)
 		req := common.ResumeEntityReq{
-			PlayerId:  session.PlayerId,
-			GatewayId: gs.ServerId,
-			SessionId: session.SessionId,
+			PlayerId:  session.PlayerID,
+			GatewayId: gs.ServerID,
+			SessionId: session.SessionID,
 		}
-		if err := gs.ForwardMsgToWorld(session.WorldId, common.Gw2Wd_ResumeEntityReq, &req); err != nil {
+		if err := gs.ForwardMsgToWorld(session.WorldID, common.Gw2Wd_ResumeEntityReq, &req); err != nil {
 			gs.SendLogoutCleanup(session)
 			gs.FailSession(session, "world unavailable")
 		}
@@ -127,27 +127,27 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 	session.State = sessionActive
 	session.LastHeartbeat = time.Now()
 	session.Deadline = time.Time{}
-	session.SceneId = snapshot.SceneId
+	session.SceneID = snapshot.SceneID
 	gs.AttachPlayer(session)
 
 	loginRsp := common.LoginRsp{
 		Success:   true,
 		Message:   rsp.Message,
 		WorldAddr: session.WorldAddr,
-		WorldId:   session.WorldId,
-		PlayerId:  session.PlayerId,
+		WorldId:   session.WorldID,
+		PlayerId:  session.PlayerID,
 		X:         snapshot.X,
 		Z:         snapshot.Z,
 		Width:     snapshot.Width,
 		Height:    snapshot.Height,
-		SceneId:   snapshot.SceneId,
+		SceneId:   snapshot.SceneID,
 	}
 	common.SendMsg(session.Conn, common.Gw2Cli_LoginRsp, &loginRsp)
 
 	conn := session.Conn
-	worldID, x, z := session.WorldId, snapshot.X, snapshot.Z
-	width, height, playerID := snapshot.Width, snapshot.Height, session.PlayerId
-	sceneID := snapshot.SceneId
+	worldID, x, z := session.WorldID, snapshot.X, snapshot.Z
+	width, height, playerID := snapshot.Width, snapshot.Height, session.PlayerID
+	sceneID := snapshot.SceneID
 	time.AfterFunc(100*time.Millisecond, func() {
 		gs.Loop.Defer(func() {
 			notify := common.EnterSceneNotify{
@@ -163,7 +163,7 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 		})
 	})
 }
-func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
+func (gs *gatewayServer) HandleCentralForceKickNotify(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
 	log.Printf("[gateway] force-kick: player=%d account=%s session=%s world=%s",
 		notify.PlayerId, notify.Account, notify.SessionId, notify.WorldId)
 
@@ -175,7 +175,7 @@ func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *c
 		gs.SendLogoutCleanupRaw(notify.PlayerId, notify.SessionId)
 		return
 	}
-	if notify.SessionId != "" && session.SessionId != "" && session.SessionId != notify.SessionId {
+	if notify.SessionId != "" && session.SessionID != "" && session.SessionID != notify.SessionId {
 		log.Printf("[gateway] ignoring stale force-kick for player %d session=%s", notify.PlayerId, notify.SessionId)
 		return
 	}
@@ -197,7 +197,7 @@ func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *c
 		}
 		worldID := notify.WorldId
 		if worldID == "" {
-			worldID = session.WorldId
+			worldID = session.WorldID
 		}
 		gs.AttachPlayer(session)
 		gs.EnterDestroy(session, worldID)
@@ -215,10 +215,10 @@ func (gs *gatewayServer) HandleCentralForceKick(_ *common.ConnWrapper, notify *c
 
 func (gs *gatewayServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
 	if !rsp.Success {
-		log.Printf("[gateway %s] hello rejected: %s", gs.ServerId, rsp.Message)
+		log.Printf("[gateway %s] hello rejected: %s", gs.ServerID, rsp.Message)
 		return
 	}
-	log.Printf("[gateway %s] registered: %s", gs.ServerId, rsp.Message)
+	log.Printf("[gateway %s] registered: %s", gs.ServerID, rsp.Message)
 	gs.SendToCentralMsg(common.Srv2Ct_ServerListReq, &common.ServerListReq{Type: common.ServerWorld})
 }
 
@@ -228,8 +228,45 @@ func (gs *gatewayServer) HandleCentralServerListRsp(_ *common.ConnWrapper, rsp *
 	}
 }
 
-func (gs *gatewayServer) HandleCentralNewWorld(_ *common.ConnWrapper, entry *common.ServerEntry) {
+func (gs *gatewayServer) HandleCentralNewWorldNotify(_ *common.ConnWrapper, entry *common.ServerEntry) {
 	gs.ConnectToWorld(entry.ServerId, entry.ListenAddr)
+}
+
+func (gs *gatewayServer) HandleCentralTransferCommitNotify(_ *common.ConnWrapper, notify *common.TransferCommitNotify) {
+	session := gs.GetByPlayer(notify.PlayerId)
+	if session == nil {
+		session = gs.GetByAccount(notify.Account)
+	}
+	if session == nil {
+		return
+	}
+	if notify.SessionId != "" && session.SessionID != "" && notify.SessionId != session.SessionID {
+		return
+	}
+	session.WorldID = notify.WorldId
+	session.SceneID = notify.SceneId
+	gs.worldMu.Lock()
+	if addr, ok := gs.worldAddrs[notify.WorldId]; ok {
+		session.WorldAddr = addr
+	}
+	gs.worldMu.Unlock()
+	if session.Conn == nil {
+		return
+	}
+	if session.State != sessionActive && session.State != sessionSuspect {
+		return
+	}
+	enter := &common.EnterSceneNotify{
+		WorldId:  notify.WorldId,
+		PlayerId: notify.PlayerId,
+		X:        notify.X,
+		Z:        notify.Z,
+		Width:    notify.Width,
+		Height:   notify.Height,
+		SceneId:  notify.SceneId,
+	}
+	common.SendMsg(session.Conn, common.Wd2Cli_EnterSceneNotify, enter)
+	log.Printf("[gateway] transfer commit: player=%d world=%s scene=%s", notify.PlayerId, notify.WorldId, notify.SceneId)
 }
 
 func (gs *gatewayServer) HandleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp *common.LogoutBeginRsp) {
@@ -237,7 +274,7 @@ func (gs *gatewayServer) HandleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp 
 	if session == nil {
 		return
 	}
-	if rsp.SessionId != "" && session.SessionId != "" && session.SessionId != rsp.SessionId {
+	if rsp.SessionId != "" && session.SessionID != "" && session.SessionID != rsp.SessionId {
 		return
 	}
 	if !rsp.Success {
@@ -252,7 +289,7 @@ func (gs *gatewayServer) HandleCentralLogoutCleanupRsp(_ *common.ConnWrapper, rs
 	if session == nil {
 		return
 	}
-	if rsp.SessionId != "" && session.SessionId != "" && session.SessionId != rsp.SessionId {
+	if rsp.SessionId != "" && session.SessionID != "" && session.SessionID != rsp.SessionId {
 		return
 	}
 	conn := session.Conn
@@ -281,7 +318,7 @@ func (gs *gatewayServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, noti
 		common.SendMsg(conn, common.Gw2Cli_ServerShutdownNotify, &common.ServerShutdownNotify{Message: notify.Reason})
 		conn.CloseAfterSend()
 	}
-	gs.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: gs.ServerId})
-	log.Printf("[gateway %s] notified %d clients of shutdown, stopping", gs.ServerId, len(conns))
+	gs.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: gs.ServerID})
+	log.Printf("[gateway %s] notified %d clients of shutdown, stopping", gs.ServerID, len(conns))
 	go gs.Stop()
 }

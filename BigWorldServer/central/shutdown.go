@@ -20,7 +20,7 @@ func (cs *centralServer) IsShuttingDown() bool {
 	return cs.shuttingDown
 }
 
-func (cs *centralServer) HandleShutdown(conn *common.ConnWrapper, req *common.ShutdownReq) {
+func (cs *centralServer) HandleShutdownReq(conn *common.ConnWrapper, req *common.ShutdownReq) {
 	log.Printf("[central] shutdown requested: %s", req.Reason)
 	common.SendMsg(conn, common.Ct2Srv_ShutdownRsp, &common.ShutdownRsp{
 		Success: true,

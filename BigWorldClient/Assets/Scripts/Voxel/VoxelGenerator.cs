@@ -76,6 +76,7 @@ namespace BigWorldClient
             {}
 
             VoxelGridData gridData = BuildGridData(columnVoxels, config.voxelSize, gridOrigin, dimX, dimZ);
+            gridData.originOffset.y -= FindCommonColumnTop(columnVoxels, gridOrigin.y);
 
             ComputeConnectivity(gridData, config.maxStepHeight);
 
@@ -314,6 +315,35 @@ namespace BigWorldClient
                 visited[x, y, z] = true;
                 queue.Enqueue((x, y, z));
             }
+        }
+
+        private static float FindCommonColumnTop(List<List<VoxelData>> columnVoxels, float gridOriginY)
+        {
+            if (columnVoxels == null || columnVoxels.Count == 0) return 0f;
+
+            var histogram = new Dictionary<int, int>();
+            for (int i = 0; i < columnVoxels.Count; i++)
+            {
+                List<VoxelData> column = columnVoxels[i];
+                if (column == null || column.Count == 0) continue;
+
+                float top = gridOriginY + column[column.Count - 1].maxY;
+                int key = Mathf.RoundToInt(top * 1000f);
+                histogram.TryGetValue(key, out int count);
+                histogram[key] = count + 1;
+            }
+
+            int bestKey = 0;
+            int bestCount = -1;
+            foreach (KeyValuePair<int, int> pair in histogram)
+            {
+                if (pair.Value > bestCount)
+                {
+                    bestCount = pair.Value;
+                    bestKey = pair.Key;
+                }
+            }
+            return bestKey / 1000f;
         }
 
         private static List<List<VoxelData>> MergeVoxels(

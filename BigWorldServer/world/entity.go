@@ -1,24 +1,31 @@
 package main
 
 import (
+	"time"
+
 	"bigworld/common"
 	pb "bigworld/common/pb"
 )
 
 type playerEntity struct {
-	PlayerId        uint64
-	Account         string
-	GatewayId       string
-	SessionId       string
-	GatewayConn     *common.ConnWrapper
-	X, Z, Y         float64
-	VoxelK          int
-	Airborne        bool
-	State           pb.MoveState
-	Scene           *scene
-	LastMoveTimeMs  int64
-	Transferring    bool
-	TransferUntilMs int64
+	PlayerID          uint64
+	Account           string
+	GatewayID         string
+	SessionID         string
+	GatewayConn       *common.ConnWrapper
+	X, Z, Y           float64
+	VoxelK            int
+	Airborne          bool
+	State             pb.MoveState
+	Scene             *scene
+	LastMoveTimeMs    int64
+	Transferring      bool
+	TransferUntilMs   int64
+	TransferStartTick int64
+	TransferID        string
+	CrossWorld        bool
+	IncomingTransfer  bool
+	TransferCooldown  time.Time
 
 	MoveDirX, MoveDirZ float64
 	CurveNorm          float64

@@ -23,6 +23,7 @@ namespace BigWorldClient
         public bool RowsAsEntries;
         public string ToggleLabel;
         public Type TableObjectType;
+        public Type TableStructType;
         public Type EntryObjectType;
         public Action<GenericTable> Validate;
         public Func<GenericTable, GenericTable> PostParse;
@@ -111,8 +112,10 @@ namespace BigWorldClient
             }
 
             var builder = new FlatBufferBuilder(1024);
-            MethodInfo pack = def.TableObjectType.GetMethod("Pack")
-                ?? throw new InvalidOperationException($"{def.TableObjectType.Name} 缺少 Pack（需 --gen-object-api 生成）");
+            if (def.TableStructType == null)
+                throw new InvalidOperationException($"{def.Name} 缺少 TableStructType（FlatBuffers 表结构体类型）");
+            MethodInfo pack = def.TableStructType.GetMethod("Pack", BindingFlags.Public | BindingFlags.Static)
+                ?? throw new InvalidOperationException($"{def.TableStructType.Name} 缺少 Pack（需 --gen-object-api 生成）");
             object offset = pack.Invoke(null, new object[] { builder, root });
             int rootOffset = (int)offset.GetType().GetField("Value").GetValue(offset);
             builder.Finish(rootOffset);

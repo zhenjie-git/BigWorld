@@ -127,8 +127,8 @@ func (rcv *SceneConfigEntry) MutateIsDefault(n bool) bool {
 func SceneConfigEntryStart(builder *flatbuffers.Builder) {
 	builder.StartObject(4)
 }
-func SceneConfigEntryAddSceneId(builder *flatbuffers.Builder, sceneId flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(sceneId), 0)
+func SceneConfigEntryAddSceneId(builder *flatbuffers.Builder, sceneID flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(sceneID), 0)
 }
 func SceneConfigEntryAddSpawnX(builder *flatbuffers.Builder, spawnX float32) {
 	builder.PrependFloat32Slot(1, spawnX, 0.0)

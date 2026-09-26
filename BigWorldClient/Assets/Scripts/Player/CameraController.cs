@@ -53,7 +53,8 @@ namespace BigWorldClient
         private void Awake()
         {
             Instance = this;
-            MainCameraTransform = Camera.main.transform;
+            if (Camera.main != null)
+                MainCameraTransform = Camera.main.transform;
 
             _currentDistance = _defaultDistance;
             _targetDistance = _defaultDistance;

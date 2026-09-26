@@ -2,6 +2,7 @@ package main
 
 import (
 	"os"
+	"sort"
 
 	pb "bigworld/common/pb"
 )
@@ -69,9 +70,23 @@ func (t *SceneConfigTable) Load(path string) error {
 	return nil
 }
 
-func (t *SceneConfigTable) Get(sceneId string) (sceneEntry, bool) {
-	e, ok := t.entries[sceneId]
+func (t *SceneConfigTable) Get(sceneID string) (sceneEntry, bool) {
+	e, ok := t.entries[sceneID]
 	return e, ok
 }
 
 func (t *SceneConfigTable) DefaultScene() string { return t.defaultScene }
+
+func (t *SceneConfigTable) AllSceneIDs() []string {
+	ids := make([]string, 0, len(t.entries))
+	for id := range t.entries {
+		ids = append(ids, id)
+	}
+	sort.Strings(ids)
+	return ids
+}
+
+func (t *SceneConfigTable) IsDefault(sceneID string) bool {
+	e, ok := t.entries[sceneID]
+	return ok && e.isDefault
+}

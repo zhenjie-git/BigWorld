@@ -42,6 +42,14 @@
                     "max_x": 9.5,
                     "min_z": 7.5,
                     "max_z": 9.5
+                },
+                {
+                    "from_scene": "ColorfulTown",
+                    "to_scene": "MainCity",
+                    "min_x": -2.0,
+                    "max_x": 2.0,
+                    "min_z": -32.0,
+                    "max_z": -28.0
                 }
             ]
         },
@@ -50,6 +58,50 @@
             "name": "dbproxy-1",
             "listen_addr": "127.0.0.1:9300",
             "central_addr": "127.0.0.1:9000"
+        },
+        "world-colorfultown": {
+            "id": 6,
+            "name": "world-colorfultown",
+            "listen_addr": "127.0.0.1:9101",
+            "central_addr": "127.0.0.1:9000",
+            "state_config_file": "../GameConfig/StateConfig/state_config.bytes",
+            "player_config_file": "../GameConfig/Player/player_config.bytes",
+            "scene_config_file": "../GameConfig/Scene/scene_config.bytes",
+            "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.bytes",
+            "movement_tick_ms": 20,
+            "scene_triggers": [
+                {
+                    "from_scene": "MainCity",
+                    "to_scene": "ColorfulTown",
+                    "min_x": 7.5,
+                    "max_x": 9.5,
+                    "min_z": 7.5,
+                    "max_z": 9.5
+                },
+                {
+                    "from_scene": "ColorfulTown",
+                    "to_scene": "MainCity",
+                    "min_x": -2.0,
+                    "max_x": 2.0,
+                    "min_z": -32.0,
+                    "max_z": -28.0
+                }
+            ]
         }
-    }
+    },
+    "scene_rules": [
+        {
+            "scene_id": "MainCity",
+            "spread_group": "town",
+            "priority": 100,
+            "is_default": true,
+            "min_replicas": 1
+        },
+        {
+            "scene_id": "ColorfulTown",
+            "spread_group": "town",
+            "priority": 90,
+            "min_replicas": 1
+        }
+    ]
 }

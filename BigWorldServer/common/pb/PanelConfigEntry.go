@@ -142,8 +142,8 @@ func (rcv *PanelConfigEntry) MutateCloseByBack(n bool) bool {
 func PanelConfigEntryStart(builder *flatbuffers.Builder) {
 	builder.StartObject(5)
 }
-func PanelConfigEntryAddPanelId(builder *flatbuffers.Builder, panelId flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(panelId), 0)
+func PanelConfigEntryAddPanelId(builder *flatbuffers.Builder, panelID flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(panelID), 0)
 }
 func PanelConfigEntryAddLayer(builder *flatbuffers.Builder, layer flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(layer), 0)

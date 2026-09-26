@@ -17,9 +17,9 @@ func NewDbProxyServer(id string, db *playerDB) *dbProxyServer {
 		db:         db,
 	}
 
-	common.Register(s.Router(common.SrcLogin), common.Lg2Db_ValidateAccountReq, s.HandleValidateAccount)
-	common.Register(s.Router(common.SrcWorld), common.Wd2Db_LoadPlayerReq, s.HandleLoadPlayer)
-	common.Register(s.Router(common.SrcWorld), common.Wd2Db_SavePlayerReq, s.HandleSavePlayer)
+	common.Register(s.Router(common.SrcLogin), common.Lg2Db_ValidateAccountReq, s.HandleValidateAccountReq)
+	common.Register(s.Router(common.SrcWorld), common.Wd2Db_LoadPlayerReq, s.HandleLoadPlayerReq)
+	common.Register(s.Router(common.SrcWorld), common.Wd2Db_SavePlayerReq, s.HandleSavePlayerReq)
 
 	cr := s.Router(common.SrcCentral)
 	common.Register(cr, common.Srv2Srv_HelloRsp, s.HandleCentralHelloRsp)
@@ -32,31 +32,32 @@ func (s *dbProxyServer) NoopHeartbeat(_ *common.ConnWrapper, _ *common.Heartbeat
 
 func (s *dbProxyServer) HandleCentralHelloRsp(_ *common.ConnWrapper, rsp *common.HelloRsp) {
 	if !rsp.Success {
-		log.Printf("[dbproxy %s] hello rejected: %s", s.ServerId, rsp.Message)
+		log.Printf("[dbproxy %s] hello rejected: %s", s.ServerID, rsp.Message)
 		return
 	}
 	if rsp.Success {
-		log.Printf("[dbproxy %s] registered: %s", s.ServerId, rsp.Message)
+		log.Printf("[dbproxy %s] registered: %s", s.ServerID, rsp.Message)
 	}
 }
 
 func (s *dbProxyServer) HandleCentralShutdownNotify(_ *common.ConnWrapper, notify *common.ShutdownNotify) {
-	log.Printf("[dbproxy %s] shutdown requested: %s", s.ServerId, notify.Reason)
-	s.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: s.ServerId})
+	log.Printf("[dbproxy %s] shutdown requested: %s", s.ServerID, notify.Reason)
+	s.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: s.ServerID})
 	go s.Stop()
 }
 
-func (s *dbProxyServer) HandleValidateAccount(conn *common.ConnWrapper, req *common.ValidateAccountReq) {
+func (s *dbProxyServer) HandleValidateAccountReq(conn *common.ConnWrapper, req *common.ValidateAccountReq) {
 
 	go func() {
 		rsp := common.ValidateAccountRsp{ReqId: req.ReqId}
-		valid, err := s.db.ValidateAccount(req.Account, req.Password)
+		valid, scene, err := s.db.ValidateAccount(req.Account, req.Password)
 		if err != nil {
 			rsp.Message = "数据库错误"
-			log.Printf("[dbproxy %s] validate account=%s err: %v", s.ServerId, req.Account, err)
+			log.Printf("[dbproxy %s] validate account=%s err: %v", s.ServerID, req.Account, err)
 		} else {
 			rsp.Valid = valid
 			if valid {
+				rsp.SceneId = scene
 				rsp.Message = "ok"
 			} else {
 				rsp.Message = "账号或密码错误"
@@ -68,13 +69,13 @@ func (s *dbProxyServer) HandleValidateAccount(conn *common.ConnWrapper, req *com
 	}()
 }
 
-func (s *dbProxyServer) HandleLoadPlayer(conn *common.ConnWrapper, req *common.LoadPlayerReq) {
+func (s *dbProxyServer) HandleLoadPlayerReq(conn *common.ConnWrapper, req *common.LoadPlayerReq) {
 	go func() {
 		rsp := common.LoadPlayerRsp{Account: req.Account}
 		found, pid, x, z, scene, err := s.db.LoadPlayer(req.Account)
 		if err != nil {
 			rsp.Message = "数据库错误"
-			log.Printf("[dbproxy %s] load player account=%s err: %v", s.ServerId, req.Account, err)
+			log.Printf("[dbproxy %s] load player account=%s err: %v", s.ServerID, req.Account, err)
 		} else {
 			rsp.Found = found
 			rsp.PlayerId = pid
@@ -88,13 +89,13 @@ func (s *dbProxyServer) HandleLoadPlayer(conn *common.ConnWrapper, req *common.L
 	}()
 }
 
-func (s *dbProxyServer) HandleSavePlayer(conn *common.ConnWrapper, req *common.SavePlayerReq) {
+func (s *dbProxyServer) HandleSavePlayerReq(conn *common.ConnWrapper, req *common.SavePlayerReq) {
 
 	go func() {
 		rsp := common.SavePlayerRsp{ReqId: req.ReqId}
 		if err := s.db.SavePlayers(req.Players); err != nil {
 			rsp.Message = "数据库错误"
-			log.Printf("[dbproxy %s] save %d players err: %v", s.ServerId, len(req.Players), err)
+			log.Printf("[dbproxy %s] save %d players err: %v", s.ServerID, len(req.Players), err)
 		} else {
 			rsp.Success = true
 			rsp.Message = "ok"

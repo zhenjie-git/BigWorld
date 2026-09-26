@@ -26,7 +26,9 @@ namespace BigWorldClient
             };
             PlayerActions.Movement.canceled += _ =>
             {
-                CameraController.Instance.DisableRecentering();
+                if (!isActiveAndEnabled) return;
+                if (CameraController.Instance != null)
+                    CameraController.Instance.DisableRecentering();
                 Enqueue(PlayerInputCommandKind.MovementCanceled);
             };
             PlayerActions.Movement.performed += _ => Enqueue(PlayerInputCommandKind.MovementPerformed);

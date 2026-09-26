@@ -169,7 +169,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5792b32a9a686f245afde4c5e2b7d579, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  <Config>k__BackingField: {fileID: 11400000, guid: 13617ac39b7d91b41a96abf076efcd9a, type: 2}
   <SkillConfigs>k__BackingField:
   - {fileID: 11400000, guid: 0612ade054482ef47920792647449779, type: 2}
   <GroundCheckCollider>k__BackingField: {fileID: 1932540728443290600}
@@ -931,18 +930,6 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &1932540728841484780
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1589957980964529458}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c5399b23f09330844a63accb8df4b612, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &2115419623565328264 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: e972086c2fbf080459247a0cb4b071df, type: 3}

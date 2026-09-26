@@ -7,12 +7,22 @@ import (
 )
 
 type SceneTriggerConfig struct {
-	FromScene string  `json:"from_scene"`
-	ToScene   string  `json:"to_scene"`
-	MinX      float64 `json:"min_x"`
-	MaxX      float64 `json:"max_x"`
-	MinZ      float64 `json:"min_z"`
-	MaxZ      float64 `json:"max_z"`
+	FromScene string   `json:"from_scene"`
+	ToScene   string   `json:"to_scene"`
+	MinX      float64  `json:"min_x"`
+	MaxX      float64  `json:"max_x"`
+	MinZ      float64  `json:"min_z"`
+	MaxZ      float64  `json:"max_z"`
+	ToX       *float64 `json:"to_x,omitempty"`
+	ToZ       *float64 `json:"to_z,omitempty"`
+}
+
+type SceneRuleConfig struct {
+	SceneID     string `json:"scene_id"`
+	SpreadGroup string `json:"spread_group,omitempty"`
+	Priority    int    `json:"priority,omitempty"`
+	IsDefault   bool   `json:"is_default,omitempty"`
+	MinReplicas int    `json:"min_replicas,omitempty"`
 }
 
 type ServerConfig struct {
@@ -20,6 +30,10 @@ type ServerConfig struct {
 	Name        string `json:"name"`
 	ListenAddr  string `json:"listen_addr"`
 	CentralAddr string `json:"central_addr"`
+
+	PeerHeartbeatMs  int      `json:"peer_heartbeat_ms,omitempty"`
+	PeerTimeoutMs    int      `json:"peer_timeout_ms,omitempty"`
+	PeerBackoffMaxMs int      `json:"peer_backoff_max_ms,omitempty"`
 
 	StateConfigFile string               `json:"state_config_file,omitempty"`
 	SceneTriggers   []SceneTriggerConfig `json:"scene_triggers,omitempty"`
@@ -50,6 +64,7 @@ type AppConfig struct {
 	ECDSAPublicKey  string                  `json:"ecdsa_public_key"`
 	ServerSecret    string                  `json:"server_secret"`
 	MySQL           MySQLConfig             `json:"mysql"`
+	SceneRules      []SceneRuleConfig       `json:"scene_rules,omitempty"`
 	Servers         map[string]ServerConfig `json:"servers"`
 }
 

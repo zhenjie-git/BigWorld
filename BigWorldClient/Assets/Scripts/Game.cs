@@ -127,6 +127,7 @@ namespace BigWorldClient
             if (evt.SceneName != _currentTemplateId) return;
             if (_currentSceneId == null) return;
 
+            WorldPortalVisuals.EnsureForScene(_currentTemplateId);
             SpawnPlayer();
         }
 
