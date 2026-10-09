@@ -142,6 +142,7 @@ namespace BigWorldClient
             if (targetType == typeof(long)) return parsed is long l ? l : Convert.ToInt64(parsed);
             if (targetType == typeof(string)) return parsed as string ?? "";
             if (targetType == typeof(bool)) return parsed is bool b && b;
+            if (targetType.IsEnum) return Enum.ToObject(targetType, Convert.ToInt64(parsed));
 
             if (targetType.IsGenericType && targetType.GetGenericTypeDefinition() == typeof(List<>))
             {

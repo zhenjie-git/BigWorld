@@ -26,16 +26,34 @@ public struct SceneConfigEntry : IFlatbufferObject
   public ArraySegment<byte>? GetSceneIdBytes() { return __p.__vector_as_arraysegment(4); }
 #endif
   public byte[] GetSceneIdArray() { return __p.__vector_as_array<byte>(4); }
-  public float SpawnX { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
-  public float SpawnZ { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
-  public bool IsDefault { get { int o = __p.__offset(10); return o != 0 ? 0!=__p.bb.Get(o + __p.bb_pos) : (bool)false; } }
+  public long TemplateId { get { int o = __p.__offset(6); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public float SpawnX { get { int o = __p.__offset(8); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float SpawnZ { get { int o = __p.__offset(10); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public bool IsDefault { get { int o = __p.__offset(12); return o != 0 ? 0!=__p.bb.Get(o + __p.bb_pos) : (bool)false; } }
+  public long GridX { get { int o = __p.__offset(14); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public long GridZ { get { int o = __p.__offset(16); return o != 0 ? __p.bb.GetLong(o + __p.bb_pos) : (long)0; } }
+  public float OriginX { get { int o = __p.__offset(18); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float OriginZ { get { int o = __p.__offset(20); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
+  public float ZoneSize { get { int o = __p.__offset(22); return o != 0 ? __p.bb.GetFloat(o + __p.bb_pos) : (float)0.0f; } }
 
   public static Offset<BigWorldClient.Network.Protocol.SceneConfigEntry> CreateSceneConfigEntry(FlatBufferBuilder builder,
       StringOffset scene_idOffset = default(StringOffset),
+      long template_id = 0,
       float spawn_x = 0.0f,
       float spawn_z = 0.0f,
-      bool is_default = false) {
-    builder.StartTable(4);
+      bool is_default = false,
+      long grid_x = 0,
+      long grid_z = 0,
+      float origin_x = 0.0f,
+      float origin_z = 0.0f,
+      float zone_size = 0.0f) {
+    builder.StartTable(10);
+    SceneConfigEntry.AddGridZ(builder, grid_z);
+    SceneConfigEntry.AddGridX(builder, grid_x);
+    SceneConfigEntry.AddTemplateId(builder, template_id);
+    SceneConfigEntry.AddZoneSize(builder, zone_size);
+    SceneConfigEntry.AddOriginZ(builder, origin_z);
+    SceneConfigEntry.AddOriginX(builder, origin_x);
     SceneConfigEntry.AddSpawnZ(builder, spawn_z);
     SceneConfigEntry.AddSpawnX(builder, spawn_x);
     SceneConfigEntry.AddSceneId(builder, scene_idOffset);
@@ -43,11 +61,17 @@ public struct SceneConfigEntry : IFlatbufferObject
     return SceneConfigEntry.EndSceneConfigEntry(builder);
   }
 
-  public static void StartSceneConfigEntry(FlatBufferBuilder builder) { builder.StartTable(4); }
+  public static void StartSceneConfigEntry(FlatBufferBuilder builder) { builder.StartTable(10); }
   public static void AddSceneId(FlatBufferBuilder builder, StringOffset sceneIdOffset) { builder.AddOffset(0, sceneIdOffset.Value, 0); }
-  public static void AddSpawnX(FlatBufferBuilder builder, float spawnX) { builder.AddFloat(1, spawnX, 0.0f); }
-  public static void AddSpawnZ(FlatBufferBuilder builder, float spawnZ) { builder.AddFloat(2, spawnZ, 0.0f); }
-  public static void AddIsDefault(FlatBufferBuilder builder, bool isDefault) { builder.AddBool(3, isDefault, false); }
+  public static void AddTemplateId(FlatBufferBuilder builder, long templateId) { builder.AddLong(1, templateId, 0); }
+  public static void AddSpawnX(FlatBufferBuilder builder, float spawnX) { builder.AddFloat(2, spawnX, 0.0f); }
+  public static void AddSpawnZ(FlatBufferBuilder builder, float spawnZ) { builder.AddFloat(3, spawnZ, 0.0f); }
+  public static void AddIsDefault(FlatBufferBuilder builder, bool isDefault) { builder.AddBool(4, isDefault, false); }
+  public static void AddGridX(FlatBufferBuilder builder, long gridX) { builder.AddLong(5, gridX, 0); }
+  public static void AddGridZ(FlatBufferBuilder builder, long gridZ) { builder.AddLong(6, gridZ, 0); }
+  public static void AddOriginX(FlatBufferBuilder builder, float originX) { builder.AddFloat(7, originX, 0.0f); }
+  public static void AddOriginZ(FlatBufferBuilder builder, float originZ) { builder.AddFloat(8, originZ, 0.0f); }
+  public static void AddZoneSize(FlatBufferBuilder builder, float zoneSize) { builder.AddFloat(9, zoneSize, 0.0f); }
   public static Offset<BigWorldClient.Network.Protocol.SceneConfigEntry> EndSceneConfigEntry(FlatBufferBuilder builder) {
     int o = builder.EndTable();
     return new Offset<BigWorldClient.Network.Protocol.SceneConfigEntry>(o);
@@ -59,9 +83,15 @@ public struct SceneConfigEntry : IFlatbufferObject
   }
   public void UnPackTo(SceneConfigEntryT _o) {
     _o.SceneId = this.SceneId;
+    _o.TemplateId = this.TemplateId;
     _o.SpawnX = this.SpawnX;
     _o.SpawnZ = this.SpawnZ;
     _o.IsDefault = this.IsDefault;
+    _o.GridX = this.GridX;
+    _o.GridZ = this.GridZ;
+    _o.OriginX = this.OriginX;
+    _o.OriginZ = this.OriginZ;
+    _o.ZoneSize = this.ZoneSize;
   }
   public static Offset<BigWorldClient.Network.Protocol.SceneConfigEntry> Pack(FlatBufferBuilder builder, SceneConfigEntryT _o) {
     if (_o == null) return default(Offset<BigWorldClient.Network.Protocol.SceneConfigEntry>);
@@ -69,24 +99,42 @@ public struct SceneConfigEntry : IFlatbufferObject
     return CreateSceneConfigEntry(
       builder,
       _scene_id,
+      _o.TemplateId,
       _o.SpawnX,
       _o.SpawnZ,
-      _o.IsDefault);
+      _o.IsDefault,
+      _o.GridX,
+      _o.GridZ,
+      _o.OriginX,
+      _o.OriginZ,
+      _o.ZoneSize);
   }
 }
 
 public class SceneConfigEntryT
 {
   public string SceneId { get; set; }
+  public long TemplateId { get; set; }
   public float SpawnX { get; set; }
   public float SpawnZ { get; set; }
   public bool IsDefault { get; set; }
+  public long GridX { get; set; }
+  public long GridZ { get; set; }
+  public float OriginX { get; set; }
+  public float OriginZ { get; set; }
+  public float ZoneSize { get; set; }
 
   public SceneConfigEntryT() {
     this.SceneId = null;
+    this.TemplateId = 0;
     this.SpawnX = 0.0f;
     this.SpawnZ = 0.0f;
     this.IsDefault = false;
+    this.GridX = 0;
+    this.GridZ = 0;
+    this.OriginX = 0.0f;
+    this.OriginZ = 0.0f;
+    this.ZoneSize = 0.0f;
   }
 }
 
@@ -97,9 +145,15 @@ static public class SceneConfigEntryVerify
   {
     return verifier.VerifyTableStart(tablePos)
       && verifier.VerifyString(tablePos, 4 /*SceneId*/, false)
-      && verifier.VerifyField(tablePos, 6 /*SpawnX*/, 4 /*float*/, 4, false)
-      && verifier.VerifyField(tablePos, 8 /*SpawnZ*/, 4 /*float*/, 4, false)
-      && verifier.VerifyField(tablePos, 10 /*IsDefault*/, 1 /*bool*/, 1, false)
+      && verifier.VerifyField(tablePos, 6 /*TemplateId*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 8 /*SpawnX*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 10 /*SpawnZ*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 12 /*IsDefault*/, 1 /*bool*/, 1, false)
+      && verifier.VerifyField(tablePos, 14 /*GridX*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 16 /*GridZ*/, 8 /*long*/, 8, false)
+      && verifier.VerifyField(tablePos, 18 /*OriginX*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 20 /*OriginZ*/, 4 /*float*/, 4, false)
+      && verifier.VerifyField(tablePos, 22 /*ZoneSize*/, 4 /*float*/, 4, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

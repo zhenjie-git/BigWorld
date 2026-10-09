@@ -89,7 +89,8 @@ namespace BigWorldClient
             Predictor.ActivateWhenSynced();
 
             List<PlayerInputCommand> commands = Input?.DrainCommands();
-            Predictor.Update(commands ?? new List<PlayerInputCommand>(), MovementInput, GetWorldMoveDirection(), Time.realtimeSinceStartup);
+            Predictor.Update(commands ?? new List<PlayerInputCommand>(), MovementInput,
+                GetWorldMoveDirection(), Time.realtimeSinceStartup);
 
             if (Predictor.Ready)
             {
@@ -109,7 +110,7 @@ namespace BigWorldClient
             if (Predictor != null) return;
 
             PlayerConfigTable cfg = PlayerConfigTable.Instance;
-            GameScene scene = string.IsNullOrEmpty(Player?.SceneId) ? null : SceneMgr.Instance.GetScene(Player.SceneId);
+            GameScene scene = Player == null || Player.SceneTemplate == 0 ? null : SceneMgr.Instance.GetScene(Player.SceneTemplate);
             SimContext = SimContext.Build(scene, cfg);
 
             GameNetworkManager mgr = GameNetworkManager.Instance;
@@ -144,26 +145,26 @@ namespace BigWorldClient
 
         public Vector3 GetWorldMoveDirection()
         {
-            Vector3 localDir = GetMovementInputDirection();
+            return GetWorldMoveDirection(MovementInput);
+        }
+
+        public Vector3 GetWorldMoveDirection(Vector2 movementInput)
+        {
             Vector3 dir;
-            if (MovementInput == Vector2.zero)
+            if (movementInput == Vector2.zero)
             {
                 dir = transform.forward;
                 dir.y = 0f;
             }
             else
             {
+                Vector3 localDir = new Vector3(movementInput.x, 0f, movementInput.y);
                 dir = GetTargetRotationDirection(UpdateTargetRotation(localDir));
             }
 
             if (dir.sqrMagnitude < 0.0001f)
                 dir = Vector3.forward;
             return dir.normalized;
-        }
-
-        public Vector3 GetMovementInputDirection()
-        {
-            return new Vector3(MovementInput.x, 0f, MovementInput.y);
         }
 
         public float UpdateTargetRotation(Vector3 direction, bool shouldConsiderCameraRotation = true)

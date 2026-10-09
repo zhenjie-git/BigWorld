@@ -10,7 +10,8 @@ namespace BigWorldClient
         public PlayerController Controller { get; }
         public List<Skill> Skills { get; } = new();
 
-        public string SceneId { get; set; }
+        public int SceneTemplate { get; set; }
+        public string WorldId { get; set; }
 
         private Vector3 _currentTargetRotation;
 

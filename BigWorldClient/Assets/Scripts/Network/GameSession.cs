@@ -14,11 +14,12 @@ namespace BigWorldClient.Network
         public readonly ulong PlayerId;
         public readonly string WorldId;
         public readonly string WorldAddr;
-        public readonly string SceneId;
-        public readonly double X, Z, Width, Height;
+        public readonly long SceneId;
+        public readonly double X, Z;
+        public readonly bool Seamless;
 
-        public PlayerInfo(ulong playerId, string worldId, string worldAddr, string sceneId,
-            double x, double z, double width, double height)
+        public PlayerInfo(ulong playerId, string worldId, string worldAddr, long sceneId,
+            double x, double z, bool seamless = false)
         {
             PlayerId = playerId;
             WorldId = worldId;
@@ -26,9 +27,28 @@ namespace BigWorldClient.Network
             SceneId = sceneId;
             X = x;
             Z = z;
-            Width = width;
-            Height = height;
+            Seamless = seamless;
         }
+    }
+
+    public enum RemoteEntityEventKind { Enter, Leave, MoveEvent, Snapshot }
+
+    public struct RemoteEntityEvent
+    {
+        public RemoteEntityEventKind Kind;
+        public ulong PlayerId;
+        public string Account;
+        public uint EventKind;
+        public double X, Y, Z;
+        public int VoxelK;
+        public bool Airborne;
+        public MoveState State;
+        public double DirX, DirZ;
+        public double CurveNorm;
+        public long StateStartMs;
+        public double FallVelY;
+        public long SimTick;
+        public long ServerTimeMs;
     }
 
     public readonly struct SessionEvent
@@ -98,6 +118,7 @@ namespace BigWorldClient.Network
         private volatile NetClient _client;
         private readonly ConcurrentQueue<SessionEvent> _events = new ConcurrentQueue<SessionEvent>();
         private readonly ConcurrentQueue<MoveRspInfo> _moveResponses = new ConcurrentQueue<MoveRspInfo>();
+        private readonly ConcurrentQueue<RemoteEntityEvent> _remoteEvents = new ConcurrentQueue<RemoteEntityEvent>();
 
         private Thread _thread;
         private volatile bool _running;
@@ -115,10 +136,8 @@ namespace BigWorldClient.Network
         private ulong _playerId;
         private string _worldId;
         private string _worldAddr;
-        private string _sceneId;
-        private double _x, _z, _width, _height;
-        private bool _gotGwRsp;
-        private bool _gotEnter;
+        private long _sceneId;
+        private double _x, _z;
 
         private long _phaseStartTicks;
 
@@ -127,6 +146,8 @@ namespace BigWorldClient.Network
         public bool TryDequeue(out SessionEvent evt) => _events.TryDequeue(out evt);
 
         public bool TryDequeueMove(out MoveRspInfo info) => _moveResponses.TryDequeue(out info);
+
+        public bool TryDequeueRemote(out RemoteEntityEvent evt) => _remoteEvents.TryDequeue(out evt);
 
         public void ClearMoveResponses()
         {
@@ -186,11 +207,11 @@ namespace BigWorldClient.Network
             return _client.Send(MessageTypes.Cli2Wd_StopStartReq, req.ToByteArray());
         }
 
-        public bool SendMoveStop(long tick)
+        public bool SendHalt(long tick)
         {
             if (_state != State.InGame) return false;
-            var req = new MoveStopReq { PlayerId = _playerId, ServerTimeMs = ServerClock.TickToMs(tick) };
-            return _client.Send(MessageTypes.Cli2Wd_MoveStopReq, req.ToByteArray());
+            var req = new MoveHaltReq { PlayerId = _playerId, ServerTimeMs = ServerClock.TickToMs(tick) };
+            return _client.Send(MessageTypes.Cli2Wd_MoveHaltReq, req.ToByteArray());
         }
 
         public void BeginLogin(string host, int port, string username, string password)
@@ -209,8 +230,6 @@ namespace BigWorldClient.Network
             _playerId = 0;
             _worldId = null;
             _worldAddr = null;
-            _gotGwRsp = false;
-            _gotEnter = false;
             _activeConnectionId = 0;
             _phaseStartTicks = NowMs();
 
@@ -341,7 +360,6 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
             _phaseHandlers[State.Phase2] = new Dictionary<int, MessageHandler>
             {
                 [MessageTypes.Gw2Cli_LoginRsp] = HandleGatewayLoginRsp,
-                [MessageTypes.Wd2Cli_EnterSceneNotify] = HandleEnterSceneNotify,
             };
             _phaseHandlers[State.InGame] = new Dictionary<int, MessageHandler>
             {
@@ -350,6 +368,10 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
                 [MessageTypes.Wd2Cli_MoveRsp] = HandleMoveRsp,
                 [MessageTypes.Gw2Cli_LogoutRsp] = HandleForceKickRsp,
                 [MessageTypes.Wd2Cli_EnterSceneNotify] = HandleInGameEnterSceneNotify,
+                [MessageTypes.Wd2Cli_EntityEnterNotify] = HandleEntityEnterNotify,
+                [MessageTypes.Wd2Cli_EntityLeaveNotify] = HandleEntityLeaveNotify,
+                [MessageTypes.Wd2Cli_EntityMoveEventNotify] = HandleEntityMoveEventNotify,
+                [MessageTypes.Wd2Cli_EntitySnapshotNotify] = HandleEntitySnapshotNotify,
             };
 
             _phaseHandlers[State.LoggingOut] = new Dictionary<int, MessageHandler>
@@ -407,39 +429,86 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
                 return;
             }
             _playerId = rsp.PlayerId;
+            _worldId = rsp.WorldId;
             _worldAddr = rsp.WorldAddr;
             _sceneId = rsp.SceneId;
-            if (string.IsNullOrEmpty(_worldId)) _worldId = rsp.WorldId;
-            _gotGwRsp = true;
-            MaybeEnterScene();
-        }
-
-        private void HandleEnterSceneNotify(NetClient client, byte[] payload)
-        {
-            var n = EnterSceneNotify.Parser.ParseFrom(payload);
-            _worldId = n.WorldId;
-            _sceneId = n.SceneId;
-            _playerId = n.PlayerId;
-            _x = n.X;
-            _z = n.Z;
-            _width = n.Width;
-            _height = n.Height;
-            _gotEnter = true;
-            MaybeEnterScene();
+            _x = rsp.X;
+            _z = rsp.Z;
+            _state = State.InGame;
+            Push(SessionEventKind.LoginSucceeded, "",
+                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z));
         }
 
         private void HandleInGameEnterSceneNotify(NetClient client, byte[] payload)
         {
             var n = EnterSceneNotify.Parser.ParseFrom(payload);
+            if (!n.Seamless)
+                ClearMoveResponses();
             _playerId = n.PlayerId;
             _worldId = n.WorldId;
             _sceneId = n.SceneId;
             _x = n.X;
             _z = n.Z;
-            _width = n.Width;
-            _height = n.Height;
             Push(SessionEventKind.SceneTransfer, "",
-                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z, _width, _height));
+                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z, n.Seamless));
+        }
+
+        private static RemoteEntityEvent FromEntityState(EntityStatePb s)
+        {
+            return new RemoteEntityEvent
+            {
+                PlayerId = s.PlayerId,
+                Account = s.Account,
+                X = s.X,
+                Y = s.Y,
+                Z = s.Z,
+                VoxelK = s.VoxelK,
+                Airborne = s.Airborne,
+                State = s.State,
+                DirX = s.DirX,
+                DirZ = s.DirZ,
+                CurveNorm = s.CurveNorm,
+                StateStartMs = s.StateStartMs,
+                FallVelY = s.FallVelY,
+                SimTick = s.SimTick,
+            };
+        }
+
+        private void HandleEntityEnterNotify(NetClient client, byte[] payload)
+        {
+            var n = EntityEnterNotify.Parser.ParseFrom(payload);
+            RemoteEntityEvent evt = FromEntityState(n.Entity);
+            evt.Kind = RemoteEntityEventKind.Enter;
+            _remoteEvents.Enqueue(evt);
+        }
+
+        private void HandleEntityLeaveNotify(NetClient client, byte[] payload)
+        {
+            var n = EntityLeaveNotify.Parser.ParseFrom(payload);
+            _remoteEvents.Enqueue(new RemoteEntityEvent { Kind = RemoteEntityEventKind.Leave, PlayerId = n.PlayerId });
+        }
+
+        private void HandleEntityMoveEventNotify(NetClient client, byte[] payload)
+        {
+            var n = EntityMoveEventNotify.Parser.ParseFrom(payload);
+            _remoteEvents.Enqueue(new RemoteEntityEvent
+            {
+                Kind = RemoteEntityEventKind.MoveEvent,
+                PlayerId = n.PlayerId,
+                EventKind = n.Kind,
+                State = n.State,
+                DirX = n.DirX,
+                DirZ = n.DirZ,
+                ServerTimeMs = n.ServerTimeMs,
+            });
+        }
+
+        private void HandleEntitySnapshotNotify(NetClient client, byte[] payload)
+        {
+            var n = EntitySnapshotNotify.Parser.ParseFrom(payload);
+            RemoteEntityEvent evt = FromEntityState(n.Entity);
+            evt.Kind = RemoteEntityEventKind.Snapshot;
+            _remoteEvents.Enqueue(evt);
         }
 
         private void HandleServerShutdownNotify(NetClient client, byte[] payload)
@@ -481,13 +550,6 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
             var rsp = LogoutRsp.Parser.ParseFrom(payload);
             Push(SessionEventKind.Kicked, string.IsNullOrEmpty(rsp.Message) ? "account logged in elsewhere" : rsp.Message);
             _running = false;
-        }
-        private void MaybeEnterScene()
-        {
-            if (!_gotGwRsp || !_gotEnter) return;
-            _state = State.InGame;
-            Push(SessionEventKind.LoginSucceeded, "",
-                new PlayerInfo(_playerId, _worldId, _worldAddr, _sceneId, _x, _z, _width, _height));
         }
 
         public void SendHeartbeat()
@@ -536,6 +598,7 @@ private void HandleNetEvent(NetClient client, NetClient.NetEvent evt)
             _client?.Drain();
             while (_events.TryDequeue(out _)) { }
             while (_moveResponses.TryDequeue(out _)) { }
+            while (_remoteEvents.TryDequeue(out _)) { }
         }
 
         private void StopThread()

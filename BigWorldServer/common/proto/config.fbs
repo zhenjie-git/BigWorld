@@ -37,14 +37,48 @@ table StateConfigMsg {
 }
 root_type StateConfigMsg;
 
+enum EventPolicy:ubyte { Keep = 0, Block = 1, Interrupt = 2 }
+
 table TransitionEntry {
-  source: string (required);
-  allowed_targets: [string];
+  source: string;
+  Walk: EventPolicy;
+  Run: EventPolicy;
+  Sprint: EventPolicy;
+  Jump: EventPolicy;
+  Dash: EventPolicy;
+  Roll: EventPolicy;
+  StopLight: EventPolicy;
+  StopMed: EventPolicy;
+  StopHard: EventPolicy;
+  Halt: EventPolicy;
+  DirChange: EventPolicy;
+  blocks_travel: bool;
 }
 table TransitionTableMsg {
   entries: [TransitionEntry];
 }
 root_type TransitionTableMsg;
+
+table PhaseEntry {
+  phase: string;
+  accepts_move_input: bool;
+  simulates: bool;
+  joins_aoi: bool;
+  sends_move_rsp: bool;
+  can_start_travel: bool;
+  saves_to_db: bool;
+  forces_move_idle: bool;
+  Active: bool;
+  TeleportFrozen: bool;
+  ZoneHandoff: bool;
+  WorldHandoff: bool;
+  Arriving: bool;
+  ArrivingFrozen: bool;
+}
+table PhaseTableMsg {
+  entries: [PhaseEntry];
+}
+root_type PhaseTableMsg;
 
 table PanelConfigEntry {
   panel_id: string;
@@ -60,9 +94,15 @@ root_type PanelConfigMsg;
 
 table SceneConfigEntry {
   scene_id: string;
+  template_id: long;
   spawn_x: float;
   spawn_z: float;
   is_default: bool;
+  grid_x: long;
+  grid_z: long;
+  origin_x: float;
+  origin_z: float;
+  zone_size: float;
 }
 table SceneConfigMsg {
   entries: [SceneConfigEntry];

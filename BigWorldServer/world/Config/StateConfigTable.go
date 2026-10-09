@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"fmt"
@@ -9,6 +9,8 @@ import (
 
 	pb "bigworld/common/pb"
 )
+
+const MaxMoveDelta = 0.6
 
 type StateConfigState struct {
 	Duration    float64
@@ -23,12 +25,7 @@ type StateConfigTable struct {
 	caps       map[pb.MoveState]float64
 }
 
-var stateConfigTable = &StateConfigTable{
-	FixedDelta: 0.02,
-	Margin:     2.0,
-	States:     map[string]StateConfigState{},
-	caps:       map[pb.MoveState]float64{},
-}
+var stateConfigTable = &StateConfigTable{}
 
 func StateConfig() *StateConfigTable { return stateConfigTable }
 
@@ -144,7 +141,7 @@ func (t *StateConfigTable) MaxPerFrame(state pb.MoveState) float64 {
 	if v, ok := t.caps[state]; ok {
 		return v
 	}
-	return maxMoveDelta
+	return MaxMoveDelta
 }
 
 func (t *StateConfigTable) ComputeStateCap(st StateConfigState) float64 {

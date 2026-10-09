@@ -31,8 +31,6 @@ namespace BigWorldClient
                     CameraController.Instance.DisableRecentering();
                 Enqueue(PlayerInputCommandKind.MovementCanceled);
             };
-            PlayerActions.Movement.performed += _ => Enqueue(PlayerInputCommandKind.MovementPerformed);
-            PlayerActions.Look.started += _ => { };
             PlayerActions.Dash.started += _ => Enqueue(PlayerInputCommandKind.Dash);
             PlayerActions.Jump.started += _ => Enqueue(PlayerInputCommandKind.Jump);
             PlayerActions.Sprint.performed += _ => Enqueue(PlayerInputCommandKind.Sprint);

@@ -56,7 +56,7 @@ const (
 	Cli2Wd_DashStartReq          MessageType = 54
 	Cli2Wd_RollStartReq          MessageType = 55
 	Cli2Wd_StopStartReq          MessageType = 56
-	Cli2Wd_MoveStopReq           MessageType = 57
+	Cli2Wd_MoveHaltReq           MessageType = 57
 	Cli2Wd_MoveDirChangeReq      MessageType = 58
 	Gw2Wd_ResumeEntityReq        MessageType = 60
 	Wd2Gw_ResumeEntityRsp        MessageType = 61
@@ -76,4 +76,9 @@ const (
 	Ct2Gw_TransferCommitNotify   MessageType = 75
 	Ct2Wd_SceneAssignNotify      MessageType = 76
 	Wd2Ct_SceneAssignAck         MessageType = 77
+	Wd2Cli_EntityEnterNotify     MessageType = 78
+	Wd2Cli_EntityLeaveNotify     MessageType = 79
+	Wd2Cli_EntityMoveEventNotify MessageType = 80
+	Wd2Cli_EntitySnapshotNotify  MessageType = 81
+	Wd2Wd_BorderInterestNotify   MessageType = 82
 )

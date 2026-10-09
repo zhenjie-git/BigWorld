@@ -320,7 +320,7 @@ namespace BigWorldClient
                 return MoveLedged;
             }
 
-            if (!ctx.ValidateGroundMove(e.X, e.Z, k, dx, dz, maxDelta, out int newK, out double newY) || newK < 0)
+            if (!ctx.ValidateGroundMove(e.X, e.Z, k, dx, dz, maxDelta, e.Y, out int newK, out double newY) || newK < 0)
                 return MoveBlocked;
 
             e.X += dx;
@@ -350,7 +350,7 @@ namespace BigWorldClient
                 return;
             }
 
-            if (ctx.ValidateGroundMove(e.X, e.Z, k, dx, dz, maxDelta, out _, out _))
+            if (ctx.ValidateGroundMove(e.X, e.Z, k, dx, dz, maxDelta, e.Y, out _, out _))
             {
                 e.X += dx;
                 e.Z += dz;

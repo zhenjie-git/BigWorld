@@ -17,7 +17,7 @@ if errorlevel 1 (
 
 REM ---- 2. Wait for all servers to exit (poll ports, up to 60s) ---------------
 echo [2/3] Waiting for servers to exit ...
-powershell -NoProfile -Command "$ports=9000,8000,9100,9200,9300; $n=60; for($i=0;$i -lt $n;$i++){ $up=0; foreach($p in $ports){ try{$c=New-Object Net.Sockets.TcpClient;$c.Connect('127.0.0.1',$p);$c.Close();$up++}catch{} }; if($up -eq 0){ Write-Host 'All ports closed.'; exit 0 }; Start-Sleep 1 }; exit 1"
+powershell -NoProfile -Command "$ports=9000,8000,9100,9101,9200,9300; $n=60; for($i=0;$i -lt $n;$i++){ $up=0; foreach($p in $ports){ try{$c=New-Object Net.Sockets.TcpClient;$c.Connect('127.0.0.1',$p);$c.Close();$up++}catch{} }; if($up -eq 0){ Write-Host 'All ports closed.'; exit 0 }; Start-Sleep 1 }; exit 1"
 if errorlevel 1 (
     echo   [WARN] Some servers still listening after 60s - force killing.
     goto force
@@ -27,7 +27,8 @@ echo.
 echo All servers stopped gracefully.
 echo   Central   :9000 - stopped
 echo   Gateway   :8000 - stopped
-echo   World     :9100 - stopped
+echo   World1    :9100 - stopped
+    echo   World2    :9101 - stopped
 echo   Login     :9200 - stopped
 echo   DBProxy   :9300 - stopped
 echo.
@@ -46,7 +47,7 @@ taskkill /f /im login.exe 2>nul
 taskkill /f /im dbproxy.exe 2>nul
 
 :: Kill any lingering server processes by port (Windows)
-for %%p in (9000 8000 9100 9200 9300) do (
+for %%p in (9000 8000 9100 9101 9200 9300) do (
     netstat -ano | findstr "%%p" >nul 2>nul
     if not errorlevel 1 (
         for /f "tokens=5" %%a in ('netstat -ano ^| findstr "%%p"') do (
@@ -58,7 +59,8 @@ for %%p in (9000 8000 9100 9200 9300) do (
 echo All servers stopped (force kill).
 echo   Central   :9000 - stopped
 echo   Gateway   :8000 - stopped
-echo   World     :9100 - stopped
+echo   World1    :9100 - stopped
+    echo   World2    :9101 - stopped
 echo   Login     :9200 - stopped
 echo   DBProxy   :9300 - stopped
 echo.

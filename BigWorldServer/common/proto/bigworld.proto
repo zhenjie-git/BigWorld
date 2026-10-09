@@ -76,14 +76,14 @@ message LoginRsp {
   double z            = 9;
   double width        = 10;
   double height       = 11;
-  string scene_id     = 12;
+  int64 scene_id     = 12;
 }
 
 message GatewayAssignReq {
   uint64 req_id    = 1;
   string server_id = 2;
   string account   = 3;
-  string scene_id  = 4;
+  int64 scene_id  = 4;
 }
 
 message GatewayAssignRsp {
@@ -137,7 +137,7 @@ message LoginFinishReq {
   string gateway_id = 5;
   string message    = 6;
   string session_id = 7;
-  string scene_id   = 8;
+  int64 scene_id   = 8;
 }
 
 message LoginFinishRsp {
@@ -162,7 +162,8 @@ message EnterSceneNotify {
   double z         = 4;
   double width     = 5;
   double height    = 6;
-  string scene_id  = 7;
+  int64 scene_id  = 7;
+  bool   seamless  = 8;
 }
 
 // --- Session / logout ---
@@ -219,7 +220,7 @@ message CreateEntityRsp {
   double width     = 6;
   double height    = 7;
   string message   = 8;
-  string scene_id  = 9;
+  int64 scene_id  = 9;
   string session_id = 10;
 }
 
@@ -246,7 +247,7 @@ message ResumeEntityRsp {
   string message    = 2;
   uint64 player_id  = 3;
   string session_id = 4;
-  string scene_id   = 5;
+  int64 scene_id   = 5;
   double x          = 6;
   double z          = 7;
   double width      = 8;
@@ -321,7 +322,7 @@ message StopStartReq {
   int64  server_time_ms = 3;
 }
 
-message MoveStopReq {
+message MoveHaltReq {
   uint64 player_id = 1;
   int64  server_time_ms = 2;
 }
@@ -396,7 +397,7 @@ message ValidateAccountRsp {
   uint64 req_id  = 1;
   bool   valid   = 2;
   string message = 3;
-  string scene_id = 4;
+  int64 scene_id = 4;
 }
 
 // 玩家载入（world -> dbproxy）。
@@ -413,7 +414,8 @@ message LoadPlayerRsp {
   double x         = 4;
   double z         = 5;
   string message   = 6;
-  string scene_id  = 7;
+  int64  scene_id  = 7;
+  string legacy_scene = 8;
 }
 
 // 玩家保存（world -> dbproxy）。players 为批量，destroy 存单条、autosave 存全量。
@@ -422,7 +424,7 @@ message PlayerData {
   string account   = 2;
   double x         = 3;
   double z         = 4;
-  string scene_id  = 5;
+  int64 scene_id  = 5;
 }
 
 message SavePlayerReq {
@@ -467,10 +469,11 @@ message TransferPrepareReq {
   uint64 player_id     = 3;
   string gateway_id    = 4;
   string session_id    = 5;
-  string from_scene_id = 6;
-  string to_scene_id   = 7;
+  int64 from_scene_id = 6;
+  int64 to_scene_id   = 7;
   double to_x          = 8;
   double to_z          = 9;
+  bool   seamless      = 10;
 }
 
 message TransferIncomingNotify {
@@ -480,10 +483,11 @@ message TransferIncomingNotify {
   string gateway_id    = 4;
   string session_id    = 5;
   string from_world_id = 6;
-  string from_scene_id = 7;
-  string to_scene_id   = 8;
+  int64 from_scene_id = 7;
+  int64 to_scene_id   = 8;
   double to_x          = 9;
   double to_z          = 10;
+  bool   seamless      = 11;
 }
 
 message TransferIncomingAck {
@@ -499,9 +503,10 @@ message TransferPrepareRsp {
   string transfer_id    = 4;
   string to_world_id    = 5;
   string to_world_addr  = 6;
-  string to_scene_id    = 7;
+  int64 to_scene_id    = 7;
   double to_x           = 8;
   double to_z           = 9;
+  bool   seamless       = 10;
 }
 
 message TransferAbortReq {
@@ -524,6 +529,15 @@ message TransferFinishNotify {
   bool   success     = 2;
 }
 
+message MoveInputPb {
+  uint64    seq     = 1;
+  int64     tick    = 2;
+  uint32    kind    = 3;
+  MoveState state   = 4;
+  float     dir_x   = 5;
+  float     dir_z   = 6;
+}
+
 message TransferEntityReq {
   string transfer_id   = 1;
   uint64 player_id     = 2;
@@ -531,10 +545,23 @@ message TransferEntityReq {
   string gateway_id    = 4;
   string session_id    = 5;
   string from_world_id = 6;
-  string from_scene_id = 7;
-  string to_scene_id   = 8;
+  int64 from_scene_id = 7;
+  int64 to_scene_id   = 8;
   double x             = 9;
   double z             = 10;
+  bool   seamless      = 11;
+  double y             = 12;
+  int32  voxel_k       = 13;
+  bool   airborne      = 14;
+  MoveState state      = 15;
+  double move_dir_x    = 16;
+  double move_dir_z    = 17;
+  double curve_norm    = 18;
+  int64  state_start_ms = 19;
+  double fall_vel_y    = 20;
+  int64  sim_tick      = 21;
+  uint64 input_seq     = 22;
+  repeated MoveInputPb inputs = 23;
 }
 
 message TransferEntityRsp {
@@ -553,11 +580,63 @@ message TransferCommitNotify {
   string account     = 3;
   string session_id  = 4;
   string world_id    = 5;
-  string scene_id    = 6;
+  int64 scene_id    = 6;
   double x           = 7;
   double z           = 8;
   double width       = 9;
   double height      = 10;
+  bool   seamless    = 11;
+}
+
+// --- Entity visibility (world -> gateway -> client, world -> world border) ---
+
+message EntityStatePb {
+  uint64    player_id      = 1;
+  double    x              = 2;
+  double    y              = 3;
+  double    z              = 4;
+  int32     voxel_k        = 5;
+  bool      airborne       = 6;
+  MoveState state          = 7;
+  double    dir_x          = 8;
+  double    dir_z          = 9;
+  double    curve_norm     = 10;
+  int64     state_start_ms = 11;
+  double    fall_vel_y     = 12;
+  int64     sim_tick       = 13;
+  string    account        = 14;
+}
+
+message EntityEnterNotify {
+  uint64        target_player_id = 1;
+  EntityStatePb entity          = 2;
+}
+
+message EntityLeaveNotify {
+  uint64 target_player_id = 1;
+  uint64 player_id        = 2;
+}
+
+message EntityMoveEventNotify {
+  uint64    target_player_id = 1;
+  uint64    player_id        = 2;
+  uint32    kind             = 3;
+  MoveState state            = 4;
+  double    dir_x            = 5;
+  double    dir_z            = 6;
+  int64     server_time_ms   = 7;
+}
+
+message EntitySnapshotNotify {
+  uint64        target_player_id = 1;
+  EntityStatePb entity          = 2;
+}
+
+message BorderInterestNotify {
+  string                 from_world_id      = 1;
+  int64                 scene_id           = 2;
+  repeated EntityStatePb entities           = 3;
+  repeated uint64        removed_player_ids = 4;
 }
 
 // --- Scene assignment (central -> world) ---

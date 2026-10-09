@@ -43,7 +43,7 @@ namespace BigWorldClient
 
     public static class ConfigTypeParsers
     {
-        public static readonly string[] KnownTypes = { "float", "int", "string", "bool", "string_array", "recentering" };
+        public static readonly string[] KnownTypes = { "float", "int", "string", "bool", "string_array", "recentering", "policy" };
         public static readonly string[] KnownEndpoints = { "server", "client", "both", "tool" };
 
         public static object Parse(string type, string raw, string where)
@@ -56,9 +56,18 @@ namespace BigWorldClient
                 case "bool": return ParseBool(raw, where);
                 case "string_array": return ParseStringArray(raw, where);
                 case "recentering": return ParseRecentering(raw, where);
+                case "policy": return ParsePolicy(raw, where);
                 default:
                     throw new InvalidOperationException($"{where} 的数据类型 \"{type}\" 未注册");
             }
+        }
+
+        static long ParsePolicy(string raw, string where)
+        {
+            long value = ParseInt(raw, where);
+            if (value < 0 || value > 2)
+                throw new FormatException($"{where} 的策略格值 \"{raw}\" 非法（0=KEEP/1=BLOCK/2=INTERRUPT）");
+            return value;
         }
 
         static double ParseFloat(string raw, string where)

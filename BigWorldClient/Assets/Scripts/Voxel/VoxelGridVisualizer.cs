@@ -74,7 +74,6 @@ namespace BigWorldClient
         {
             if (!File.Exists(filePath))
             {
-                {}
                 return;
             }
             var data = VoxelGridData.LoadFromBinary(filePath);
@@ -91,7 +90,6 @@ namespace BigWorldClient
         {
             if (asset == null)
             {
-                {}
                 return;
             }
             var data = VoxelGridData.FromBytes(asset.bytes);
@@ -180,7 +178,6 @@ namespace BigWorldClient
             ClearMesh();
             _meshFilter.sharedMesh = mesh;
 
-            {}
         }
 
         private void ComputeYRange(out float yMin, out float yMax)

@@ -6,6 +6,6 @@ use (
 	./DbProxy
 	./Gateway
 	./Login
-	./World
 	./Shutdown
+	./World
 )

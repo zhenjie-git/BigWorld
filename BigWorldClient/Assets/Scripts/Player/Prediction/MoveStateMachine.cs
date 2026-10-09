@@ -48,6 +48,25 @@ namespace BigWorldClient
         public MoveState CurrentState => _current?.Type ?? MoveState.MoveIdle;
         public MoveTransitionTable TransitionTable => _table;
 
+        public EventPolicy CheckEvent(MoveEvent ev) => _table.PolicyOf(CurrentState, ev);
+
+        public bool CanTrigger(MoveEvent ev) => CheckEvent(ev) != EventPolicy.Block;
+
+        public bool CanTransitionTo(MoveState to) => _table.CanTransition(CurrentState, to);
+
+        private static readonly MoveState[] LocomotionStates =
+            { MoveState.MoveWalk, MoveState.MoveRun, MoveState.MoveSprint, MoveState.MoveRoll };
+
+        public bool IsLocomotion()
+        {
+            MoveState state = CurrentState;
+            for (int i = 0; i < LocomotionStates.Length; i++)
+            {
+                if (LocomotionStates[i] == state) return true;
+            }
+            return false;
+        }
+
         public event Action<MoveState, double> StateApplied = delegate { };
         public event Action<MoveState, MoveState, MoveTransitionReason> TransitionOccurred = delegate { };
 
@@ -106,12 +125,6 @@ namespace BigWorldClient
 
             MovementSim.SetMoveState(ref entity, to, MovementSim.TickToMs(tick));
             _current.Enter(ref entity, tick);
-
-            if (prev == MoveState.MoveJumpUp || prev == MoveState.MoveJumpDown
-                || to == MoveState.MoveJumpUp || to == MoveState.MoveJumpDown
-                || to == MoveState.MoveIdle && (prev == MoveState.MoveJumpUp || prev == MoveState.MoveJumpDown))
-            {
-            }
 
             TransitionOccurred(prev, to, reason);
             StateApplied(to, 0.0);

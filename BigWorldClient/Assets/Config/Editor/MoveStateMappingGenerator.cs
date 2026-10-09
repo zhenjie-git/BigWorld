@@ -15,7 +15,7 @@ namespace BigWorldClient
     {
         const string ExcelRelativePath = "StateConfig/state_config.xlsx";
         const string ClientGenPath = "Assets/Config/MoveStateMappings.gen.cs";
-        static string ServerGenPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "BigWorldServer", "World", "MoveStateMapping.gen.go"));
+        static string ServerGenPath => Path.GetFullPath(Path.Combine(Application.dataPath, "..", "..", "BigWorldServer", "World", "Config", "MoveStateMapping.gen.go"));
 
         public static void Generate()
         {
@@ -107,7 +107,7 @@ namespace BigWorldClient
         static void WriteServer(List<(string StateName, string CsName, string ProtoName)> entries)
         {
             var sb = new StringBuilder();
-            sb.Append("package main\n\n");
+            sb.Append("package config\n\n");
             sb.Append("import pb \"bigworld/common/pb\"\n\n");
             sb.Append("func StateNameToMoveState(name string) (pb.MoveState, bool) {\n");
             sb.Append("\tswitch name {\n");

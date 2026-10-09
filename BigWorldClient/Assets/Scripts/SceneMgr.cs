@@ -9,8 +9,7 @@ namespace BigWorldClient
         private static SceneMgr _instance;
         public static SceneMgr Instance => _instance ??= new SceneMgr();
 
-        private readonly Dictionary<string, GameScene> _scenes = new();
-        private readonly Dictionary<string, int> _instanceCounters = new();
+        private readonly Dictionary<int, GameScene> _scenes = new();
 
         private MonoBehaviour _runner;
 
@@ -19,29 +18,23 @@ namespace BigWorldClient
             _runner = coroutineRunner;
         }
 
-        public GameScene CreateScene(string templateId, float maxStepHeight)
+        public GameScene CreateScene(SceneID serverScene, Vector3 serverSpawn, float maxStepHeight)
         {
-            _instanceCounters.TryGetValue(templateId, out int count);
-            count++;
-            _instanceCounters[templateId] = count;
-
-            string sceneId = $"{templateId}_{count}";
-            var scene = new GameScene(sceneId, templateId, _runner, maxStepHeight);
-            _scenes[sceneId] = scene;
-
-            {}
+            int template = serverScene.Template();
+            var scene = new GameScene(serverScene, serverSpawn, _runner, maxStepHeight);
+            _scenes[template] = scene;
             return scene;
         }
 
-        public GameScene GetScene(string sceneId)
+        public GameScene GetScene(int template)
         {
-            _scenes.TryGetValue(sceneId, out var scene);
+            _scenes.TryGetValue(template, out var scene);
             return scene;
         }
 
-        public void RemoveScene(string sceneId)
+        public void RemoveScene(int template)
         {
-            _scenes.Remove(sceneId);
+            _scenes.Remove(template);
         }
     }
 }

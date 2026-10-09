@@ -23,7 +23,7 @@ type moveInputKind uint8
 
 const (
 	moveInputStart moveInputKind = iota
-	moveInputStop
+	moveInputHalt
 	moveInputDirChange
 )
 
@@ -186,19 +186,33 @@ func InsertMoveInput(inputs []moveInput, in moveInput) []moveInput {
 
 func (ss *worldServer) ApplyMoveInputToEntity(e *playerEntity, in moveInput) (bool, string) {
 	stateMs := ss.TickToMs(in.Tick)
+	var ev moveEvent
 	switch in.Kind {
 	case moveInputStart:
-		if !MoveTransitions().CanTransition(e.State, in.State) {
+		var ok bool
+		ev, ok = moveTargetEvents[in.State]
+		if !ok {
 			return false, "非法状态转换"
 		}
+	case moveInputHalt:
+		ev = MoveEventHalt
+	case moveInputDirChange:
+		ev = MoveEventDirChange
+	}
+	policy := ss.movePolicy[e.State][ev]
+	if policy == pb.EventPolicyBlock {
+		return false, "非法状态转换"
+	}
+	switch in.Kind {
+	case moveInputStart:
 		if in.DirX != 0 || in.DirZ != 0 {
 			SetMoveDir(e, in.DirX, in.DirZ)
 		}
-		if e.State != in.State {
+		if policy == pb.EventPolicyInterrupt && e.State != in.State {
 			SetMoveState(e, in.State, stateMs)
 		}
-	case moveInputStop:
-		if e.State != pb.MoveState_MOVE_IDLE {
+	case moveInputHalt:
+		if policy == pb.EventPolicyInterrupt && e.State != pb.MoveState_MOVE_IDLE {
 			SetMoveState(e, pb.MoveState_MOVE_IDLE, stateMs)
 		}
 	case moveInputDirChange:
@@ -208,6 +222,15 @@ func (ss *worldServer) ApplyMoveInputToEntity(e *playerEntity, in moveInput) (bo
 }
 
 func (ss *worldServer) ProcessMoveInput(e *playerEntity, in moveInput) (bool, string, entitySnapshot) {
+	if e.Phase == PhaseTeleportFrozen {
+		if in.Tick <= e.PhaseStartTick {
+			return false, "正在传送", entitySnapshot{}
+		}
+		ss.applyPhase(e, PhaseActive)
+	} else if !e.Phase.AcceptsMoveInput() {
+		return false, "正在传送", entitySnapshot{}
+	}
+
 	nowTick := ss.NowTick()
 
 	if in.Tick > e.SimTick {
@@ -297,6 +320,9 @@ func (ss *worldServer) RebuildEntityWithInput(e *playerEntity, in moveInput, now
 func (ss *worldServer) TickMoves() {
 	nowTick := ss.NowTick()
 	for _, e := range ss.players {
+		if !e.Phase.Simulates() {
+			continue
+		}
 		ss.AdvanceEntityTo(e, nowTick)
 	}
 }

@@ -90,16 +90,19 @@ namespace BigWorldClient
         {
             var table = new StateConfigTable();
             TextAsset asset = Resources.Load<TextAsset>("Config/StateConfig");
-            if (asset != null)
+            if (asset == null)
             {
-                StateConfigMsg msg = StateConfigMsg.GetRootAsStateConfigMsg(new ByteBuffer(asset.bytes));
-                for (int i = 0; i < msg.EntriesLength; i++)
-                {
-                    var entry = msg.Entries(i);
-                    if (!entry.HasValue || !TryParseStateName(entry.Value.State, out MoveState state)) continue;
-                    table._entries[state] = entry.Value;
-                    table._states[state] = BuildMoveState(state, entry.Value);
-                }
+                Debug.LogError("[StateConfigTable] 缺少 Resources/Config/StateConfig.bytes（重新执行配置导出中心导出状态配置）");
+                return table;
+            }
+
+            StateConfigMsg msg = StateConfigMsg.GetRootAsStateConfigMsg(new ByteBuffer(asset.bytes));
+            for (int i = 0; i < msg.EntriesLength; i++)
+            {
+                var entry = msg.Entries(i);
+                if (!entry.HasValue || !TryParseStateName(entry.Value.State, out MoveState state)) continue;
+                table._entries[state] = entry.Value;
+                table._states[state] = BuildMoveState(state, entry.Value);
             }
 
             return table;
@@ -125,7 +128,11 @@ namespace BigWorldClient
         {
             if (string.IsNullOrEmpty(resourcesPath)) return;
             TextAsset asset = Resources.Load<TextAsset>(resourcesPath);
-            if (asset == null) return;
+            if (asset == null)
+            {
+                Debug.LogError($"[StateConfigTable] 缺少曲线资源 {resourcesPath}.bytes（重新执行配置导出中心导出状态配置）");
+                return;
+            }
             CurveMsg msg = CurveMsg.GetRootAsCurveMsg(new ByteBuffer(asset.bytes));
             if (msg.TLength == 0) return;
             moveState.Curves[axis] = new SimCurve(msg);

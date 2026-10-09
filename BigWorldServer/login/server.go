@@ -28,7 +28,7 @@ type validatePending struct {
 	conn     *common.ConnWrapper
 	req      *common.LoginReq
 	reqID    uint64
-	sceneID  string
+	sceneID  int64
 	deadline time.Time
 }
 

@@ -15,6 +15,15 @@ EditorBuildSettings:
     path: Assets/Scenes/MainCity.unity
     guid: d4e4e39c7a4516f4d9f027e69db935cd
   - enabled: 1
-    path: Assets/Scenes/ColorfulTown.unity
-    guid: 78a51dfd649f3fa4fb183f78fe76ffb4
+    path: Assets/Scenes/ColorfulTown_0_0.unity
+    guid: 6809f696bde3ca549a42ff8d71437931
+  - enabled: 1
+    path: Assets/Scenes/ColorfulTown_1_0.unity
+    guid: ec333acb4871eea489f8e4e311ba0c08
+  - enabled: 1
+    path: Assets/Scenes/ColorfulTown_0_1.unity
+    guid: 73dd3021860a5c54ba274edad850c8d9
+  - enabled: 1
+    path: Assets/Scenes/ColorfulTown_1_1.unity
+    guid: 9d9cc30f8e3041741a72bd6ec92f3175
   m_configObjects: {}

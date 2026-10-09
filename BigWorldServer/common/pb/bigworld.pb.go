@@ -614,7 +614,7 @@ type LoginRsp struct {
 	Z             float64                `protobuf:"fixed64,9,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,10,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,11,opt,name=height,proto3" json:"height,omitempty"`
-	SceneId       string                 `protobuf:"bytes,12,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,12,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -726,11 +726,11 @@ func (x *LoginRsp) GetHeight() float64 {
 	return 0
 }
 
-func (x *LoginRsp) GetSceneId() string {
+func (x *LoginRsp) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 type GatewayAssignReq struct {
@@ -738,7 +738,7 @@ type GatewayAssignReq struct {
 	ReqId         uint64                 `protobuf:"varint,1,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
 	ServerId      string                 `protobuf:"bytes,2,opt,name=server_id,json=serverId,proto3" json:"server_id,omitempty"`
 	Account       string                 `protobuf:"bytes,3,opt,name=account,proto3" json:"account,omitempty"`
-	SceneId       string                 `protobuf:"bytes,4,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,4,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -794,11 +794,11 @@ func (x *GatewayAssignReq) GetAccount() string {
 	return ""
 }
 
-func (x *GatewayAssignReq) GetSceneId() string {
+func (x *GatewayAssignReq) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 type GatewayAssignRsp struct {
@@ -1214,7 +1214,7 @@ type LoginFinishReq struct {
 	GatewayId     string                 `protobuf:"bytes,5,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
 	SessionId     string                 `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	SceneId       string                 `protobuf:"bytes,8,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,8,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1298,11 +1298,11 @@ func (x *LoginFinishReq) GetSessionId() string {
 	return ""
 }
 
-func (x *LoginFinishReq) GetSceneId() string {
+func (x *LoginFinishReq) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 type LoginFinishRsp struct {
@@ -1457,7 +1457,8 @@ type EnterSceneNotify struct {
 	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,5,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,6,opt,name=height,proto3" json:"height,omitempty"`
-	SceneId       string                 `protobuf:"bytes,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	Seamless      bool                   `protobuf:"varint,8,opt,name=seamless,proto3" json:"seamless,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1534,11 +1535,18 @@ func (x *EnterSceneNotify) GetHeight() float64 {
 	return 0
 }
 
-func (x *EnterSceneNotify) GetSceneId() string {
+func (x *EnterSceneNotify) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
+}
+
+func (x *EnterSceneNotify) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
 }
 
 type LogoutReq struct {
@@ -1963,7 +1971,7 @@ type CreateEntityRsp struct {
 	Width         float64                `protobuf:"fixed64,6,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,7,opt,name=height,proto3" json:"height,omitempty"`
 	Message       string                 `protobuf:"bytes,8,opt,name=message,proto3" json:"message,omitempty"`
-	SceneId       string                 `protobuf:"bytes,9,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,9,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	SessionId     string                 `protobuf:"bytes,10,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -2055,11 +2063,11 @@ func (x *CreateEntityRsp) GetMessage() string {
 	return ""
 }
 
-func (x *CreateEntityRsp) GetSceneId() string {
+func (x *CreateEntityRsp) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *CreateEntityRsp) GetSessionId() string {
@@ -2263,7 +2271,7 @@ type ResumeEntityRsp struct {
 	Message       string                 `protobuf:"bytes,2,opt,name=message,proto3" json:"message,omitempty"`
 	PlayerId      uint64                 `protobuf:"varint,3,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	SceneId       string                 `protobuf:"bytes,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	X             float64                `protobuf:"fixed64,6,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,7,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,8,opt,name=width,proto3" json:"width,omitempty"`
@@ -2330,11 +2338,11 @@ func (x *ResumeEntityRsp) GetSessionId() string {
 	return ""
 }
 
-func (x *ResumeEntityRsp) GetSceneId() string {
+func (x *ResumeEntityRsp) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *ResumeEntityRsp) GetX() float64 {
@@ -2839,7 +2847,7 @@ func (x *StopStartReq) GetServerTimeMs() int64 {
 	return 0
 }
 
-type MoveStopReq struct {
+type MoveHaltReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	ServerTimeMs  int64                  `protobuf:"varint,2,opt,name=server_time_ms,json=serverTimeMs,proto3" json:"server_time_ms,omitempty"`
@@ -2847,20 +2855,20 @@ type MoveStopReq struct {
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *MoveStopReq) Reset() {
-	*x = MoveStopReq{}
+func (x *MoveHaltReq) Reset() {
+	*x = MoveHaltReq{}
 	mi := &file_bigworld_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *MoveStopReq) String() string {
+func (x *MoveHaltReq) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*MoveStopReq) ProtoMessage() {}
+func (*MoveHaltReq) ProtoMessage() {}
 
-func (x *MoveStopReq) ProtoReflect() protoreflect.Message {
+func (x *MoveHaltReq) ProtoReflect() protoreflect.Message {
 	mi := &file_bigworld_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -2872,19 +2880,19 @@ func (x *MoveStopReq) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use MoveStopReq.ProtoReflect.Descriptor instead.
-func (*MoveStopReq) Descriptor() ([]byte, []int) {
+// Deprecated: Use MoveHaltReq.ProtoReflect.Descriptor instead.
+func (*MoveHaltReq) Descriptor() ([]byte, []int) {
 	return file_bigworld_proto_rawDescGZIP(), []int{39}
 }
 
-func (x *MoveStopReq) GetPlayerId() uint64 {
+func (x *MoveHaltReq) GetPlayerId() uint64 {
 	if x != nil {
 		return x.PlayerId
 	}
 	return 0
 }
 
-func (x *MoveStopReq) GetServerTimeMs() int64 {
+func (x *MoveHaltReq) GetServerTimeMs() int64 {
 	if x != nil {
 		return x.ServerTimeMs
 	}
@@ -3400,7 +3408,7 @@ type ValidateAccountRsp struct {
 	ReqId         uint64                 `protobuf:"varint,1,opt,name=req_id,json=reqId,proto3" json:"req_id,omitempty"`
 	Valid         bool                   `protobuf:"varint,2,opt,name=valid,proto3" json:"valid,omitempty"`
 	Message       string                 `protobuf:"bytes,3,opt,name=message,proto3" json:"message,omitempty"`
-	SceneId       string                 `protobuf:"bytes,4,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,4,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3456,11 +3464,11 @@ func (x *ValidateAccountRsp) GetMessage() string {
 	return ""
 }
 
-func (x *ValidateAccountRsp) GetSceneId() string {
+func (x *ValidateAccountRsp) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 // 玩家载入（world -> dbproxy）。
@@ -3518,7 +3526,8 @@ type LoadPlayerRsp struct {
 	X             float64                `protobuf:"fixed64,4,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,5,opt,name=z,proto3" json:"z,omitempty"`
 	Message       string                 `protobuf:"bytes,6,opt,name=message,proto3" json:"message,omitempty"`
-	SceneId       string                 `protobuf:"bytes,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,7,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	LegacyScene   string                 `protobuf:"bytes,8,opt,name=legacy_scene,json=legacyScene,proto3" json:"legacy_scene,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3595,9 +3604,16 @@ func (x *LoadPlayerRsp) GetMessage() string {
 	return ""
 }
 
-func (x *LoadPlayerRsp) GetSceneId() string {
+func (x *LoadPlayerRsp) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
+	}
+	return 0
+}
+
+func (x *LoadPlayerRsp) GetLegacyScene() string {
+	if x != nil {
+		return x.LegacyScene
 	}
 	return ""
 }
@@ -3609,7 +3625,7 @@ type PlayerData struct {
 	Account       string                 `protobuf:"bytes,2,opt,name=account,proto3" json:"account,omitempty"`
 	X             float64                `protobuf:"fixed64,3,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
-	SceneId       string                 `protobuf:"bytes,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,5,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -3672,11 +3688,11 @@ func (x *PlayerData) GetZ() float64 {
 	return 0
 }
 
-func (x *PlayerData) GetSceneId() string {
+func (x *PlayerData) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 type SavePlayerReq struct {
@@ -4026,10 +4042,11 @@ type TransferPrepareReq struct {
 	PlayerId      uint64                 `protobuf:"varint,3,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
 	GatewayId     string                 `protobuf:"bytes,4,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
 	SessionId     string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
-	FromSceneId   string                 `protobuf:"bytes,6,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
-	ToSceneId     string                 `protobuf:"bytes,7,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
+	FromSceneId   int64                  `protobuf:"varint,6,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
+	ToSceneId     int64                  `protobuf:"varint,7,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
 	ToX           float64                `protobuf:"fixed64,8,opt,name=to_x,json=toX,proto3" json:"to_x,omitempty"`
 	ToZ           float64                `protobuf:"fixed64,9,opt,name=to_z,json=toZ,proto3" json:"to_z,omitempty"`
+	Seamless      bool                   `protobuf:"varint,10,opt,name=seamless,proto3" json:"seamless,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4099,18 +4116,18 @@ func (x *TransferPrepareReq) GetSessionId() string {
 	return ""
 }
 
-func (x *TransferPrepareReq) GetFromSceneId() string {
+func (x *TransferPrepareReq) GetFromSceneId() int64 {
 	if x != nil {
 		return x.FromSceneId
 	}
-	return ""
+	return 0
 }
 
-func (x *TransferPrepareReq) GetToSceneId() string {
+func (x *TransferPrepareReq) GetToSceneId() int64 {
 	if x != nil {
 		return x.ToSceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *TransferPrepareReq) GetToX() float64 {
@@ -4127,6 +4144,13 @@ func (x *TransferPrepareReq) GetToZ() float64 {
 	return 0
 }
 
+func (x *TransferPrepareReq) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
+}
+
 type TransferIncomingNotify struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
@@ -4135,10 +4159,11 @@ type TransferIncomingNotify struct {
 	GatewayId     string                 `protobuf:"bytes,4,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
 	SessionId     string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	FromWorldId   string                 `protobuf:"bytes,6,opt,name=from_world_id,json=fromWorldId,proto3" json:"from_world_id,omitempty"`
-	FromSceneId   string                 `protobuf:"bytes,7,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
-	ToSceneId     string                 `protobuf:"bytes,8,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
+	FromSceneId   int64                  `protobuf:"varint,7,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
+	ToSceneId     int64                  `protobuf:"varint,8,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
 	ToX           float64                `protobuf:"fixed64,9,opt,name=to_x,json=toX,proto3" json:"to_x,omitempty"`
 	ToZ           float64                `protobuf:"fixed64,10,opt,name=to_z,json=toZ,proto3" json:"to_z,omitempty"`
+	Seamless      bool                   `protobuf:"varint,11,opt,name=seamless,proto3" json:"seamless,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4215,18 +4240,18 @@ func (x *TransferIncomingNotify) GetFromWorldId() string {
 	return ""
 }
 
-func (x *TransferIncomingNotify) GetFromSceneId() string {
+func (x *TransferIncomingNotify) GetFromSceneId() int64 {
 	if x != nil {
 		return x.FromSceneId
 	}
-	return ""
+	return 0
 }
 
-func (x *TransferIncomingNotify) GetToSceneId() string {
+func (x *TransferIncomingNotify) GetToSceneId() int64 {
 	if x != nil {
 		return x.ToSceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *TransferIncomingNotify) GetToX() float64 {
@@ -4241,6 +4266,13 @@ func (x *TransferIncomingNotify) GetToZ() float64 {
 		return x.ToZ
 	}
 	return 0
+}
+
+func (x *TransferIncomingNotify) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
 }
 
 type TransferIncomingAck struct {
@@ -4311,9 +4343,10 @@ type TransferPrepareRsp struct {
 	TransferId    string                 `protobuf:"bytes,4,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
 	ToWorldId     string                 `protobuf:"bytes,5,opt,name=to_world_id,json=toWorldId,proto3" json:"to_world_id,omitempty"`
 	ToWorldAddr   string                 `protobuf:"bytes,6,opt,name=to_world_addr,json=toWorldAddr,proto3" json:"to_world_addr,omitempty"`
-	ToSceneId     string                 `protobuf:"bytes,7,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
+	ToSceneId     int64                  `protobuf:"varint,7,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
 	ToX           float64                `protobuf:"fixed64,8,opt,name=to_x,json=toX,proto3" json:"to_x,omitempty"`
 	ToZ           float64                `protobuf:"fixed64,9,opt,name=to_z,json=toZ,proto3" json:"to_z,omitempty"`
+	Seamless      bool                   `protobuf:"varint,10,opt,name=seamless,proto3" json:"seamless,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -4390,11 +4423,11 @@ func (x *TransferPrepareRsp) GetToWorldAddr() string {
 	return ""
 }
 
-func (x *TransferPrepareRsp) GetToSceneId() string {
+func (x *TransferPrepareRsp) GetToSceneId() int64 {
 	if x != nil {
 		return x.ToSceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *TransferPrepareRsp) GetToX() float64 {
@@ -4409,6 +4442,13 @@ func (x *TransferPrepareRsp) GetToZ() float64 {
 		return x.ToZ
 	}
 	return 0
+}
+
+func (x *TransferPrepareRsp) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
 }
 
 type TransferAbortReq struct {
@@ -4607,6 +4647,90 @@ func (x *TransferFinishNotify) GetSuccess() bool {
 	return false
 }
 
+type MoveInputPb struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Seq           uint64                 `protobuf:"varint,1,opt,name=seq,proto3" json:"seq,omitempty"`
+	Tick          int64                  `protobuf:"varint,2,opt,name=tick,proto3" json:"tick,omitempty"`
+	Kind          uint32                 `protobuf:"varint,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	State         MoveState              `protobuf:"varint,4,opt,name=state,proto3,enum=bigworld.MoveState" json:"state,omitempty"`
+	DirX          float32                `protobuf:"fixed32,5,opt,name=dir_x,json=dirX,proto3" json:"dir_x,omitempty"`
+	DirZ          float32                `protobuf:"fixed32,6,opt,name=dir_z,json=dirZ,proto3" json:"dir_z,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *MoveInputPb) Reset() {
+	*x = MoveInputPb{}
+	mi := &file_bigworld_proto_msgTypes[65]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *MoveInputPb) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*MoveInputPb) ProtoMessage() {}
+
+func (x *MoveInputPb) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[65]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use MoveInputPb.ProtoReflect.Descriptor instead.
+func (*MoveInputPb) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{65}
+}
+
+func (x *MoveInputPb) GetSeq() uint64 {
+	if x != nil {
+		return x.Seq
+	}
+	return 0
+}
+
+func (x *MoveInputPb) GetTick() int64 {
+	if x != nil {
+		return x.Tick
+	}
+	return 0
+}
+
+func (x *MoveInputPb) GetKind() uint32 {
+	if x != nil {
+		return x.Kind
+	}
+	return 0
+}
+
+func (x *MoveInputPb) GetState() MoveState {
+	if x != nil {
+		return x.State
+	}
+	return MoveState_MOVE_IDLE
+}
+
+func (x *MoveInputPb) GetDirX() float32 {
+	if x != nil {
+		return x.DirX
+	}
+	return 0
+}
+
+func (x *MoveInputPb) GetDirZ() float32 {
+	if x != nil {
+		return x.DirZ
+	}
+	return 0
+}
+
 type TransferEntityReq struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	TransferId    string                 `protobuf:"bytes,1,opt,name=transfer_id,json=transferId,proto3" json:"transfer_id,omitempty"`
@@ -4615,17 +4739,30 @@ type TransferEntityReq struct {
 	GatewayId     string                 `protobuf:"bytes,4,opt,name=gateway_id,json=gatewayId,proto3" json:"gateway_id,omitempty"`
 	SessionId     string                 `protobuf:"bytes,5,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	FromWorldId   string                 `protobuf:"bytes,6,opt,name=from_world_id,json=fromWorldId,proto3" json:"from_world_id,omitempty"`
-	FromSceneId   string                 `protobuf:"bytes,7,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
-	ToSceneId     string                 `protobuf:"bytes,8,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
+	FromSceneId   int64                  `protobuf:"varint,7,opt,name=from_scene_id,json=fromSceneId,proto3" json:"from_scene_id,omitempty"`
+	ToSceneId     int64                  `protobuf:"varint,8,opt,name=to_scene_id,json=toSceneId,proto3" json:"to_scene_id,omitempty"`
 	X             float64                `protobuf:"fixed64,9,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,10,opt,name=z,proto3" json:"z,omitempty"`
+	Seamless      bool                   `protobuf:"varint,11,opt,name=seamless,proto3" json:"seamless,omitempty"`
+	Y             float64                `protobuf:"fixed64,12,opt,name=y,proto3" json:"y,omitempty"`
+	VoxelK        int32                  `protobuf:"varint,13,opt,name=voxel_k,json=voxelK,proto3" json:"voxel_k,omitempty"`
+	Airborne      bool                   `protobuf:"varint,14,opt,name=airborne,proto3" json:"airborne,omitempty"`
+	State         MoveState              `protobuf:"varint,15,opt,name=state,proto3,enum=bigworld.MoveState" json:"state,omitempty"`
+	MoveDirX      float64                `protobuf:"fixed64,16,opt,name=move_dir_x,json=moveDirX,proto3" json:"move_dir_x,omitempty"`
+	MoveDirZ      float64                `protobuf:"fixed64,17,opt,name=move_dir_z,json=moveDirZ,proto3" json:"move_dir_z,omitempty"`
+	CurveNorm     float64                `protobuf:"fixed64,18,opt,name=curve_norm,json=curveNorm,proto3" json:"curve_norm,omitempty"`
+	StateStartMs  int64                  `protobuf:"varint,19,opt,name=state_start_ms,json=stateStartMs,proto3" json:"state_start_ms,omitempty"`
+	FallVelY      float64                `protobuf:"fixed64,20,opt,name=fall_vel_y,json=fallVelY,proto3" json:"fall_vel_y,omitempty"`
+	SimTick       int64                  `protobuf:"varint,21,opt,name=sim_tick,json=simTick,proto3" json:"sim_tick,omitempty"`
+	InputSeq      uint64                 `protobuf:"varint,22,opt,name=input_seq,json=inputSeq,proto3" json:"input_seq,omitempty"`
+	Inputs        []*MoveInputPb         `protobuf:"bytes,23,rep,name=inputs,proto3" json:"inputs,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TransferEntityReq) Reset() {
 	*x = TransferEntityReq{}
-	mi := &file_bigworld_proto_msgTypes[65]
+	mi := &file_bigworld_proto_msgTypes[66]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4637,7 +4774,7 @@ func (x *TransferEntityReq) String() string {
 func (*TransferEntityReq) ProtoMessage() {}
 
 func (x *TransferEntityReq) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[65]
+	mi := &file_bigworld_proto_msgTypes[66]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4650,7 +4787,7 @@ func (x *TransferEntityReq) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferEntityReq.ProtoReflect.Descriptor instead.
 func (*TransferEntityReq) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{65}
+	return file_bigworld_proto_rawDescGZIP(), []int{66}
 }
 
 func (x *TransferEntityReq) GetTransferId() string {
@@ -4695,18 +4832,18 @@ func (x *TransferEntityReq) GetFromWorldId() string {
 	return ""
 }
 
-func (x *TransferEntityReq) GetFromSceneId() string {
+func (x *TransferEntityReq) GetFromSceneId() int64 {
 	if x != nil {
 		return x.FromSceneId
 	}
-	return ""
+	return 0
 }
 
-func (x *TransferEntityReq) GetToSceneId() string {
+func (x *TransferEntityReq) GetToSceneId() int64 {
 	if x != nil {
 		return x.ToSceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *TransferEntityReq) GetX() float64 {
@@ -4721,6 +4858,97 @@ func (x *TransferEntityReq) GetZ() float64 {
 		return x.Z
 	}
 	return 0
+}
+
+func (x *TransferEntityReq) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
+}
+
+func (x *TransferEntityReq) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetVoxelK() int32 {
+	if x != nil {
+		return x.VoxelK
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetAirborne() bool {
+	if x != nil {
+		return x.Airborne
+	}
+	return false
+}
+
+func (x *TransferEntityReq) GetState() MoveState {
+	if x != nil {
+		return x.State
+	}
+	return MoveState_MOVE_IDLE
+}
+
+func (x *TransferEntityReq) GetMoveDirX() float64 {
+	if x != nil {
+		return x.MoveDirX
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetMoveDirZ() float64 {
+	if x != nil {
+		return x.MoveDirZ
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetCurveNorm() float64 {
+	if x != nil {
+		return x.CurveNorm
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetStateStartMs() int64 {
+	if x != nil {
+		return x.StateStartMs
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetFallVelY() float64 {
+	if x != nil {
+		return x.FallVelY
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetSimTick() int64 {
+	if x != nil {
+		return x.SimTick
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetInputSeq() uint64 {
+	if x != nil {
+		return x.InputSeq
+	}
+	return 0
+}
+
+func (x *TransferEntityReq) GetInputs() []*MoveInputPb {
+	if x != nil {
+		return x.Inputs
+	}
+	return nil
 }
 
 type TransferEntityRsp struct {
@@ -4738,7 +4966,7 @@ type TransferEntityRsp struct {
 
 func (x *TransferEntityRsp) Reset() {
 	*x = TransferEntityRsp{}
-	mi := &file_bigworld_proto_msgTypes[66]
+	mi := &file_bigworld_proto_msgTypes[67]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4750,7 +4978,7 @@ func (x *TransferEntityRsp) String() string {
 func (*TransferEntityRsp) ProtoMessage() {}
 
 func (x *TransferEntityRsp) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[66]
+	mi := &file_bigworld_proto_msgTypes[67]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4763,7 +4991,7 @@ func (x *TransferEntityRsp) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferEntityRsp.ProtoReflect.Descriptor instead.
 func (*TransferEntityRsp) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{66}
+	return file_bigworld_proto_rawDescGZIP(), []int{67}
 }
 
 func (x *TransferEntityRsp) GetTransferId() string {
@@ -4822,18 +5050,19 @@ type TransferCommitNotify struct {
 	Account       string                 `protobuf:"bytes,3,opt,name=account,proto3" json:"account,omitempty"`
 	SessionId     string                 `protobuf:"bytes,4,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
 	WorldId       string                 `protobuf:"bytes,5,opt,name=world_id,json=worldId,proto3" json:"world_id,omitempty"`
-	SceneId       string                 `protobuf:"bytes,6,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	SceneId       int64                  `protobuf:"varint,6,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
 	X             float64                `protobuf:"fixed64,7,opt,name=x,proto3" json:"x,omitempty"`
 	Z             float64                `protobuf:"fixed64,8,opt,name=z,proto3" json:"z,omitempty"`
 	Width         float64                `protobuf:"fixed64,9,opt,name=width,proto3" json:"width,omitempty"`
 	Height        float64                `protobuf:"fixed64,10,opt,name=height,proto3" json:"height,omitempty"`
+	Seamless      bool                   `protobuf:"varint,11,opt,name=seamless,proto3" json:"seamless,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *TransferCommitNotify) Reset() {
 	*x = TransferCommitNotify{}
-	mi := &file_bigworld_proto_msgTypes[67]
+	mi := &file_bigworld_proto_msgTypes[68]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4845,7 +5074,7 @@ func (x *TransferCommitNotify) String() string {
 func (*TransferCommitNotify) ProtoMessage() {}
 
 func (x *TransferCommitNotify) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[67]
+	mi := &file_bigworld_proto_msgTypes[68]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4858,7 +5087,7 @@ func (x *TransferCommitNotify) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TransferCommitNotify.ProtoReflect.Descriptor instead.
 func (*TransferCommitNotify) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{67}
+	return file_bigworld_proto_rawDescGZIP(), []int{68}
 }
 
 func (x *TransferCommitNotify) GetTransferId() string {
@@ -4896,11 +5125,11 @@ func (x *TransferCommitNotify) GetWorldId() string {
 	return ""
 }
 
-func (x *TransferCommitNotify) GetSceneId() string {
+func (x *TransferCommitNotify) GetSceneId() int64 {
 	if x != nil {
 		return x.SceneId
 	}
-	return ""
+	return 0
 }
 
 func (x *TransferCommitNotify) GetX() float64 {
@@ -4931,6 +5160,477 @@ func (x *TransferCommitNotify) GetHeight() float64 {
 	return 0
 }
 
+func (x *TransferCommitNotify) GetSeamless() bool {
+	if x != nil {
+		return x.Seamless
+	}
+	return false
+}
+
+type EntityStatePb struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	PlayerId      uint64                 `protobuf:"varint,1,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	X             float64                `protobuf:"fixed64,2,opt,name=x,proto3" json:"x,omitempty"`
+	Y             float64                `protobuf:"fixed64,3,opt,name=y,proto3" json:"y,omitempty"`
+	Z             float64                `protobuf:"fixed64,4,opt,name=z,proto3" json:"z,omitempty"`
+	VoxelK        int32                  `protobuf:"varint,5,opt,name=voxel_k,json=voxelK,proto3" json:"voxel_k,omitempty"`
+	Airborne      bool                   `protobuf:"varint,6,opt,name=airborne,proto3" json:"airborne,omitempty"`
+	State         MoveState              `protobuf:"varint,7,opt,name=state,proto3,enum=bigworld.MoveState" json:"state,omitempty"`
+	DirX          float64                `protobuf:"fixed64,8,opt,name=dir_x,json=dirX,proto3" json:"dir_x,omitempty"`
+	DirZ          float64                `protobuf:"fixed64,9,opt,name=dir_z,json=dirZ,proto3" json:"dir_z,omitempty"`
+	CurveNorm     float64                `protobuf:"fixed64,10,opt,name=curve_norm,json=curveNorm,proto3" json:"curve_norm,omitempty"`
+	StateStartMs  int64                  `protobuf:"varint,11,opt,name=state_start_ms,json=stateStartMs,proto3" json:"state_start_ms,omitempty"`
+	FallVelY      float64                `protobuf:"fixed64,12,opt,name=fall_vel_y,json=fallVelY,proto3" json:"fall_vel_y,omitempty"`
+	SimTick       int64                  `protobuf:"varint,13,opt,name=sim_tick,json=simTick,proto3" json:"sim_tick,omitempty"`
+	Account       string                 `protobuf:"bytes,14,opt,name=account,proto3" json:"account,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *EntityStatePb) Reset() {
+	*x = EntityStatePb{}
+	mi := &file_bigworld_proto_msgTypes[69]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntityStatePb) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityStatePb) ProtoMessage() {}
+
+func (x *EntityStatePb) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[69]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityStatePb.ProtoReflect.Descriptor instead.
+func (*EntityStatePb) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{69}
+}
+
+func (x *EntityStatePb) GetPlayerId() uint64 {
+	if x != nil {
+		return x.PlayerId
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetX() float64 {
+	if x != nil {
+		return x.X
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetY() float64 {
+	if x != nil {
+		return x.Y
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetZ() float64 {
+	if x != nil {
+		return x.Z
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetVoxelK() int32 {
+	if x != nil {
+		return x.VoxelK
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetAirborne() bool {
+	if x != nil {
+		return x.Airborne
+	}
+	return false
+}
+
+func (x *EntityStatePb) GetState() MoveState {
+	if x != nil {
+		return x.State
+	}
+	return MoveState_MOVE_IDLE
+}
+
+func (x *EntityStatePb) GetDirX() float64 {
+	if x != nil {
+		return x.DirX
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetDirZ() float64 {
+	if x != nil {
+		return x.DirZ
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetCurveNorm() float64 {
+	if x != nil {
+		return x.CurveNorm
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetStateStartMs() int64 {
+	if x != nil {
+		return x.StateStartMs
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetFallVelY() float64 {
+	if x != nil {
+		return x.FallVelY
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetSimTick() int64 {
+	if x != nil {
+		return x.SimTick
+	}
+	return 0
+}
+
+func (x *EntityStatePb) GetAccount() string {
+	if x != nil {
+		return x.Account
+	}
+	return ""
+}
+
+type EntityEnterNotify struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TargetPlayerId uint64                 `protobuf:"varint,1,opt,name=target_player_id,json=targetPlayerId,proto3" json:"target_player_id,omitempty"`
+	Entity         *EntityStatePb         `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EntityEnterNotify) Reset() {
+	*x = EntityEnterNotify{}
+	mi := &file_bigworld_proto_msgTypes[70]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntityEnterNotify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityEnterNotify) ProtoMessage() {}
+
+func (x *EntityEnterNotify) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[70]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityEnterNotify.ProtoReflect.Descriptor instead.
+func (*EntityEnterNotify) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{70}
+}
+
+func (x *EntityEnterNotify) GetTargetPlayerId() uint64 {
+	if x != nil {
+		return x.TargetPlayerId
+	}
+	return 0
+}
+
+func (x *EntityEnterNotify) GetEntity() *EntityStatePb {
+	if x != nil {
+		return x.Entity
+	}
+	return nil
+}
+
+type EntityLeaveNotify struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TargetPlayerId uint64                 `protobuf:"varint,1,opt,name=target_player_id,json=targetPlayerId,proto3" json:"target_player_id,omitempty"`
+	PlayerId       uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EntityLeaveNotify) Reset() {
+	*x = EntityLeaveNotify{}
+	mi := &file_bigworld_proto_msgTypes[71]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntityLeaveNotify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityLeaveNotify) ProtoMessage() {}
+
+func (x *EntityLeaveNotify) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[71]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityLeaveNotify.ProtoReflect.Descriptor instead.
+func (*EntityLeaveNotify) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{71}
+}
+
+func (x *EntityLeaveNotify) GetTargetPlayerId() uint64 {
+	if x != nil {
+		return x.TargetPlayerId
+	}
+	return 0
+}
+
+func (x *EntityLeaveNotify) GetPlayerId() uint64 {
+	if x != nil {
+		return x.PlayerId
+	}
+	return 0
+}
+
+type EntityMoveEventNotify struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TargetPlayerId uint64                 `protobuf:"varint,1,opt,name=target_player_id,json=targetPlayerId,proto3" json:"target_player_id,omitempty"`
+	PlayerId       uint64                 `protobuf:"varint,2,opt,name=player_id,json=playerId,proto3" json:"player_id,omitempty"`
+	Kind           uint32                 `protobuf:"varint,3,opt,name=kind,proto3" json:"kind,omitempty"`
+	State          MoveState              `protobuf:"varint,4,opt,name=state,proto3,enum=bigworld.MoveState" json:"state,omitempty"`
+	DirX           float64                `protobuf:"fixed64,5,opt,name=dir_x,json=dirX,proto3" json:"dir_x,omitempty"`
+	DirZ           float64                `protobuf:"fixed64,6,opt,name=dir_z,json=dirZ,proto3" json:"dir_z,omitempty"`
+	ServerTimeMs   int64                  `protobuf:"varint,7,opt,name=server_time_ms,json=serverTimeMs,proto3" json:"server_time_ms,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EntityMoveEventNotify) Reset() {
+	*x = EntityMoveEventNotify{}
+	mi := &file_bigworld_proto_msgTypes[72]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntityMoveEventNotify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntityMoveEventNotify) ProtoMessage() {}
+
+func (x *EntityMoveEventNotify) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[72]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntityMoveEventNotify.ProtoReflect.Descriptor instead.
+func (*EntityMoveEventNotify) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{72}
+}
+
+func (x *EntityMoveEventNotify) GetTargetPlayerId() uint64 {
+	if x != nil {
+		return x.TargetPlayerId
+	}
+	return 0
+}
+
+func (x *EntityMoveEventNotify) GetPlayerId() uint64 {
+	if x != nil {
+		return x.PlayerId
+	}
+	return 0
+}
+
+func (x *EntityMoveEventNotify) GetKind() uint32 {
+	if x != nil {
+		return x.Kind
+	}
+	return 0
+}
+
+func (x *EntityMoveEventNotify) GetState() MoveState {
+	if x != nil {
+		return x.State
+	}
+	return MoveState_MOVE_IDLE
+}
+
+func (x *EntityMoveEventNotify) GetDirX() float64 {
+	if x != nil {
+		return x.DirX
+	}
+	return 0
+}
+
+func (x *EntityMoveEventNotify) GetDirZ() float64 {
+	if x != nil {
+		return x.DirZ
+	}
+	return 0
+}
+
+func (x *EntityMoveEventNotify) GetServerTimeMs() int64 {
+	if x != nil {
+		return x.ServerTimeMs
+	}
+	return 0
+}
+
+type EntitySnapshotNotify struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	TargetPlayerId uint64                 `protobuf:"varint,1,opt,name=target_player_id,json=targetPlayerId,proto3" json:"target_player_id,omitempty"`
+	Entity         *EntityStatePb         `protobuf:"bytes,2,opt,name=entity,proto3" json:"entity,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *EntitySnapshotNotify) Reset() {
+	*x = EntitySnapshotNotify{}
+	mi := &file_bigworld_proto_msgTypes[73]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *EntitySnapshotNotify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*EntitySnapshotNotify) ProtoMessage() {}
+
+func (x *EntitySnapshotNotify) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[73]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use EntitySnapshotNotify.ProtoReflect.Descriptor instead.
+func (*EntitySnapshotNotify) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{73}
+}
+
+func (x *EntitySnapshotNotify) GetTargetPlayerId() uint64 {
+	if x != nil {
+		return x.TargetPlayerId
+	}
+	return 0
+}
+
+func (x *EntitySnapshotNotify) GetEntity() *EntityStatePb {
+	if x != nil {
+		return x.Entity
+	}
+	return nil
+}
+
+type BorderInterestNotify struct {
+	state            protoimpl.MessageState `protogen:"open.v1"`
+	FromWorldId      string                 `protobuf:"bytes,1,opt,name=from_world_id,json=fromWorldId,proto3" json:"from_world_id,omitempty"`
+	SceneId          int64                  `protobuf:"varint,2,opt,name=scene_id,json=sceneId,proto3" json:"scene_id,omitempty"`
+	Entities         []*EntityStatePb       `protobuf:"bytes,3,rep,name=entities,proto3" json:"entities,omitempty"`
+	RemovedPlayerIds []uint64               `protobuf:"varint,4,rep,packed,name=removed_player_ids,json=removedPlayerIds,proto3" json:"removed_player_ids,omitempty"`
+	unknownFields    protoimpl.UnknownFields
+	sizeCache        protoimpl.SizeCache
+}
+
+func (x *BorderInterestNotify) Reset() {
+	*x = BorderInterestNotify{}
+	mi := &file_bigworld_proto_msgTypes[74]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *BorderInterestNotify) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BorderInterestNotify) ProtoMessage() {}
+
+func (x *BorderInterestNotify) ProtoReflect() protoreflect.Message {
+	mi := &file_bigworld_proto_msgTypes[74]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BorderInterestNotify.ProtoReflect.Descriptor instead.
+func (*BorderInterestNotify) Descriptor() ([]byte, []int) {
+	return file_bigworld_proto_rawDescGZIP(), []int{74}
+}
+
+func (x *BorderInterestNotify) GetFromWorldId() string {
+	if x != nil {
+		return x.FromWorldId
+	}
+	return ""
+}
+
+func (x *BorderInterestNotify) GetSceneId() int64 {
+	if x != nil {
+		return x.SceneId
+	}
+	return 0
+}
+
+func (x *BorderInterestNotify) GetEntities() []*EntityStatePb {
+	if x != nil {
+		return x.Entities
+	}
+	return nil
+}
+
+func (x *BorderInterestNotify) GetRemovedPlayerIds() []uint64 {
+	if x != nil {
+		return x.RemovedPlayerIds
+	}
+	return nil
+}
+
 type SceneAssignNotify struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	AddScenes     []string               `protobuf:"bytes,1,rep,name=add_scenes,json=addScenes,proto3" json:"add_scenes,omitempty"`
@@ -4941,7 +5641,7 @@ type SceneAssignNotify struct {
 
 func (x *SceneAssignNotify) Reset() {
 	*x = SceneAssignNotify{}
-	mi := &file_bigworld_proto_msgTypes[68]
+	mi := &file_bigworld_proto_msgTypes[75]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -4953,7 +5653,7 @@ func (x *SceneAssignNotify) String() string {
 func (*SceneAssignNotify) ProtoMessage() {}
 
 func (x *SceneAssignNotify) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[68]
+	mi := &file_bigworld_proto_msgTypes[75]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -4966,7 +5666,7 @@ func (x *SceneAssignNotify) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SceneAssignNotify.ProtoReflect.Descriptor instead.
 func (*SceneAssignNotify) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{68}
+	return file_bigworld_proto_rawDescGZIP(), []int{75}
 }
 
 func (x *SceneAssignNotify) GetAddScenes() []string {
@@ -4993,7 +5693,7 @@ type SceneAssignAck struct {
 
 func (x *SceneAssignAck) Reset() {
 	*x = SceneAssignAck{}
-	mi := &file_bigworld_proto_msgTypes[69]
+	mi := &file_bigworld_proto_msgTypes[76]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -5005,7 +5705,7 @@ func (x *SceneAssignAck) String() string {
 func (*SceneAssignAck) ProtoMessage() {}
 
 func (x *SceneAssignAck) ProtoReflect() protoreflect.Message {
-	mi := &file_bigworld_proto_msgTypes[69]
+	mi := &file_bigworld_proto_msgTypes[76]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -5018,7 +5718,7 @@ func (x *SceneAssignAck) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SceneAssignAck.ProtoReflect.Descriptor instead.
 func (*SceneAssignAck) Descriptor() ([]byte, []int) {
-	return file_bigworld_proto_rawDescGZIP(), []int{69}
+	return file_bigworld_proto_rawDescGZIP(), []int{76}
 }
 
 func (x *SceneAssignAck) GetSceneIds() []string {
@@ -5087,12 +5787,12 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x05width\x18\n" +
 	" \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\v \x01(\x01R\x06height\x12\x19\n" +
-	"\bscene_id\x18\f \x01(\tR\asceneId\"{\n" +
+	"\bscene_id\x18\f \x01(\x03R\asceneId\"{\n" +
 	"\x10GatewayAssignReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x1b\n" +
 	"\tserver_id\x18\x02 \x01(\tR\bserverId\x12\x18\n" +
 	"\aaccount\x18\x03 \x01(\tR\aaccount\x12\x19\n" +
-	"\bscene_id\x18\x04 \x01(\tR\asceneId\"\x9f\x01\n" +
+	"\bscene_id\x18\x04 \x01(\x03R\asceneId\"\x9f\x01\n" +
 	"\x10GatewayAssignRsp\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12!\n" +
@@ -5142,7 +5842,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\a \x01(\tR\tsessionId\x12\x19\n" +
-	"\bscene_id\x18\b \x01(\tR\asceneId\"\x9a\x01\n" +
+	"\bscene_id\x18\b \x01(\x03R\asceneId\"\x9a\x01\n" +
 	"\x0eLoginFinishRsp\x12\x18\n" +
 	"\asuccess\x18\x01 \x01(\bR\asuccess\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
@@ -5155,7 +5855,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\x19\n" +
 	"\bworld_id\x18\x03 \x01(\tR\aworldId\x12\x1d\n" +
 	"\n" +
-	"session_id\x18\x04 \x01(\tR\tsessionId\"\xaf\x01\n" +
+	"session_id\x18\x04 \x01(\tR\tsessionId\"\xcb\x01\n" +
 	"\x10EnterSceneNotify\x12\x19\n" +
 	"\bworld_id\x18\x01 \x01(\tR\aworldId\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\f\n" +
@@ -5163,7 +5863,8 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01z\x18\x04 \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\x05 \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\x06 \x01(\x01R\x06height\x12\x19\n" +
-	"\bscene_id\x18\a \x01(\tR\asceneId\"(\n" +
+	"\bscene_id\x18\a \x01(\x03R\asceneId\x12\x1a\n" +
+	"\bseamless\x18\b \x01(\bR\bseamless\"(\n" +
 	"\tLogoutReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\"?\n" +
 	"\tLogoutRsp\x12\x18\n" +
@@ -5208,7 +5909,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x05width\x18\x06 \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\a \x01(\x01R\x06height\x12\x18\n" +
 	"\amessage\x18\b \x01(\tR\amessage\x12\x19\n" +
-	"\bscene_id\x18\t \x01(\tR\asceneId\x12\x1d\n" +
+	"\bscene_id\x18\t \x01(\x03R\asceneId\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\n" +
 	" \x01(\tR\tsessionId\"m\n" +
@@ -5236,7 +5937,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\tplayer_id\x18\x03 \x01(\x04R\bplayerId\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x04 \x01(\tR\tsessionId\x12\x19\n" +
-	"\bscene_id\x18\x05 \x01(\tR\asceneId\x12\f\n" +
+	"\bscene_id\x18\x05 \x01(\x03R\asceneId\x12\f\n" +
 	"\x01x\x18\x06 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\a \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\b \x01(\x01R\x05width\x12\x16\n" +
@@ -5272,7 +5973,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x120\n" +
 	"\tstop_kind\x18\x02 \x01(\x0e2\x13.bigworld.MoveStateR\bstopKind\x12$\n" +
 	"\x0eserver_time_ms\x18\x03 \x01(\x03R\fserverTimeMs\"P\n" +
-	"\vMoveStopReq\x12\x1b\n" +
+	"\vMoveHaltReq\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12$\n" +
 	"\x0eserver_time_ms\x18\x02 \x01(\x03R\fserverTimeMs\"z\n" +
 	"\x10MoveDirChangeReq\x12\x1b\n" +
@@ -5320,9 +6021,9 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x14\n" +
 	"\x05valid\x18\x02 \x01(\bR\x05valid\x12\x18\n" +
 	"\amessage\x18\x03 \x01(\tR\amessage\x12\x19\n" +
-	"\bscene_id\x18\x04 \x01(\tR\asceneId\")\n" +
+	"\bscene_id\x18\x04 \x01(\x03R\asceneId\")\n" +
 	"\rLoadPlayerReq\x12\x18\n" +
-	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xad\x01\n" +
+	"\aaccount\x18\x01 \x01(\tR\aaccount\"\xd0\x01\n" +
 	"\rLoadPlayerRsp\x12\x14\n" +
 	"\x05found\x18\x01 \x01(\bR\x05found\x12\x1b\n" +
 	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x18\n" +
@@ -5330,14 +6031,15 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01x\x18\x04 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\x05 \x01(\x01R\x01z\x12\x18\n" +
 	"\amessage\x18\x06 \x01(\tR\amessage\x12\x19\n" +
-	"\bscene_id\x18\a \x01(\tR\asceneId\"z\n" +
+	"\bscene_id\x18\a \x01(\x03R\asceneId\x12!\n" +
+	"\flegacy_scene\x18\b \x01(\tR\vlegacyScene\"z\n" +
 	"\n" +
 	"PlayerData\x12\x1b\n" +
 	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\f\n" +
 	"\x01x\x18\x03 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\x04 \x01(\x01R\x01z\x12\x19\n" +
-	"\bscene_id\x18\x05 \x01(\tR\asceneId\"V\n" +
+	"\bscene_id\x18\x05 \x01(\x03R\asceneId\"V\n" +
 	"\rSavePlayerReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12.\n" +
 	"\aplayers\x18\x02 \x03(\v2\x14.bigworld.PlayerDataR\aplayers\"Z\n" +
@@ -5355,7 +6057,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\vShutdownAck\x12\x1b\n" +
 	"\tserver_id\x18\x01 \x01(\tR\bserverId\"0\n" +
 	"\x14ServerShutdownNotify\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"\x8a\x02\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\xa6\x02\n" +
 	"\x12TransferPrepareReq\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x18\n" +
 	"\aaccount\x18\x02 \x01(\tR\aaccount\x12\x1b\n" +
@@ -5364,10 +6066,12 @@ const file_bigworld_proto_rawDesc = "" +
 	"gateway_id\x18\x04 \x01(\tR\tgatewayId\x12\x1d\n" +
 	"\n" +
 	"session_id\x18\x05 \x01(\tR\tsessionId\x12\"\n" +
-	"\rfrom_scene_id\x18\x06 \x01(\tR\vfromSceneId\x12\x1e\n" +
-	"\vto_scene_id\x18\a \x01(\tR\ttoSceneId\x12\x11\n" +
+	"\rfrom_scene_id\x18\x06 \x01(\x03R\vfromSceneId\x12\x1e\n" +
+	"\vto_scene_id\x18\a \x01(\x03R\ttoSceneId\x12\x11\n" +
 	"\x04to_x\x18\b \x01(\x01R\x03toX\x12\x11\n" +
-	"\x04to_z\x18\t \x01(\x01R\x03toZ\"\xbc\x02\n" +
+	"\x04to_z\x18\t \x01(\x01R\x03toZ\x12\x1a\n" +
+	"\bseamless\x18\n" +
+	" \x01(\bR\bseamless\"\xd8\x02\n" +
 	"\x16TransferIncomingNotify\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x1b\n" +
@@ -5378,16 +6082,17 @@ const file_bigworld_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x05 \x01(\tR\tsessionId\x12\"\n" +
 	"\rfrom_world_id\x18\x06 \x01(\tR\vfromWorldId\x12\"\n" +
-	"\rfrom_scene_id\x18\a \x01(\tR\vfromSceneId\x12\x1e\n" +
-	"\vto_scene_id\x18\b \x01(\tR\ttoSceneId\x12\x11\n" +
+	"\rfrom_scene_id\x18\a \x01(\x03R\vfromSceneId\x12\x1e\n" +
+	"\vto_scene_id\x18\b \x01(\x03R\ttoSceneId\x12\x11\n" +
 	"\x04to_x\x18\t \x01(\x01R\x03toX\x12\x11\n" +
 	"\x04to_z\x18\n" +
-	" \x01(\x01R\x03toZ\"j\n" +
+	" \x01(\x01R\x03toZ\x12\x1a\n" +
+	"\bseamless\x18\v \x01(\bR\bseamless\"j\n" +
 	"\x13TransferIncomingAck\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
-	"\amessage\x18\x03 \x01(\tR\amessage\"\x8a\x02\n" +
+	"\amessage\x18\x03 \x01(\tR\amessage\"\xa6\x02\n" +
 	"\x12TransferPrepareRsp\x12\x15\n" +
 	"\x06req_id\x18\x01 \x01(\x04R\x05reqId\x12\x18\n" +
 	"\asuccess\x18\x02 \x01(\bR\asuccess\x12\x18\n" +
@@ -5396,9 +6101,11 @@ const file_bigworld_proto_rawDesc = "" +
 	"transferId\x12\x1e\n" +
 	"\vto_world_id\x18\x05 \x01(\tR\ttoWorldId\x12\"\n" +
 	"\rto_world_addr\x18\x06 \x01(\tR\vtoWorldAddr\x12\x1e\n" +
-	"\vto_scene_id\x18\a \x01(\tR\ttoSceneId\x12\x11\n" +
+	"\vto_scene_id\x18\a \x01(\x03R\ttoSceneId\x12\x11\n" +
 	"\x04to_x\x18\b \x01(\x01R\x03toX\x12\x11\n" +
-	"\x04to_z\x18\t \x01(\x01R\x03toZ\"K\n" +
+	"\x04to_z\x18\t \x01(\x01R\x03toZ\x12\x1a\n" +
+	"\bseamless\x18\n" +
+	" \x01(\bR\bseamless\"K\n" +
 	"\x10TransferAbortReq\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x16\n" +
@@ -5415,7 +6122,14 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x14TransferFinishNotify\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x18\n" +
-	"\asuccess\x18\x02 \x01(\bR\asuccess\"\xad\x02\n" +
+	"\asuccess\x18\x02 \x01(\bR\asuccess\"\x9c\x01\n" +
+	"\vMoveInputPb\x12\x10\n" +
+	"\x03seq\x18\x01 \x01(\x04R\x03seq\x12\x12\n" +
+	"\x04tick\x18\x02 \x01(\x03R\x04tick\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\rR\x04kind\x12)\n" +
+	"\x05state\x18\x04 \x01(\x0e2\x13.bigworld.MoveStateR\x05state\x12\x13\n" +
+	"\x05dir_x\x18\x05 \x01(\x02R\x04dirX\x12\x13\n" +
+	"\x05dir_z\x18\x06 \x01(\x02R\x04dirZ\"\xbd\x05\n" +
 	"\x11TransferEntityReq\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x1b\n" +
@@ -5426,11 +6140,28 @@ const file_bigworld_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x05 \x01(\tR\tsessionId\x12\"\n" +
 	"\rfrom_world_id\x18\x06 \x01(\tR\vfromWorldId\x12\"\n" +
-	"\rfrom_scene_id\x18\a \x01(\tR\vfromSceneId\x12\x1e\n" +
-	"\vto_scene_id\x18\b \x01(\tR\ttoSceneId\x12\f\n" +
+	"\rfrom_scene_id\x18\a \x01(\x03R\vfromSceneId\x12\x1e\n" +
+	"\vto_scene_id\x18\b \x01(\x03R\ttoSceneId\x12\f\n" +
 	"\x01x\x18\t \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\n" +
-	" \x01(\x01R\x01z\"\xb2\x01\n" +
+	" \x01(\x01R\x01z\x12\x1a\n" +
+	"\bseamless\x18\v \x01(\bR\bseamless\x12\f\n" +
+	"\x01y\x18\f \x01(\x01R\x01y\x12\x17\n" +
+	"\avoxel_k\x18\r \x01(\x05R\x06voxelK\x12\x1a\n" +
+	"\bairborne\x18\x0e \x01(\bR\bairborne\x12)\n" +
+	"\x05state\x18\x0f \x01(\x0e2\x13.bigworld.MoveStateR\x05state\x12\x1c\n" +
+	"\n" +
+	"move_dir_x\x18\x10 \x01(\x01R\bmoveDirX\x12\x1c\n" +
+	"\n" +
+	"move_dir_z\x18\x11 \x01(\x01R\bmoveDirZ\x12\x1d\n" +
+	"\n" +
+	"curve_norm\x18\x12 \x01(\x01R\tcurveNorm\x12$\n" +
+	"\x0estate_start_ms\x18\x13 \x01(\x03R\fstateStartMs\x12\x1c\n" +
+	"\n" +
+	"fall_vel_y\x18\x14 \x01(\x01R\bfallVelY\x12\x19\n" +
+	"\bsim_tick\x18\x15 \x01(\x03R\asimTick\x12\x1b\n" +
+	"\tinput_seq\x18\x16 \x01(\x04R\binputSeq\x12-\n" +
+	"\x06inputs\x18\x17 \x03(\v2\x15.bigworld.MoveInputPbR\x06inputs\"\xb2\x01\n" +
 	"\x11TransferEntityRsp\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x18\n" +
@@ -5439,7 +6170,7 @@ const file_bigworld_proto_rawDesc = "" +
 	"\x01x\x18\x04 \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\x05 \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\x06 \x01(\x01R\x05width\x12\x16\n" +
-	"\x06height\x18\a \x01(\x01R\x06height\"\x8d\x02\n" +
+	"\x06height\x18\a \x01(\x01R\x06height\"\xa9\x02\n" +
 	"\x14TransferCommitNotify\x12\x1f\n" +
 	"\vtransfer_id\x18\x01 \x01(\tR\n" +
 	"transferId\x12\x1b\n" +
@@ -5448,12 +6179,53 @@ const file_bigworld_proto_rawDesc = "" +
 	"\n" +
 	"session_id\x18\x04 \x01(\tR\tsessionId\x12\x19\n" +
 	"\bworld_id\x18\x05 \x01(\tR\aworldId\x12\x19\n" +
-	"\bscene_id\x18\x06 \x01(\tR\asceneId\x12\f\n" +
+	"\bscene_id\x18\x06 \x01(\x03R\asceneId\x12\f\n" +
 	"\x01x\x18\a \x01(\x01R\x01x\x12\f\n" +
 	"\x01z\x18\b \x01(\x01R\x01z\x12\x14\n" +
 	"\x05width\x18\t \x01(\x01R\x05width\x12\x16\n" +
 	"\x06height\x18\n" +
-	" \x01(\x01R\x06height\"W\n" +
+	" \x01(\x01R\x06height\x12\x1a\n" +
+	"\bseamless\x18\v \x01(\bR\bseamless\"\xf8\x02\n" +
+	"\rEntityStatePb\x12\x1b\n" +
+	"\tplayer_id\x18\x01 \x01(\x04R\bplayerId\x12\f\n" +
+	"\x01x\x18\x02 \x01(\x01R\x01x\x12\f\n" +
+	"\x01y\x18\x03 \x01(\x01R\x01y\x12\f\n" +
+	"\x01z\x18\x04 \x01(\x01R\x01z\x12\x17\n" +
+	"\avoxel_k\x18\x05 \x01(\x05R\x06voxelK\x12\x1a\n" +
+	"\bairborne\x18\x06 \x01(\bR\bairborne\x12)\n" +
+	"\x05state\x18\a \x01(\x0e2\x13.bigworld.MoveStateR\x05state\x12\x13\n" +
+	"\x05dir_x\x18\b \x01(\x01R\x04dirX\x12\x13\n" +
+	"\x05dir_z\x18\t \x01(\x01R\x04dirZ\x12\x1d\n" +
+	"\n" +
+	"curve_norm\x18\n" +
+	" \x01(\x01R\tcurveNorm\x12$\n" +
+	"\x0estate_start_ms\x18\v \x01(\x03R\fstateStartMs\x12\x1c\n" +
+	"\n" +
+	"fall_vel_y\x18\f \x01(\x01R\bfallVelY\x12\x19\n" +
+	"\bsim_tick\x18\r \x01(\x03R\asimTick\x12\x18\n" +
+	"\aaccount\x18\x0e \x01(\tR\aaccount\"n\n" +
+	"\x11EntityEnterNotify\x12(\n" +
+	"\x10target_player_id\x18\x01 \x01(\x04R\x0etargetPlayerId\x12/\n" +
+	"\x06entity\x18\x02 \x01(\v2\x17.bigworld.EntityStatePbR\x06entity\"Z\n" +
+	"\x11EntityLeaveNotify\x12(\n" +
+	"\x10target_player_id\x18\x01 \x01(\x04R\x0etargetPlayerId\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\"\xed\x01\n" +
+	"\x15EntityMoveEventNotify\x12(\n" +
+	"\x10target_player_id\x18\x01 \x01(\x04R\x0etargetPlayerId\x12\x1b\n" +
+	"\tplayer_id\x18\x02 \x01(\x04R\bplayerId\x12\x12\n" +
+	"\x04kind\x18\x03 \x01(\rR\x04kind\x12)\n" +
+	"\x05state\x18\x04 \x01(\x0e2\x13.bigworld.MoveStateR\x05state\x12\x13\n" +
+	"\x05dir_x\x18\x05 \x01(\x01R\x04dirX\x12\x13\n" +
+	"\x05dir_z\x18\x06 \x01(\x01R\x04dirZ\x12$\n" +
+	"\x0eserver_time_ms\x18\a \x01(\x03R\fserverTimeMs\"q\n" +
+	"\x14EntitySnapshotNotify\x12(\n" +
+	"\x10target_player_id\x18\x01 \x01(\x04R\x0etargetPlayerId\x12/\n" +
+	"\x06entity\x18\x02 \x01(\v2\x17.bigworld.EntityStatePbR\x06entity\"\xb8\x01\n" +
+	"\x14BorderInterestNotify\x12\"\n" +
+	"\rfrom_world_id\x18\x01 \x01(\tR\vfromWorldId\x12\x19\n" +
+	"\bscene_id\x18\x02 \x01(\x03R\asceneId\x123\n" +
+	"\bentities\x18\x03 \x03(\v2\x17.bigworld.EntityStatePbR\bentities\x12,\n" +
+	"\x12removed_player_ids\x18\x04 \x03(\x04R\x10removedPlayerIds\"W\n" +
 	"\x11SceneAssignNotify\x12\x1d\n" +
 	"\n" +
 	"add_scenes\x18\x01 \x03(\tR\taddScenes\x12#\n" +
@@ -5498,7 +6270,7 @@ func file_bigworld_proto_rawDescGZIP() []byte {
 }
 
 var file_bigworld_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 70)
+var file_bigworld_proto_msgTypes = make([]protoimpl.MessageInfo, 77)
 var file_bigworld_proto_goTypes = []any{
 	(ServerType)(0),                // 0: bigworld.ServerType
 	(MoveState)(0),                 // 1: bigworld.MoveState
@@ -5541,7 +6313,7 @@ var file_bigworld_proto_goTypes = []any{
 	(*DashStartReq)(nil),           // 38: bigworld.DashStartReq
 	(*RollStartReq)(nil),           // 39: bigworld.RollStartReq
 	(*StopStartReq)(nil),           // 40: bigworld.StopStartReq
-	(*MoveStopReq)(nil),            // 41: bigworld.MoveStopReq
+	(*MoveHaltReq)(nil),            // 41: bigworld.MoveHaltReq
 	(*MoveDirChangeReq)(nil),       // 42: bigworld.MoveDirChangeReq
 	(*MoveRsp)(nil),                // 43: bigworld.MoveRsp
 	(*SkillReq)(nil),               // 44: bigworld.SkillReq
@@ -5567,11 +6339,18 @@ var file_bigworld_proto_goTypes = []any{
 	(*TransferAbortReq)(nil),       // 64: bigworld.TransferAbortReq
 	(*TransferReadyReq)(nil),       // 65: bigworld.TransferReadyReq
 	(*TransferFinishNotify)(nil),   // 66: bigworld.TransferFinishNotify
-	(*TransferEntityReq)(nil),      // 67: bigworld.TransferEntityReq
-	(*TransferEntityRsp)(nil),      // 68: bigworld.TransferEntityRsp
-	(*TransferCommitNotify)(nil),   // 69: bigworld.TransferCommitNotify
-	(*SceneAssignNotify)(nil),      // 70: bigworld.SceneAssignNotify
-	(*SceneAssignAck)(nil),         // 71: bigworld.SceneAssignAck
+	(*MoveInputPb)(nil),            // 67: bigworld.MoveInputPb
+	(*TransferEntityReq)(nil),      // 68: bigworld.TransferEntityReq
+	(*TransferEntityRsp)(nil),      // 69: bigworld.TransferEntityRsp
+	(*TransferCommitNotify)(nil),   // 70: bigworld.TransferCommitNotify
+	(*EntityStatePb)(nil),          // 71: bigworld.EntityStatePb
+	(*EntityEnterNotify)(nil),      // 72: bigworld.EntityEnterNotify
+	(*EntityLeaveNotify)(nil),      // 73: bigworld.EntityLeaveNotify
+	(*EntityMoveEventNotify)(nil),  // 74: bigworld.EntityMoveEventNotify
+	(*EntitySnapshotNotify)(nil),   // 75: bigworld.EntitySnapshotNotify
+	(*BorderInterestNotify)(nil),   // 76: bigworld.BorderInterestNotify
+	(*SceneAssignNotify)(nil),      // 77: bigworld.SceneAssignNotify
+	(*SceneAssignAck)(nil),         // 78: bigworld.SceneAssignAck
 }
 var file_bigworld_proto_depIdxs = []int32{
 	0,  // 0: bigworld.HelloReq.server_type:type_name -> bigworld.ServerType
@@ -5588,11 +6367,19 @@ var file_bigworld_proto_depIdxs = []int32{
 	33, // 11: bigworld.MoveDirChangeReq.dir:type_name -> bigworld.MoveDir
 	1,  // 12: bigworld.MoveRsp.state:type_name -> bigworld.MoveState
 	52, // 13: bigworld.SavePlayerReq.players:type_name -> bigworld.PlayerData
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	1,  // 14: bigworld.MoveInputPb.state:type_name -> bigworld.MoveState
+	1,  // 15: bigworld.TransferEntityReq.state:type_name -> bigworld.MoveState
+	67, // 16: bigworld.TransferEntityReq.inputs:type_name -> bigworld.MoveInputPb
+	1,  // 17: bigworld.EntityStatePb.state:type_name -> bigworld.MoveState
+	71, // 18: bigworld.EntityEnterNotify.entity:type_name -> bigworld.EntityStatePb
+	1,  // 19: bigworld.EntityMoveEventNotify.state:type_name -> bigworld.MoveState
+	71, // 20: bigworld.EntitySnapshotNotify.entity:type_name -> bigworld.EntityStatePb
+	71, // 21: bigworld.BorderInterestNotify.entities:type_name -> bigworld.EntityStatePb
+	22, // [22:22] is the sub-list for method output_type
+	22, // [22:22] is the sub-list for method input_type
+	22, // [22:22] is the sub-list for extension type_name
+	22, // [22:22] is the sub-list for extension extendee
+	0,  // [0:22] is the sub-list for field type_name
 }
 
 func init() { file_bigworld_proto_init() }
@@ -5606,7 +6393,7 @@ func file_bigworld_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_bigworld_proto_rawDesc), len(file_bigworld_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   70,
+			NumMessages:   77,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

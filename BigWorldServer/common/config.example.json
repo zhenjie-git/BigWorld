@@ -24,7 +24,7 @@
             "listen_addr": "127.0.0.1:8000",
             "central_addr": "127.0.0.1:9000"
         },
-        "world": {
+        "world-1": {
             "id": 4,
             "name": "world-1",
             "listen_addr": "127.0.0.1:9100",
@@ -33,6 +33,7 @@
             "player_config_file": "../GameConfig/Player/player_config.bytes",
             "scene_config_file": "../GameConfig/Scene/scene_config.bytes",
             "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.bytes",
+            "phase_table_file": "../GameConfig/StateTransitionTable/phase_table.bytes",
             "movement_tick_ms": 20,
             "scene_triggers": [
                 {
@@ -59,15 +60,16 @@
             "listen_addr": "127.0.0.1:9300",
             "central_addr": "127.0.0.1:9000"
         },
-        "world-colorfultown": {
+        "world-2": {
             "id": 6,
-            "name": "world-colorfultown",
+            "name": "world-2",
             "listen_addr": "127.0.0.1:9101",
             "central_addr": "127.0.0.1:9000",
             "state_config_file": "../GameConfig/StateConfig/state_config.bytes",
             "player_config_file": "../GameConfig/Player/player_config.bytes",
             "scene_config_file": "../GameConfig/Scene/scene_config.bytes",
             "state_transition_table_file": "../GameConfig/StateTransitionTable/state_transition_table.bytes",
+            "phase_table_file": "../GameConfig/StateTransitionTable/phase_table.bytes",
             "movement_tick_ms": 20,
             "scene_triggers": [
                 {
@@ -88,20 +90,5 @@
                 }
             ]
         }
-    },
-    "scene_rules": [
-        {
-            "scene_id": "MainCity",
-            "spread_group": "town",
-            "priority": 100,
-            "is_default": true,
-            "min_replicas": 1
-        },
-        {
-            "scene_id": "ColorfulTown",
-            "spread_group": "town",
-            "priority": 90,
-            "min_replicas": 1
-        }
-    ]
+    }
 }

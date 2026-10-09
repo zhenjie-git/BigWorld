@@ -143,25 +143,6 @@ func (gs *gatewayServer) HandleCentralLoginFinishRsp(_ *common.ConnWrapper, rsp 
 		SceneId:   snapshot.SceneID,
 	}
 	common.SendMsg(session.Conn, common.Gw2Cli_LoginRsp, &loginRsp)
-
-	conn := session.Conn
-	worldID, x, z := session.WorldID, snapshot.X, snapshot.Z
-	width, height, playerID := snapshot.Width, snapshot.Height, session.PlayerID
-	sceneID := snapshot.SceneID
-	time.AfterFunc(100*time.Millisecond, func() {
-		gs.Loop.Defer(func() {
-			notify := common.EnterSceneNotify{
-				WorldId:  worldID,
-				PlayerId: playerID,
-				X:        x,
-				Z:        z,
-				Width:    width,
-				Height:   height,
-				SceneId:  sceneID,
-			}
-			common.SendMsg(conn, common.Wd2Cli_EnterSceneNotify, &notify)
-		})
-	})
 }
 func (gs *gatewayServer) HandleCentralForceKickNotify(_ *common.ConnWrapper, notify *common.ForceKickNotify) {
 	log.Printf("[gateway] force-kick: player=%d account=%s session=%s world=%s",
@@ -264,9 +245,10 @@ func (gs *gatewayServer) HandleCentralTransferCommitNotify(_ *common.ConnWrapper
 		Width:    notify.Width,
 		Height:   notify.Height,
 		SceneId:  notify.SceneId,
+		Seamless: notify.Seamless,
 	}
 	common.SendMsg(session.Conn, common.Wd2Cli_EnterSceneNotify, enter)
-	log.Printf("[gateway] transfer commit: player=%d world=%s scene=%s", notify.PlayerId, notify.WorldId, notify.SceneId)
+	log.Printf("[gateway] transfer commit: player=%d world=%s scene=%d", notify.PlayerId, notify.WorldId, notify.SceneId)
 }
 
 func (gs *gatewayServer) HandleCentralLogoutBeginRsp(_ *common.ConnWrapper, rsp *common.LogoutBeginRsp) {

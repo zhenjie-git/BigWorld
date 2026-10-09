@@ -31,27 +31,12 @@ namespace BigWorldClient.Network
         private string _lastUsername;
         private string _lastPassword;
         private InputAction _logoutAction;
-        private Vector3 _serverSpawnPos;
-        private bool _hasServerSpawn;
-        private string _serverSceneId;
 
         public ServerClock Clock => _session?.Clock;
 
-        public bool TryGetServerSpawn(out Vector3 pos)
-        {
-            pos = _serverSpawnPos;
-            return _hasServerSpawn;
-        }
-
-        public bool TryGetServerScene(out string sceneId)
-        {
-            sceneId = _serverSceneId;
-            return !string.IsNullOrEmpty(sceneId);
-        }
-
         public bool SendDirStart(int msgType, float dirX, float dirZ, long tick) => _session != null && _session.SendDirStart(msgType, dirX, dirZ, tick);
         public bool SendStopStart(MoveState stopKind, long tick) => _session != null && _session.SendStopStart(stopKind, tick);
-        public bool SendMoveStop(long tick) => _session != null && _session.SendMoveStop(tick);
+        public bool SendHalt(long tick) => _session != null && _session.SendHalt(tick);
 
         public bool TryDequeueMove(out MoveRspInfo info)
         {
@@ -97,6 +82,12 @@ namespace BigWorldClient.Network
             SessionEvent evt;
             while (_session != null && _session.TryDequeue(out evt))
                 HandleSessionEvent(evt);
+
+            if (_session != null)
+            {
+                while (_session.TryDequeueRemote(out RemoteEntityEvent remote))
+                    RemotePlayerManager.Instance?.HandleEvent(remote);
+            }
         }
 
         public void StartLogin(string host, int port, string username, string password)
@@ -125,28 +116,17 @@ namespace BigWorldClient.Network
             {
                 case SessionEventKind.LoginSucceeded:
                     StartHeartbeat();
-                    _serverSpawnPos = new Vector3((float)evt.Player.X, 0f, (float)evt.Player.Z);
-                    _hasServerSpawn = true;
-                    _serverSceneId = evt.Player.SceneId;
+                    Game.Instance?.HandleLoginSucceeded(evt.Player);
+                    UIEventBus.Publish(new LoginResultEvent { Success = true, Message = "登录成功" });
                     if (_reconnecting)
                     {
                         _attemptResolved = true;
                         _attemptSucceeded = true;
                     }
-                    UIEventBus.Publish(new LoginResultEvent { Success = true, Message = "登录成功" });
                     break;
 
                 case SessionEventKind.SceneTransfer:
-                    _session?.ClearMoveResponses();
-                    _serverSpawnPos = new Vector3((float)evt.Player.X, 0f, (float)evt.Player.Z);
-                    _hasServerSpawn = true;
-                    _serverSceneId = evt.Player.SceneId;
-                    UIEventBus.Publish(new SceneTransferEvent
-                    {
-                        SceneId = evt.Player.SceneId,
-                        X = (float)evt.Player.X,
-                        Z = (float)evt.Player.Z,
-                    });
+                    Game.Instance?.HandleSceneTransfer(evt.Player);
                     break;
 
                 case SessionEventKind.LoginFailed:

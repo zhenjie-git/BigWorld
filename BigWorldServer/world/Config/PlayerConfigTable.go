@@ -1,6 +1,7 @@
-package main
+package config
 
 import (
+	"fmt"
 	"os"
 
 	pb "bigworld/common/pb"
@@ -15,18 +16,14 @@ type PlayerConfigTable struct {
 	playerCenterY     float64
 }
 
-var playerConfigTable = &PlayerConfigTable{
-	maxStep:           0.5,
-	sprintToRunTime:   1.0,
-	fallGravityMps2:   10.0,
-	fallSpeedLimitMps: 15.0,
-	playerHeight:      1.8,
-	playerCenterY:     0.9,
-}
+var playerConfigTable = &PlayerConfigTable{}
 
 func PlayerConfig() *PlayerConfigTable { return playerConfigTable }
 
 func (c *PlayerConfigTable) Load(path string) error {
+	if path == "" {
+		return fmt.Errorf("player config path is empty")
+	}
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return err
@@ -39,23 +36,20 @@ func (c *PlayerConfigTable) Load(path string) error {
 	c.playerHeight = float64(msg.ColliderHeight())
 	c.playerCenterY = float64(msg.ColliderCenterY())
 
-	if c.maxStep <= 0 {
-		c.maxStep = 0.5
-	}
-	if c.sprintToRunTime <= 0 {
-		c.sprintToRunTime = 1.0
-	}
-	if c.fallGravityMps2 <= 0 {
-		c.fallGravityMps2 = 10.0
-	}
-	if c.fallSpeedLimitMps <= 0 {
-		c.fallSpeedLimitMps = 15.0
-	}
-	if c.playerHeight <= 0 {
-		c.playerHeight = 1.8
-	}
-	if c.playerCenterY <= 0 {
-		c.playerCenterY = 0.9
+	for _, check := range []struct {
+		name  string
+		value float64
+	}{
+		{"voxel_max_step_height", c.maxStep},
+		{"sprint_to_run_time", c.sprintToRunTime},
+		{"gravity", c.fallGravityMps2},
+		{"fall_speed_limit", c.fallSpeedLimitMps},
+		{"collider_height", c.playerHeight},
+		{"collider_center_y", c.playerCenterY},
+	} {
+		if check.value <= 0 {
+			return fmt.Errorf("player config: %s must be > 0, got %v", check.name, check.value)
+		}
 	}
 	return nil
 }

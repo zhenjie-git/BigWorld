@@ -8,7 +8,18 @@ import (
 
 type TransitionEntryT struct {
 	Source string `json:"source"`
-	AllowedTargets []string `json:"allowed_targets"`
+	Walk EventPolicy `json:"Walk"`
+	Run EventPolicy `json:"Run"`
+	Sprint EventPolicy `json:"Sprint"`
+	Jump EventPolicy `json:"Jump"`
+	Dash EventPolicy `json:"Dash"`
+	Roll EventPolicy `json:"Roll"`
+	StopLight EventPolicy `json:"StopLight"`
+	StopMed EventPolicy `json:"StopMed"`
+	StopHard EventPolicy `json:"StopHard"`
+	Halt EventPolicy `json:"Halt"`
+	DirChange EventPolicy `json:"DirChange"`
+	BlocksTravel bool `json:"blocks_travel"`
 }
 
 func (t *TransitionEntryT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
@@ -19,32 +30,37 @@ func (t *TransitionEntryT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffse
 	if t.Source != "" {
 		sourceOffset = builder.CreateString(t.Source)
 	}
-	allowedTargetsOffset := flatbuffers.UOffsetT(0)
-	if t.AllowedTargets != nil {
-		allowedTargetsLength := len(t.AllowedTargets)
-		allowedTargetsOffsets := make([]flatbuffers.UOffsetT, allowedTargetsLength)
-		for j := 0; j < allowedTargetsLength; j++ {
-			allowedTargetsOffsets[j] = builder.CreateString(t.AllowedTargets[j])
-		}
-		TransitionEntryStartAllowedTargetsVector(builder, allowedTargetsLength)
-		for j := allowedTargetsLength - 1; j >= 0; j-- {
-			builder.PrependUOffsetT(allowedTargetsOffsets[j])
-		}
-		allowedTargetsOffset = builder.EndVector(allowedTargetsLength)
-	}
 	TransitionEntryStart(builder)
 	TransitionEntryAddSource(builder, sourceOffset)
-	TransitionEntryAddAllowedTargets(builder, allowedTargetsOffset)
+	TransitionEntryAddWalk(builder, t.Walk)
+	TransitionEntryAddRun(builder, t.Run)
+	TransitionEntryAddSprint(builder, t.Sprint)
+	TransitionEntryAddJump(builder, t.Jump)
+	TransitionEntryAddDash(builder, t.Dash)
+	TransitionEntryAddRoll(builder, t.Roll)
+	TransitionEntryAddStopLight(builder, t.StopLight)
+	TransitionEntryAddStopMed(builder, t.StopMed)
+	TransitionEntryAddStopHard(builder, t.StopHard)
+	TransitionEntryAddHalt(builder, t.Halt)
+	TransitionEntryAddDirChange(builder, t.DirChange)
+	TransitionEntryAddBlocksTravel(builder, t.BlocksTravel)
 	return TransitionEntryEnd(builder)
 }
 
 func (rcv *TransitionEntry) UnPackTo(t *TransitionEntryT) {
 	t.Source = string(rcv.Source())
-	allowedTargetsLength := rcv.AllowedTargetsLength()
-	t.AllowedTargets = make([]string, allowedTargetsLength)
-	for j := 0; j < allowedTargetsLength; j++ {
-		t.AllowedTargets[j] = string(rcv.AllowedTargets(j))
-	}
+	t.Walk = rcv.Walk()
+	t.Run = rcv.Run()
+	t.Sprint = rcv.Sprint()
+	t.Jump = rcv.Jump()
+	t.Dash = rcv.Dash()
+	t.Roll = rcv.Roll()
+	t.StopLight = rcv.StopLight()
+	t.StopMed = rcv.StopMed()
+	t.StopHard = rcv.StopHard()
+	t.Halt = rcv.Halt()
+	t.DirChange = rcv.DirChange()
+	t.BlocksTravel = rcv.BlocksTravel()
 }
 
 func (rcv *TransitionEntry) UnPack() *TransitionEntryT {
@@ -99,34 +115,191 @@ func (rcv *TransitionEntry) Source() []byte {
 	return nil
 }
 
-func (rcv *TransitionEntry) AllowedTargets(j int) []byte {
+func (rcv *TransitionEntry) Walk() EventPolicy {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		a := rcv._tab.Vector(o)
-		return rcv._tab.ByteVector(a + flatbuffers.UOffsetT(j*4))
-	}
-	return nil
-}
-
-func (rcv *TransitionEntry) AllowedTargetsLength() int {
-	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
-	if o != 0 {
-		return rcv._tab.VectorLen(o)
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
 	}
 	return 0
 }
 
+func (rcv *TransitionEntry) MutateWalk(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(6, byte(n))
+}
+
+func (rcv *TransitionEntry) Run() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateRun(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(8, byte(n))
+}
+
+func (rcv *TransitionEntry) Sprint() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateSprint(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(10, byte(n))
+}
+
+func (rcv *TransitionEntry) Jump() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateJump(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(12, byte(n))
+}
+
+func (rcv *TransitionEntry) Dash() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateDash(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(14, byte(n))
+}
+
+func (rcv *TransitionEntry) Roll() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateRoll(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(16, byte(n))
+}
+
+func (rcv *TransitionEntry) StopLight() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateStopLight(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(18, byte(n))
+}
+
+func (rcv *TransitionEntry) StopMed() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateStopMed(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(20, byte(n))
+}
+
+func (rcv *TransitionEntry) StopHard() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateStopHard(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(22, byte(n))
+}
+
+func (rcv *TransitionEntry) Halt() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(24))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateHalt(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(24, byte(n))
+}
+
+func (rcv *TransitionEntry) DirChange() EventPolicy {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(26))
+	if o != 0 {
+		return EventPolicy(rcv._tab.GetByte(o + rcv._tab.Pos))
+	}
+	return 0
+}
+
+func (rcv *TransitionEntry) MutateDirChange(n EventPolicy) bool {
+	return rcv._tab.MutateByteSlot(26, byte(n))
+}
+
+func (rcv *TransitionEntry) BlocksTravel() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(28))
+	if o != 0 {
+		return rcv._tab.GetBool(o + rcv._tab.Pos)
+	}
+	return false
+}
+
+func (rcv *TransitionEntry) MutateBlocksTravel(n bool) bool {
+	return rcv._tab.MutateBoolSlot(28, n)
+}
+
 func TransitionEntryStart(builder *flatbuffers.Builder) {
-	builder.StartObject(2)
+	builder.StartObject(13)
 }
 func TransitionEntryAddSource(builder *flatbuffers.Builder, source flatbuffers.UOffsetT) {
 	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(source), 0)
 }
-func TransitionEntryAddAllowedTargets(builder *flatbuffers.Builder, allowedTargets flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(1, flatbuffers.UOffsetT(allowedTargets), 0)
+func TransitionEntryAddWalk(builder *flatbuffers.Builder, walk EventPolicy) {
+	builder.PrependByteSlot(1, byte(walk), 0)
 }
-func TransitionEntryStartAllowedTargetsVector(builder *flatbuffers.Builder, numElems int) flatbuffers.UOffsetT {
-	return builder.StartVector(4, numElems, 4)
+func TransitionEntryAddRun(builder *flatbuffers.Builder, run EventPolicy) {
+	builder.PrependByteSlot(2, byte(run), 0)
+}
+func TransitionEntryAddSprint(builder *flatbuffers.Builder, sprint EventPolicy) {
+	builder.PrependByteSlot(3, byte(sprint), 0)
+}
+func TransitionEntryAddJump(builder *flatbuffers.Builder, jump EventPolicy) {
+	builder.PrependByteSlot(4, byte(jump), 0)
+}
+func TransitionEntryAddDash(builder *flatbuffers.Builder, dash EventPolicy) {
+	builder.PrependByteSlot(5, byte(dash), 0)
+}
+func TransitionEntryAddRoll(builder *flatbuffers.Builder, roll EventPolicy) {
+	builder.PrependByteSlot(6, byte(roll), 0)
+}
+func TransitionEntryAddStopLight(builder *flatbuffers.Builder, stopLight EventPolicy) {
+	builder.PrependByteSlot(7, byte(stopLight), 0)
+}
+func TransitionEntryAddStopMed(builder *flatbuffers.Builder, stopMed EventPolicy) {
+	builder.PrependByteSlot(8, byte(stopMed), 0)
+}
+func TransitionEntryAddStopHard(builder *flatbuffers.Builder, stopHard EventPolicy) {
+	builder.PrependByteSlot(9, byte(stopHard), 0)
+}
+func TransitionEntryAddHalt(builder *flatbuffers.Builder, halt EventPolicy) {
+	builder.PrependByteSlot(10, byte(halt), 0)
+}
+func TransitionEntryAddDirChange(builder *flatbuffers.Builder, dirChange EventPolicy) {
+	builder.PrependByteSlot(11, byte(dirChange), 0)
+}
+func TransitionEntryAddBlocksTravel(builder *flatbuffers.Builder, blocksTravel bool) {
+	builder.PrependBoolSlot(12, blocksTravel, false)
 }
 func TransitionEntryEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()

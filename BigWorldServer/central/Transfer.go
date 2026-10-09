@@ -11,8 +11,8 @@ import (
 )
 
 const (
-	transferIncomingTimeout = 3 * time.Second
-	transferReadyTimeout    = 3 * time.Second
+	transferIncomingTimeout = 1500 * time.Millisecond
+	transferReadyTimeout    = 1500 * time.Millisecond
 )
 
 type transferRecord struct {
@@ -24,10 +24,11 @@ type transferRecord struct {
 	SessionID   string
 	FromWorldID string
 	ToWorldID   string
-	FromSceneID string
-	ToSceneID   string
+	FromSceneID int64
+	ToSceneID   int64
 	ToX         float64
 	ToZ         float64
+	Seamless    bool
 	Width       float64
 	Height      float64
 	Stage       int
@@ -52,7 +53,7 @@ func (cs *centralServer) HandleTransferPrepareReq(conn *common.ConnWrapper, req 
 	if sender == "" {
 		return
 	}
-	if req.Account == "" || req.PlayerId == 0 || req.ToSceneId == "" {
+	if req.Account == "" || req.PlayerId == 0 || req.ToSceneId == 0 {
 		fail("invalid transfer request")
 		return
 	}
@@ -77,11 +78,8 @@ func (cs *centralServer) HandleTransferPrepareReq(conn *common.ConnWrapper, req 
 		fail("duplicate request")
 		return
 	}
-	targetWorldID, _, ok := cs.PickSceneWorld(req.ToSceneId, sender)
-	if !ok || targetWorldID == "" {
-		targetWorldID = sender
-	}
-	if targetWorldID == sender {
+	targetWorldID, _, local, ok := cs.PickZoneWorld(req.ToSceneId, sender)
+	if !ok || targetWorldID == "" || local {
 		rsp := &common.TransferPrepareRsp{
 			ReqId:     req.ReqId,
 			Success:   true,
@@ -89,6 +87,7 @@ func (cs *centralServer) HandleTransferPrepareReq(conn *common.ConnWrapper, req 
 			ToSceneId: req.ToSceneId,
 			ToX:       req.ToX,
 			ToZ:       req.ToZ,
+			Seamless:  req.Seamless,
 		}
 		_ = cs.SendToWorldMsg(sender, common.Ct2Wd_TransferPrepareRsp, rsp)
 		log.Printf("[central] transfer req=%d scene=%s stays on world %s", req.ReqId, req.ToSceneId, sender)
@@ -114,6 +113,7 @@ func (cs *centralServer) HandleTransferPrepareReq(conn *common.ConnWrapper, req 
 		ToSceneID:   req.ToSceneId,
 		ToX:         req.ToX,
 		ToZ:         req.ToZ,
+		Seamless:    req.Seamless,
 		Stage:       transferStageIncomingAck,
 		Deadline:    time.Now().Add(transferIncomingTimeout),
 	}
@@ -134,6 +134,7 @@ func (cs *centralServer) HandleTransferPrepareReq(conn *common.ConnWrapper, req 
 		ToSceneId:   req.ToSceneId,
 		ToX:         req.ToX,
 		ToZ:         req.ToZ,
+		Seamless:    req.Seamless,
 	}
 	if err := cs.SendToWorldMsg(targetWorldID, common.Ct2Wd_TransferIncomingNotify, notify); err != nil {
 		log.Printf("[central] transfer %s incoming notify send failed: %v", transferID, err)
@@ -172,6 +173,7 @@ func (cs *centralServer) HandleTransferIncomingAck(conn *common.ConnWrapper, ack
 		ToSceneId:   rec.ToSceneID,
 		ToX:         rec.ToX,
 		ToZ:         rec.ToZ,
+		Seamless:    rec.Seamless,
 	}
 	_ = cs.SendToWorldMsg(rec.FromWorldID, common.Ct2Wd_TransferPrepareRsp, rsp)
 	log.Printf("[central] transfer %s authorized %s -> %s", rec.ID, rec.FromWorldID, rec.ToWorldID)
@@ -251,6 +253,7 @@ func (cs *centralServer) FinishTransfer(rec *transferRecord, success bool, reaso
 			Z:          rec.ToZ,
 			Width:      rec.Width,
 			Height:     rec.Height,
+			Seamless:   rec.Seamless,
 		}
 		if gwRec, ok := cs.servers[rec.GatewayID]; ok && gwRec.conn != nil {
 			common.SendMsg(gwRec.conn, common.Ct2Gw_TransferCommitNotify, commit)

@@ -5,7 +5,6 @@ namespace BigWorldClient
     public enum PlayerInputCommandKind
     {
         MovementStarted,
-        MovementPerformed,
         MovementCanceled,
         WalkToggle,
         Sprint,

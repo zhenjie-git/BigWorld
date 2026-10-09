@@ -10,7 +10,7 @@ import (
 func main() {
 	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-	serverKey := flag.String("server", "world", "server config key")
+	serverKey := flag.String("server", "world-1", "server config key")
 	configPath := flag.String("config", "common/config.json", "config file path")
 	flag.Parse()
 	cfg := common.MustLoadServerConfig(*configPath, *serverKey)

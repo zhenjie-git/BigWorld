@@ -26,29 +26,66 @@ public struct TransitionEntry : IFlatbufferObject
   public ArraySegment<byte>? GetSourceBytes() { return __p.__vector_as_arraysegment(4); }
 #endif
   public byte[] GetSourceArray() { return __p.__vector_as_array<byte>(4); }
-  public string AllowedTargets(int j) { int o = __p.__offset(6); return o != 0 ? __p.__string(__p.__vector(o) + j * 4) : null; }
-  public int AllowedTargetsLength { get { int o = __p.__offset(6); return o != 0 ? __p.__vector_len(o) : 0; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Walk { get { int o = __p.__offset(6); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Run { get { int o = __p.__offset(8); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Sprint { get { int o = __p.__offset(10); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Jump { get { int o = __p.__offset(12); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Dash { get { int o = __p.__offset(14); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Roll { get { int o = __p.__offset(16); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy StopLight { get { int o = __p.__offset(18); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy StopMed { get { int o = __p.__offset(20); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy StopHard { get { int o = __p.__offset(22); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy Halt { get { int o = __p.__offset(24); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public BigWorldClient.Network.Protocol.EventPolicy DirChange { get { int o = __p.__offset(26); return o != 0 ? (BigWorldClient.Network.Protocol.EventPolicy)__p.bb.Get(o + __p.bb_pos) : BigWorldClient.Network.Protocol.EventPolicy.Keep; } }
+  public bool BlocksTravel { get { int o = __p.__offset(28); return o != 0 ? 0!=__p.bb.Get(o + __p.bb_pos) : (bool)false; } }
 
   public static Offset<BigWorldClient.Network.Protocol.TransitionEntry> CreateTransitionEntry(FlatBufferBuilder builder,
       StringOffset sourceOffset = default(StringOffset),
-      VectorOffset allowed_targetsOffset = default(VectorOffset)) {
-    builder.StartTable(2);
-    TransitionEntry.AddAllowedTargets(builder, allowed_targetsOffset);
+      BigWorldClient.Network.Protocol.EventPolicy Walk = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Run = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Sprint = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Jump = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Dash = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Roll = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy StopLight = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy StopMed = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy StopHard = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy Halt = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      BigWorldClient.Network.Protocol.EventPolicy DirChange = BigWorldClient.Network.Protocol.EventPolicy.Keep,
+      bool blocks_travel = false) {
+    builder.StartTable(13);
     TransitionEntry.AddSource(builder, sourceOffset);
+    TransitionEntry.AddBlocksTravel(builder, blocks_travel);
+    TransitionEntry.AddDirChange(builder, DirChange);
+    TransitionEntry.AddHalt(builder, Halt);
+    TransitionEntry.AddStopHard(builder, StopHard);
+    TransitionEntry.AddStopMed(builder, StopMed);
+    TransitionEntry.AddStopLight(builder, StopLight);
+    TransitionEntry.AddRoll(builder, Roll);
+    TransitionEntry.AddDash(builder, Dash);
+    TransitionEntry.AddJump(builder, Jump);
+    TransitionEntry.AddSprint(builder, Sprint);
+    TransitionEntry.AddRun(builder, Run);
+    TransitionEntry.AddWalk(builder, Walk);
     return TransitionEntry.EndTransitionEntry(builder);
   }
 
-  public static void StartTransitionEntry(FlatBufferBuilder builder) { builder.StartTable(2); }
+  public static void StartTransitionEntry(FlatBufferBuilder builder) { builder.StartTable(13); }
   public static void AddSource(FlatBufferBuilder builder, StringOffset sourceOffset) { builder.AddOffset(0, sourceOffset.Value, 0); }
-  public static void AddAllowedTargets(FlatBufferBuilder builder, VectorOffset allowedTargetsOffset) { builder.AddOffset(1, allowedTargetsOffset.Value, 0); }
-  public static VectorOffset CreateAllowedTargetsVector(FlatBufferBuilder builder, StringOffset[] data) { builder.StartVector(4, data.Length, 4); for (int i = data.Length - 1; i >= 0; i--) builder.AddOffset(data[i].Value); return builder.EndVector(); }
-  public static VectorOffset CreateAllowedTargetsVectorBlock(FlatBufferBuilder builder, StringOffset[] data) { builder.StartVector(4, data.Length, 4); builder.Add(data); return builder.EndVector(); }
-  public static VectorOffset CreateAllowedTargetsVectorBlock(FlatBufferBuilder builder, ArraySegment<StringOffset> data) { builder.StartVector(4, data.Count, 4); builder.Add(data); return builder.EndVector(); }
-  public static VectorOffset CreateAllowedTargetsVectorBlock(FlatBufferBuilder builder, IntPtr dataPtr, int sizeInBytes) { builder.StartVector(1, sizeInBytes, 1); builder.Add<StringOffset>(dataPtr, sizeInBytes); return builder.EndVector(); }
-  public static void StartAllowedTargetsVector(FlatBufferBuilder builder, int numElems) { builder.StartVector(4, numElems, 4); }
+  public static void AddWalk(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy walk) { builder.AddByte(1, (byte)walk, 0); }
+  public static void AddRun(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy run) { builder.AddByte(2, (byte)run, 0); }
+  public static void AddSprint(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy sprint) { builder.AddByte(3, (byte)sprint, 0); }
+  public static void AddJump(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy jump) { builder.AddByte(4, (byte)jump, 0); }
+  public static void AddDash(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy dash) { builder.AddByte(5, (byte)dash, 0); }
+  public static void AddRoll(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy roll) { builder.AddByte(6, (byte)roll, 0); }
+  public static void AddStopLight(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy stopLight) { builder.AddByte(7, (byte)stopLight, 0); }
+  public static void AddStopMed(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy stopMed) { builder.AddByte(8, (byte)stopMed, 0); }
+  public static void AddStopHard(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy stopHard) { builder.AddByte(9, (byte)stopHard, 0); }
+  public static void AddHalt(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy halt) { builder.AddByte(10, (byte)halt, 0); }
+  public static void AddDirChange(FlatBufferBuilder builder, BigWorldClient.Network.Protocol.EventPolicy dirChange) { builder.AddByte(11, (byte)dirChange, 0); }
+  public static void AddBlocksTravel(FlatBufferBuilder builder, bool blocksTravel) { builder.AddBool(12, blocksTravel, false); }
   public static Offset<BigWorldClient.Network.Protocol.TransitionEntry> EndTransitionEntry(FlatBufferBuilder builder) {
     int o = builder.EndTable();
-    builder.Required(o, 4);  // source
     return new Offset<BigWorldClient.Network.Protocol.TransitionEntry>(o);
   }
   public TransitionEntryT UnPack() {
@@ -58,33 +95,70 @@ public struct TransitionEntry : IFlatbufferObject
   }
   public void UnPackTo(TransitionEntryT _o) {
     _o.Source = this.Source;
-    _o.AllowedTargets = new List<string>();
-    for (var _j = 0; _j < this.AllowedTargetsLength; ++_j) {_o.AllowedTargets.Add(this.AllowedTargets(_j));}
+    _o.Walk = this.Walk;
+    _o.Run = this.Run;
+    _o.Sprint = this.Sprint;
+    _o.Jump = this.Jump;
+    _o.Dash = this.Dash;
+    _o.Roll = this.Roll;
+    _o.StopLight = this.StopLight;
+    _o.StopMed = this.StopMed;
+    _o.StopHard = this.StopHard;
+    _o.Halt = this.Halt;
+    _o.DirChange = this.DirChange;
+    _o.BlocksTravel = this.BlocksTravel;
   }
   public static Offset<BigWorldClient.Network.Protocol.TransitionEntry> Pack(FlatBufferBuilder builder, TransitionEntryT _o) {
     if (_o == null) return default(Offset<BigWorldClient.Network.Protocol.TransitionEntry>);
     var _source = _o.Source == null ? default(StringOffset) : builder.CreateString(_o.Source);
-    var _allowed_targets = default(VectorOffset);
-    if (_o.AllowedTargets != null) {
-      var __allowed_targets = new StringOffset[_o.AllowedTargets.Count];
-      for (var _j = 0; _j < __allowed_targets.Length; ++_j) { __allowed_targets[_j] = builder.CreateString(_o.AllowedTargets[_j]); }
-      _allowed_targets = CreateAllowedTargetsVector(builder, __allowed_targets);
-    }
     return CreateTransitionEntry(
       builder,
       _source,
-      _allowed_targets);
+      _o.Walk,
+      _o.Run,
+      _o.Sprint,
+      _o.Jump,
+      _o.Dash,
+      _o.Roll,
+      _o.StopLight,
+      _o.StopMed,
+      _o.StopHard,
+      _o.Halt,
+      _o.DirChange,
+      _o.BlocksTravel);
   }
 }
 
 public class TransitionEntryT
 {
   public string Source { get; set; }
-  public List<string> AllowedTargets { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Walk { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Run { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Sprint { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Jump { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Dash { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Roll { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy StopLight { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy StopMed { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy StopHard { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy Halt { get; set; }
+  public BigWorldClient.Network.Protocol.EventPolicy DirChange { get; set; }
+  public bool BlocksTravel { get; set; }
 
   public TransitionEntryT() {
     this.Source = null;
-    this.AllowedTargets = null;
+    this.Walk = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Run = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Sprint = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Jump = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Dash = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Roll = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.StopLight = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.StopMed = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.StopHard = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.Halt = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.DirChange = BigWorldClient.Network.Protocol.EventPolicy.Keep;
+    this.BlocksTravel = false;
   }
 }
 
@@ -94,8 +168,19 @@ static public class TransitionEntryVerify
   static public bool Verify(Google.FlatBuffers.Verifier verifier, uint tablePos)
   {
     return verifier.VerifyTableStart(tablePos)
-      && verifier.VerifyString(tablePos, 4 /*Source*/, true)
-      && verifier.VerifyVectorOfStrings(tablePos, 6 /*AllowedTargets*/, false)
+      && verifier.VerifyString(tablePos, 4 /*Source*/, false)
+      && verifier.VerifyField(tablePos, 6 /*Walk*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 8 /*Run*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 10 /*Sprint*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 12 /*Jump*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 14 /*Dash*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 16 /*Roll*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 18 /*StopLight*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 20 /*StopMed*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 22 /*StopHard*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 24 /*Halt*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 26 /*DirChange*/, 1 /*BigWorldClient.Network.Protocol.EventPolicy*/, 1, false)
+      && verifier.VerifyField(tablePos, 28 /*BlocksTravel*/, 1 /*bool*/, 1, false)
       && verifier.VerifyTableEnd(tablePos);
   }
 }

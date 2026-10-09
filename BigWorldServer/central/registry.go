@@ -25,12 +25,10 @@ func (cs *centralServer) HandlePeerHello(conn *common.ConnWrapper, req *common.H
 			ServerId:   req.ServerId,
 			ListenAddr: req.ListenAddr,
 		},
-		conn:           conn,
-		lastHB:         time.Now().Unix(),
-		assignedScenes: make(map[string]bool),
+		conn:   conn,
+		lastHB: time.Now().Unix(),
 	}
 	cs.connToID[conn] = req.ServerId
-	cs.RebalanceScenes()
 
 	log.Printf("[central] server registered: %s (%s) at %s",
 		req.ServerId, req.ServerType, req.ListenAddr)

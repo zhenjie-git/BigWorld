@@ -71,6 +71,14 @@ namespace BigWorldClient
             },
             new ConfigTableEntry
             {
+                Name = ConfigTableDefinitions.PhaseTable.Name,
+                Description = ConfigTableDefinitions.PhaseTable.Description,
+                ExcelRelativePath = ConfigTableDefinitions.PhaseTable.ExcelRelativePath,
+                GameConfigFolder = ConfigTableDefinitions.PhaseTable.GameConfigFolder,
+                Export = withCurves => ConfigTableExporter.Export(ConfigTableDefinitions.PhaseTable, withCurves),
+            },
+            new ConfigTableEntry
+            {
                 Name = ConfigTableDefinitions.PanelConfig.Name,
                 Description = ConfigTableDefinitions.PanelConfig.Description,
                 ExcelRelativePath = ConfigTableDefinitions.PanelConfig.ExcelRelativePath,

@@ -45,13 +45,16 @@ if errorlevel 1 echo   [WARN] Central not up within 30s - check the central wind
 echo [2/6] Starting DBProxy Server ...
 start "dbproxy" /D "%~dp0" cmd /c "go run ./DbProxy"
 
-echo [3/6] Starting World Server ...
-start "world" /D "%~dp0" cmd /c "go run ./World"
+echo [3/7] Starting World Server 1 ...
+start "World-1" /D "%~dp0" cmd /c "go run ./World -server world-1 -config common/config.json"
 
-echo [4/6] Starting Login Server ...
+echo [4/7] Starting World Server 2 (zone shards) ...
+start "World-2" /D "%~dp0" cmd /c "go run ./World -server world-2 -config common/config.json"
+
+echo [5/7] Starting Login Server ...
 start "login" /D "%~dp0" cmd /c "go run ./Login"
 
-echo [5/6] Starting Gateway Server ...
+echo [6/7] Starting Gateway Server ...
 start "gateway" /D "%~dp0" cmd /c "go run ./Gateway"
 
 echo.
@@ -59,7 +62,8 @@ echo All servers started (run from repo root so common/config.json resolves):
 echo   MySQL     :3306
 echo   Central   :9000
 echo   DBProxy   :9300
-echo   World     :9100
+echo   World1    :9100
+echo   World2    :9101
 echo   Login     :9200
 echo   Gateway   :8000
 echo.

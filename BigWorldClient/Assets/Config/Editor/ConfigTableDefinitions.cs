@@ -58,7 +58,7 @@ namespace BigWorldClient
         public static readonly TableDef StateTransitionTable = new TableDef
         {
             Name = "状态迁移表",
-            Description = "状态机迁移矩阵（服务器/客户端共用）",
+            Description = "移动区状态×事件策略矩阵，0=KEEP/1=BLOCK/2=INTERRUPT（服务器/客户端共用）",
             ExcelRelativePath = "StateTransitionTable/state_transition_table.xlsx",
             SheetName = "state_transition_table",
             ServerBytesRelativePath = "StateTransitionTable/state_transition_table.bytes",
@@ -68,8 +68,23 @@ namespace BigWorldClient
             TableObjectType = typeof(TransitionTableMsgT),
             TableStructType = typeof(TransitionTableMsg),
             EntryObjectType = typeof(TransitionEntryT),
-            PostParse = MatrixToAllowedTargets,
             Validate = ValidateTransitionTable,
+        };
+
+        public static readonly TableDef PhaseTable = new TableDef
+        {
+            Name = "实体阶段表",
+            Description = "phase 对各系统策略 + forces_move_idle 进入动作 + 合法跳变（服务器）",
+            ExcelRelativePath = "StateTransitionTable/state_transition_table.xlsx",
+            SheetName = "phase_table",
+            ServerBytesRelativePath = "StateTransitionTable/phase_table.bytes",
+            ClientBytesAssetPath = null,
+            GameConfigFolder = "StateTransitionTable",
+            RowsAsEntries = true,
+            TableObjectType = typeof(PhaseTableMsgT),
+            TableStructType = typeof(PhaseTableMsg),
+            EntryObjectType = typeof(PhaseEntryT),
+            Validate = ValidatePhaseTable,
         };
 
         public static readonly TableDef PanelConfig = new TableDef
@@ -91,11 +106,11 @@ namespace BigWorldClient
         public static readonly TableDef SceneConfig = new TableDef
         {
             Name = "场景配置",
-            Description = "场景注册与体素生成参数，scene_id == Unity 场景名 == 体素文件名（服务器）",
+            Description = "场景/zone 注册与体素生成参数，scene_id == Unity 场景名 == 体素文件名（服务器 + 客户端 zone 表）",
             ExcelRelativePath = "Scene/scene_config.xlsx",
             SheetName = "scene_config",
             ServerBytesRelativePath = "Scene/scene_config.bytes",
-            ClientBytesAssetPath = null,
+            ClientBytesAssetPath = "Assets/Resources/Config/SceneConfig.bytes",
             GameConfigFolder = "Scene",
             RowsAsEntries = true,
             TableObjectType = typeof(SceneConfigMsgT),
@@ -107,6 +122,7 @@ namespace BigWorldClient
         public static void ExportPlayerConfig() => ConfigTableExporter.BatchExport(PlayerConfig);
         public static void ExportStateConfig(bool withCurves) => ConfigTableExporter.BatchExport(StateConfig, withCurves);
         public static void ExportStateTransitionTable() => ConfigTableExporter.BatchExport(StateTransitionTable);
+        public static void ExportPhaseTable() => ConfigTableExporter.BatchExport(PhaseTable);
         public static void ExportPanelConfig() => ConfigTableExporter.BatchExport(PanelConfig);
         public static void ExportSceneConfig() => ConfigTableExporter.BatchExport(SceneConfig);
 
@@ -211,6 +227,8 @@ namespace BigWorldClient
         static void ValidateSceneConfig(GenericTable table)
         {
             var ids = new HashSet<string>(StringComparer.Ordinal);
+            var templateByMap = new Dictionary<string, long>(StringComparer.Ordinal);
+            var mapByTemplate = new Dictionary<long, string>();
             int defaults = 0;
             foreach (ConfigRowData row in table.Rows)
             {
@@ -229,14 +247,84 @@ namespace BigWorldClient
                     throw new InvalidOperationException($"scene_config 第 {row.RowNo} 行 voxel_size_x/y/z 必须全部 > 0");
                 if (table.GetFloat(row, "character_height") < 0.1)
                     throw new InvalidOperationException($"scene_config 第 {row.RowNo} 行 character_height 必须 ≥ 0.1");
+
+                long template = (long)table.GetFloat(row, "template_id");
+                if (template < 1 || template > 65535)
+                    throw new InvalidOperationException($"scene_config 第 {row.RowNo} 行 template_id={template} 越界（1~65535）");
+                string mapId = TrimZoneSuffix(id);
+                if (mapByTemplate.TryGetValue(template, out string owner) && owner != mapId)
+                    throw new InvalidOperationException(
+                        $"scene_config template_id={template} 同时用于地图 {owner} 和 {mapId}");
+                mapByTemplate[template] = mapId;
+                if (templateByMap.TryGetValue(mapId, out long existing) && existing != template)
+                    throw new InvalidOperationException(
+                        $"scene_config 地图 {mapId} 的 template_id 不一致（{existing} vs {template}）");
+                templateByMap[mapId] = template;
             }
             if (defaults != 1)
                 throw new InvalidOperationException($"scene_config 需要恰好一行 is_default=TRUE，当前 {defaults} 行");
         }
 
+        static string TrimZoneSuffix(string name)
+        {
+            int us1 = name.LastIndexOf('_');
+            if (us1 <= 0)
+                return name;
+            int us2 = name.LastIndexOf('_', us1 - 1);
+            if (us2 <= 0)
+                return name;
+            return name.Substring(0, us2);
+        }
+
+        static string ToSnakeCase(string name) =>
+            Regex.Replace(name, @"([a-z0-9])([A-Z])", "$1_$2").ToLowerInvariant();
+
+        static bool IsSchemaColumn<TEntry>(string column) where TEntry : class
+        {
+            foreach (var prop in typeof(TEntry).GetProperties())
+            {
+                if (column == prop.Name || column == ToSnakeCase(prop.Name)) return true;
+            }
+            return false;
+        }
+
+        static List<string> MissingSchemaColumns<TEntry>(GenericTable table) where TEntry : class
+        {
+            var missing = new List<string>();
+            foreach (var prop in typeof(TEntry).GetProperties())
+            {
+                if (table.Columns.Any(c => c.Name == prop.Name || c.Name == ToSnakeCase(prop.Name))) continue;
+                missing.Add(prop.Name);
+            }
+            return missing;
+        }
+
+        static List<string> PhaseTransitionColumns(GenericTable table)
+        {
+            var columns = new List<string>();
+            foreach (var prop in typeof(PhaseEntryT).GetProperties())
+            {
+                if (prop.Name == "Phase") continue;
+                bool verbatim = table.Columns.Any(c => c.Name == prop.Name);
+                bool snake = table.Columns.Any(c => c.Name == ToSnakeCase(prop.Name));
+                if (verbatim && !snake)
+                    columns.Add(prop.Name);
+            }
+            return columns;
+        }
+
         static void ValidateTransitionTable(GenericTable table)
         {
             var names = new HashSet<string>(MoveStateMappings.Names, StringComparer.Ordinal);
+            foreach (ConfigColumn column in table.Columns)
+            {
+                if (column.Name == "source") continue;
+                if (!IsSchemaColumn<TransitionEntryT>(column.Name))
+                    throw new InvalidOperationException($"策略矩阵的列名 \"{column.Name}\" 不在 TransitionEntry schema 字段内（事件列名即 schema 字段名）");
+            }
+            foreach (string missing in MissingSchemaColumns<TransitionEntryT>(table))
+                throw new InvalidOperationException($"策略矩阵缺少 schema 字段对应的列：{missing}");
+
             var seen = new HashSet<string>(StringComparer.Ordinal);
             foreach (ConfigRowData row in table.Rows)
             {
@@ -246,13 +334,12 @@ namespace BigWorldClient
                 if (!seen.Add(source))
                     throw new InvalidOperationException($"迁移表源状态重复：{source}");
 
-                var targets = Get(row, "allowed_targets") as List<object>;
-                if (targets == null) continue;
-                foreach (object target in targets)
+                foreach (ConfigColumn column in table.Columns)
                 {
-                    if (!names.Contains((string)target))
-                        throw new InvalidOperationException(
-                            $"迁移表第 {row.RowNo} 行目标状态 \"{target}\" 不在状态名列表内");
+                    if (column.Type != "policy") continue;
+                    long policy = (long)table.GetFloat(row, column.Name);
+                    if (policy < 0 || policy > 2)
+                        throw new InvalidOperationException($"迁移表第 {row.RowNo} 行事件 {column.Name} 的格值 {policy} 非法（0/1/2）");
                 }
             }
 
@@ -261,60 +348,31 @@ namespace BigWorldClient
                     throw new InvalidOperationException($"迁移表缺少源状态行：{name}");
         }
 
-        static object Get(ConfigRowData row, string field)
+        static void ValidatePhaseTable(GenericTable table)
         {
-            return row.Values.TryGetValue(field, out object value) ? value : null;
-        }
-
-        static GenericTable MatrixToAllowedTargets(GenericTable matrix)
-        {
-            var states = new HashSet<string>(MoveStateMappings.Names, StringComparer.Ordinal);
-
-            var targetColumns = new List<ConfigColumn>();
-            foreach (ConfigColumn column in matrix.Columns)
+            foreach (ConfigColumn column in table.Columns)
             {
-                if (column.Name == "source") continue;
-                if (!states.Contains(column.Name))
-                    throw new InvalidOperationException($"迁移矩阵的列名 \"{column.Name}\" 不在状态名列表内（矩阵列名即目标状态名）");
-                targetColumns.Add(column);
+                if (column.Name == "phase") continue;
+                if (!IsSchemaColumn<PhaseEntryT>(column.Name))
+                    throw new InvalidOperationException($"phase 表的列名 \"{column.Name}\" 不在 PhaseEntry schema 字段内");
             }
+            foreach (string missing in MissingSchemaColumns<PhaseEntryT>(table))
+                throw new InvalidOperationException($"phase 表缺少 schema 字段对应的列：{missing}");
 
-            var expectedTargets = new HashSet<string>(states, StringComparer.Ordinal);
-            var actualTargets = new HashSet<string>(targetColumns.Select(c => c.Name), StringComparer.Ordinal);
-            foreach (string missing in expectedTargets.Except(actualTargets).OrderBy(s => s))
-                throw new InvalidOperationException($"迁移矩阵缺少目标状态列：{missing}");
-
-            var result = new GenericTable();
-            result.Columns.Add(new ConfigColumn { Name = "source", Type = "string", Endpoint = "both" });
-            result.Columns.Add(new ConfigColumn { Name = "allowed_targets", Type = "string_array", Endpoint = "both" });
-
+            var phaseCols = new HashSet<string>(PhaseTransitionColumns(table), StringComparer.Ordinal);
             var seen = new HashSet<string>(StringComparer.Ordinal);
-            foreach (ConfigRowData row in matrix.Rows)
+            foreach (ConfigRowData row in table.Rows)
             {
-                string source = matrix.GetString(row, "source");
-                if (!states.Contains(source))
-                    throw new InvalidOperationException($"迁移矩阵第 {row.RowNo} 行源状态 \"{source}\" 不在状态名列表内");
-                if (!seen.Add(source))
-                    throw new InvalidOperationException($"迁移矩阵源状态重复：{source}");
-
-                var allowed = new List<object>();
-                foreach (ConfigColumn column in targetColumns)
-                {
-                    if (row.Values[column.Name] is true)
-                        allowed.Add(column.Name);
-                }
-
-                var newRow = new ConfigRowData { RowNo = row.RowNo };
-                newRow.Values["source"] = source;
-                newRow.Values["allowed_targets"] = allowed;
-                result.Rows.Add(newRow);
+                string phase = table.GetString(row, "phase");
+                if (!phaseCols.Contains(phase))
+                    throw new InvalidOperationException($"phase 表第 {row.RowNo} 行 phase \"{phase}\" 不在跳变矩阵列名内");
+                if (!seen.Add(phase))
+                    throw new InvalidOperationException($"phase 表 phase 重复：{phase}");
             }
 
-            foreach (string name in states)
+            foreach (string name in phaseCols)
                 if (!seen.Contains(name))
-                    throw new InvalidOperationException($"迁移矩阵缺少源状态行：{name}");
-
-            return result;
+                    throw new InvalidOperationException($"phase 表缺少 phase 行：{name}");
         }
 
         static List<string> GenerateCurves(TableDef def, List<string[]> rawRows)

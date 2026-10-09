@@ -22,6 +22,7 @@ const (
   x           DOUBLE       NOT NULL DEFAULT 0,
   z           DOUBLE       NOT NULL DEFAULT 0,
   scene       VARCHAR(64)  NOT NULL DEFAULT '',
+  scene_id    BIGINT       NOT NULL DEFAULT 0,
   updated_at  TIMESTAMP    NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;`
 
@@ -101,6 +102,11 @@ func EnsureSchema(db *sql.DB) error {
 			return fmt.Errorf("migrate players add scene: %w", err)
 		}
 	}
+	if _, err := db.Exec(`ALTER TABLE players ADD COLUMN scene_id BIGINT NOT NULL DEFAULT 0`); err != nil {
+		if !IsColumnExists(err) {
+			return fmt.Errorf("migrate players add scene_id: %w", err)
+		}
+	}
 	return nil
 }
 
@@ -118,23 +124,23 @@ func IsColumnExists(err error) bool {
 // LoadPlayer returns the saved player for an account. If the account has no
 // row yet, a new one is inserted (allocating a stable AUTO_INCREMENT player_id)
 // and found is false so the caller spawns at a random position.
-func (p *playerDB) LoadPlayer(account string) (found bool, playerID uint64, x, z float64, scene string, err error) {
-	row := p.db.QueryRow("SELECT player_id, x, z, scene FROM players WHERE account = ?", account)
-	switch e := row.Scan(&playerID, &x, &z, &scene); e {
+func (p *playerDB) LoadPlayer(account string) (found bool, playerID uint64, x, z float64, sceneID int64, legacyScene string, err error) {
+	row := p.db.QueryRow("SELECT player_id, x, z, scene, scene_id FROM players WHERE account = ?", account)
+	switch e := row.Scan(&playerID, &x, &z, &legacyScene, &sceneID); e {
 	case nil:
-		return true, playerID, x, z, scene, nil
+		return true, playerID, x, z, sceneID, legacyScene, nil
 	case sql.ErrNoRows:
-		res, e := p.db.Exec("INSERT INTO players (account, x, z, scene) VALUES (?, 0, 0, '')", account)
+		res, e := p.db.Exec("INSERT INTO players (account, x, z) VALUES (?, 0, 0)", account)
 		if e != nil {
-			return false, 0, 0, 0, "", fmt.Errorf("insert new player: %w", e)
+			return false, 0, 0, 0, 0, "", fmt.Errorf("insert new player: %w", e)
 		}
 		id, e := res.LastInsertId()
 		if e != nil {
-			return false, 0, 0, 0, "", fmt.Errorf("last insert id: %w", e)
+			return false, 0, 0, 0, 0, "", fmt.Errorf("last insert id: %w", e)
 		}
-		return false, uint64(id), 0, 0, "", nil
+		return false, uint64(id), 0, 0, 0, "", nil
 	default:
-		return false, 0, 0, 0, "", fmt.Errorf("load player: %w", e)
+		return false, 0, 0, 0, 0, "", fmt.Errorf("load player: %w", e)
 	}
 }
 
@@ -148,8 +154,8 @@ func (p *playerDB) SavePlayers(players []*common.PlayerData) error {
 	if err != nil {
 		return fmt.Errorf("begin tx: %w", err)
 	}
-	const stmt = "INSERT INTO players (player_id, account, x, z, scene) VALUES (?, ?, ?, ?, ?) " +
-		"ON DUPLICATE KEY UPDATE x = VALUES(x), z = VALUES(z), scene = VALUES(scene)"
+	const stmt = "INSERT INTO players (player_id, account, x, z, scene_id) VALUES (?, ?, ?, ?, ?) " +
+		"ON DUPLICATE KEY UPDATE x = VALUES(x), z = VALUES(z), scene_id = VALUES(scene_id)"
 	for _, pl := range players {
 		if _, err := tx.Exec(stmt, pl.PlayerId, pl.Account, pl.X, pl.Z, pl.SceneId); err != nil {
 			tx.Rollback()
@@ -162,15 +168,15 @@ func (p *playerDB) SavePlayers(players []*common.PlayerData) error {
 // ValidateAccount checks the credentials against the accounts table.
 // NOTE: passwords are stored in plaintext to match the previous hardcoded
 // table; production should hash (e.g. bcrypt).
-func (p *playerDB) ValidateAccount(account, password string) (bool, string, error) {
-	var scene string
-	err := p.db.QueryRow(`SELECT COALESCE(pl.scene, '') FROM accounts a LEFT JOIN players pl ON pl.account = a.account WHERE a.account = ? AND a.password = ?`, account, password).Scan(&scene)
+func (p *playerDB) ValidateAccount(account, password string) (bool, int64, error) {
+	var sceneID int64
+	err := p.db.QueryRow(`SELECT COALESCE(pl.scene_id, 0) FROM accounts a LEFT JOIN players pl ON pl.account = a.account WHERE a.account = ? AND a.password = ?`, account, password).Scan(&sceneID)
 	switch err {
 	case nil:
-		return true, scene, nil
+		return true, sceneID, nil
 	case sql.ErrNoRows:
-		return false, "", nil
+		return false, 0, nil
 	default:
-		return false, "", fmt.Errorf("validate account: %w", err)
+		return false, 0, fmt.Errorf("validate account: %w", err)
 	}
 }

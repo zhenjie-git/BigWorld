@@ -369,6 +369,22 @@ func (m *worldPeerMgr) PeerByConn(conn *common.ConnWrapper) *worldPeer {
 	return nil
 }
 
+func (m *worldPeerMgr) BroadcastPeers(msgType common.MessageType, msg proto.Message) {
+	data, err := common.MarshalHelper(msg)
+	if err != nil {
+		return
+	}
+	for id, p := range m.peers {
+		if p.Conn == nil {
+			continue
+		}
+		if err := p.Conn.Send(common.Message{Type: msgType, Data: data}); err != nil {
+			m.ClosePeerConn(p, "broadcast send failed")
+			log.Printf("[world %s] broadcast to %s failed: %v", m.selfID, id, err)
+		}
+	}
+}
+
 func (m *worldPeerMgr) HandleHeartbeatReq(conn *common.ConnWrapper, req *common.HeartbeatReq) {
 	p := m.PeerByConn(conn)
 	if p == nil {

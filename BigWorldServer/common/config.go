@@ -17,14 +17,6 @@ type SceneTriggerConfig struct {
 	ToZ       *float64 `json:"to_z,omitempty"`
 }
 
-type SceneRuleConfig struct {
-	SceneID     string `json:"scene_id"`
-	SpreadGroup string `json:"spread_group,omitempty"`
-	Priority    int    `json:"priority,omitempty"`
-	IsDefault   bool   `json:"is_default,omitempty"`
-	MinReplicas int    `json:"min_replicas,omitempty"`
-}
-
 type ServerConfig struct {
 	ID          int    `json:"id"`
 	Name        string `json:"name"`
@@ -45,6 +37,7 @@ type ServerConfig struct {
 	// GameConfig/Player/player_config.xlsx.
 	PlayerConfigFile         string `json:"player_config_file,omitempty"`
 	StateTransitionTableFile string `json:"state_transition_table_file,omitempty"`
+	PhaseTableFile           string `json:"phase_table_file,omitempty"`
 	SceneConfigFile          string `json:"scene_config_file,omitempty"`
 
 	// Server-authoritative movement simulation tick interval (world process).
@@ -64,7 +57,6 @@ type AppConfig struct {
 	ECDSAPublicKey  string                  `json:"ecdsa_public_key"`
 	ServerSecret    string                  `json:"server_secret"`
 	MySQL           MySQLConfig             `json:"mysql"`
-	SceneRules      []SceneRuleConfig       `json:"scene_rules,omitempty"`
 	Servers         map[string]ServerConfig `json:"servers"`
 }
 

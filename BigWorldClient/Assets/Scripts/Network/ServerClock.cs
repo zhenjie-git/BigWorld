@@ -9,8 +9,9 @@ namespace BigWorldClient.Network
 
         private readonly object _lock = new object();
         private long _bestRttMs = long.MaxValue;
-        private double _offsetMs;
         private long _lastRttMs;
+        private bool _offsetSeeded;
+        private double _offsetMs;
 
         public bool IsSynced
         {
@@ -37,8 +38,9 @@ namespace BigWorldClient.Network
             lock (_lock)
             {
                 _bestRttMs = long.MaxValue;
-                _offsetMs = 0;
                 _lastRttMs = 0;
+                _offsetSeeded = false;
+                _offsetMs = 0;
             }
         }
 
@@ -55,6 +57,7 @@ namespace BigWorldClient.Network
                 {
                     _bestRttMs = rtt;
                     _offsetMs = offset;
+                    _offsetSeeded = true;
                 }
             }
         }
@@ -62,11 +65,7 @@ namespace BigWorldClient.Network
         public long NowMs()
         {
             lock (_lock)
-            {
-                return _bestRttMs == long.MaxValue
-                    ? LocalNowMs()
-                    : (long)(LocalNowMs() + _offsetMs);
-            }
+                return _offsetSeeded ? (long)(LocalNowMs() + _offsetMs) : LocalNowMs();
         }
 
         public long TickNow()
@@ -75,28 +74,9 @@ namespace BigWorldClient.Network
             return ms >= 0 ? ms / TickMs : 0;
         }
 
+        public static long MsToTick(long ms) => ms >= 0 ? ms / TickMs : 0;
+
         public static long TickToMs(long tick) => tick * TickMs;
-
-        public void LearnServerTick(long serverTick, long receiveLocalMs)
-        {
-            if (serverTick <= 0) return;
-            double observedOffset = (double)TickToMs(serverTick) - receiveLocalMs;
-
-            lock (_lock)
-            {
-                if (_bestRttMs == long.MaxValue)
-                {
-                    _bestRttMs = 0;
-                    _offsetMs = observedOffset;
-                    return;
-                }
-
-                double delta = observedOffset - _offsetMs;
-                if (delta > 500.0) delta = 500.0;
-                if (delta < -500.0) delta = -500.0;
-                _offsetMs += delta * 0.25;
-            }
-        }
 
         public static long LocalNowMs() => DateTime.UtcNow.Ticks / TimeSpan.TicksPerMillisecond;
     }

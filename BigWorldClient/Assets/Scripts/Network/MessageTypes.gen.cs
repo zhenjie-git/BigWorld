@@ -55,7 +55,7 @@ namespace BigWorldClient.Network
         public const int Cli2Wd_DashStartReq = 54;
         public const int Cli2Wd_RollStartReq = 55;
         public const int Cli2Wd_StopStartReq = 56;
-        public const int Cli2Wd_MoveStopReq = 57;
+        public const int Cli2Wd_MoveHaltReq = 57;
         public const int Cli2Wd_MoveDirChangeReq = 58;
         public const int Gw2Wd_ResumeEntityReq = 60;
         public const int Wd2Gw_ResumeEntityRsp = 61;
@@ -75,5 +75,10 @@ namespace BigWorldClient.Network
         public const int Ct2Gw_TransferCommitNotify = 75;
         public const int Ct2Wd_SceneAssignNotify = 76;
         public const int Wd2Ct_SceneAssignAck = 77;
+        public const int Wd2Cli_EntityEnterNotify = 78;
+        public const int Wd2Cli_EntityLeaveNotify = 79;
+        public const int Wd2Cli_EntityMoveEventNotify = 80;
+        public const int Wd2Cli_EntitySnapshotNotify = 81;
+        public const int Wd2Wd_BorderInterestNotify = 82;
     }
 }

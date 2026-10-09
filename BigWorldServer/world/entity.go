@@ -8,24 +8,22 @@ import (
 )
 
 type playerEntity struct {
-	PlayerID          uint64
-	Account           string
-	GatewayID         string
-	SessionID         string
-	GatewayConn       *common.ConnWrapper
-	X, Z, Y           float64
-	VoxelK            int
-	Airborne          bool
-	State             pb.MoveState
-	Scene             *scene
-	LastMoveTimeMs    int64
-	Transferring      bool
-	TransferUntilMs   int64
-	TransferStartTick int64
-	TransferID        string
-	CrossWorld        bool
-	IncomingTransfer  bool
-	TransferCooldown  time.Time
+	PlayerID         uint64
+	Account          string
+	GatewayID        string
+	SessionID        string
+	GatewayConn      *common.ConnWrapper
+	X, Z, Y          float64
+	VoxelK           int
+	Airborne         bool
+	State            pb.MoveState
+	Scene            *scene
+	LastMoveTimeMs   int64
+	Phase            entityPhase
+	PhaseUntilMs     int64
+	PhaseStartTick   int64
+	TransferID       string
+	TransferCooldown time.Time
 
 	MoveDirX, MoveDirZ float64
 	CurveNorm          float64
@@ -36,4 +34,6 @@ type playerEntity struct {
 	Snapshots []entitySnapshot
 	Inputs    []moveInput
 	InputSeq  uint64
+
+	KnownEntities map[uint64]bool
 }

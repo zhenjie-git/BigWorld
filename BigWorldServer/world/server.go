@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bigworld/world/Config"
 	"fmt"
 	"log"
 	"net"
@@ -24,6 +25,7 @@ type worldServer struct {
 	playersByAccount  map[string]*playerEntity
 	sceneMgr          *sceneMgr
 	sceneTriggers     []common.SceneTriggerConfig
+	zoneTriggers      []zoneTrigger
 	playerCounter     uint64
 	serverCfg         common.ServerConfig
 	serverNumID       int
@@ -32,9 +34,11 @@ type worldServer struct {
 	outboundTransfers map[string]*outboundTransfer
 	incomingTransfers map[string]*incomingTransfer
 	transferReqSeq    uint64
+	foreigns          map[uint64]*foreignEntity
 
 	moveTickMs    int64
 	rollbackTicks int64
+	movePolicy    map[pb.MoveState][MoveEventCount]pb.EventPolicy
 
 	dbConn       *common.ConnWrapper
 	dbID         string
@@ -75,21 +79,22 @@ func FillMoveRspState(rsp *common.MoveRsp, s entitySnapshot) {
 }
 
 func NewWorldServer(id string, cfg common.ServerConfig) *worldServer {
-	sceneTriggers := cfg.SceneTriggers
-	if len(sceneTriggers) == 0 {
-		sceneTriggers = defaultSceneTriggers()
+	sceneMgr := NewSceneMgr(id, cfg)
+	if len(cfg.SceneTriggers) == 0 {
+		log.Fatalf("[world %s] scene_triggers is not configured", id)
+	}
+	if cfg.MovementTickMs <= 0 {
+		log.Fatalf("[world %s] movement_tick_ms must be > 0, got %d", id, cfg.MovementTickMs)
 	}
 	ss := &worldServer{
 		ServerBase:       common.NewServerBase(common.ServerWorld, id),
 		players:          make(map[uint64]*playerEntity),
 		playersByAccount: make(map[string]*playerEntity),
-		sceneMgr:         NewSceneMgr(id, cfg),
-		sceneTriggers:    sceneTriggers,
+		sceneMgr:         sceneMgr,
+		sceneTriggers:    cfg.SceneTriggers,
+		zoneTriggers:     resolveTriggers(cfg.SceneTriggers),
 		dbLoadPendings:   make(map[string]*dbLoadPending),
 		moveTickMs:       int64(cfg.MovementTickMs),
-	}
-	if ss.moveTickMs <= 0 {
-		ss.moveTickMs = 20
 	}
 	ss.serverCfg = cfg
 	ss.serverNumID = cfg.ID
@@ -97,25 +102,30 @@ func NewWorldServer(id string, cfg common.ServerConfig) *worldServer {
 	ss.gatewayConns = make(map[string]*common.ConnWrapper)
 	ss.outboundTransfers = make(map[string]*outboundTransfer)
 	ss.incomingTransfers = make(map[string]*incomingTransfer)
+	ss.foreigns = make(map[uint64]*foreignEntity)
 	ss.peerMgr = NewWorldPeerMgr(ss, cfg)
 	ss.rollbackTicks = maxMoveWindowMs / ss.moveTickMs
 	if maxMoveWindowMs%ss.moveTickMs != 0 {
 		ss.rollbackTicks++
 	}
 
-	if err := PlayerConfig().Load(cfg.PlayerConfigFile); err != nil {
-		log.Printf("[world %s] WARN: player config %q failed to load: %v (using builtin defaults)",
-			id, cfg.PlayerConfigFile, err)
+	if err := config.PlayerConfig().Load(cfg.PlayerConfigFile); err != nil {
+		log.Fatalf("[world %s] player config %q failed to load: %v", id, cfg.PlayerConfigFile, err)
 	}
-	if err := MoveTransitions().Load(cfg.StateTransitionTableFile); err != nil {
-		log.Printf("[world %s] WARN: state transition table %q failed to load: %v (transition validation disabled)",
-			id, cfg.StateTransitionTableFile, err)
+	if err := config.MoveTransitions().Load(cfg.StateTransitionTableFile); err != nil {
+		log.Fatalf("[world %s] state transition table %q failed to load: %v", id, cfg.StateTransitionTableFile, err)
 	}
-	if cfg.StateConfigFile != "" {
-		if err := StateConfig().Load(cfg.StateConfigFile); err != nil {
-			log.Printf("[world %s] WARN: state config %q failed to load: %v (per-state move caps disabled)",
-				id, cfg.StateConfigFile, err)
-		}
+	if cfg.PhaseTableFile == "" {
+		log.Fatalf("[world %s] phase_table_file is not configured", id)
+	}
+	if err := config.Phases().Load(cfg.PhaseTableFile); err != nil {
+		log.Fatalf("[world %s] phase table %q failed to load: %v", id, cfg.PhaseTableFile, err)
+	}
+	validatePhaseConfig()
+	ss.buildMovePolicy()
+	ss.logMovePolicy()
+	if err := config.StateConfig().Load(cfg.StateConfigFile); err != nil {
+		log.Fatalf("[world %s] state config %q failed to load: %v", id, cfg.StateConfigFile, err)
 	}
 
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_WalkStartReq, ss.HandleWalkStartReq)
@@ -125,7 +135,7 @@ func NewWorldServer(id string, cfg common.ServerConfig) *worldServer {
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_DashStartReq, ss.HandleDashStartReq)
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_RollStartReq, ss.HandleRollStartReq)
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_StopStartReq, ss.HandleStopStartReq)
-	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_MoveStopReq, ss.HandleMoveStopReq)
+	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_MoveHaltReq, ss.HandleMoveHaltReq)
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_MoveDirChangeReq, ss.HandleMoveDirChangeReq)
 	common.Register(ss.Router(common.SrcGateway), common.Cli2Wd_SkillReq, ss.HandleSkillReq)
 	common.Register(ss.Router(common.SrcGateway), common.Gw2Wd_DestroyEntityReq, ss.HandleDestroyEntityReq)
@@ -152,6 +162,7 @@ func NewWorldServer(id string, cfg common.ServerConfig) *worldServer {
 	common.Register(wr, common.Wd2Wd_HeartbeatRsp, ss.peerMgr.HandleHeartbeatRsp)
 	common.Register(wr, common.Wd2Wd_TransferEntityReq, ss.HandlePeerTransferEntityReq)
 	common.Register(wr, common.Wd2Wd_TransferEntityRsp, ss.HandlePeerTransferEntityRsp)
+	common.Register(wr, common.Wd2Wd_BorderInterestNotify, ss.HandlePeerBorderInterestNotify)
 
 	ss.OnPeerHello = ss.HandlePeerHello
 	ss.OnDisconnect = ss.HandleConnDisconnect
@@ -168,10 +179,12 @@ func (ss *worldServer) OnTick() {
 	for _, e := range ss.players {
 		ss.AdvanceEntityTo(e, nowTick)
 	}
+	ss.CheckZoneBoundaries(now)
 	ss.CheckSceneTriggers(now)
 	ss.ClearExpiredTransfers(now)
 	ss.peerMgr.OnTick(now)
 	ss.CheckTransferTimeouts(now)
+	ss.RunAoi(now, nowTick)
 
 	for account, pend := range ss.dbLoadPendings {
 		if now.After(pend.deadline) {
@@ -195,10 +208,6 @@ func (ss *worldServer) OnTick() {
 
 func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64, to pb.MoveState, ts int64, dirX, dirZ float64) {
 	entity, ok := ss.players[playerID]
-	if ok && entity.Transferring && !ss.TryFinishTransfer(entity, ts) {
-		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: playerID, Message: "正在传送"})
-		return
-	}
 	var rsp *common.MoveRsp
 	var logX, logY, logZ float64
 	var logLayer int
@@ -226,6 +235,7 @@ func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64
 				ackMs := ss.TickToMs(tick)
 				rsp = &common.MoveRsp{Success: true, PlayerId: playerID, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "移动开始", AckTimeMs: ackMs, AckTick: tick}
 				FillMoveRspState(rsp, snap)
+				ss.BroadcastEntityMove(entity, in)
 				logAccepted = true
 				logX, logY, logZ = snap.X, snap.Y, snap.Z
 				logLayer = snap.VoxelK
@@ -235,7 +245,9 @@ func (ss *worldServer) HandleMoveStart(conn *common.ConnWrapper, playerID uint64
 		rsp = &common.MoveRsp{Success: false, PlayerId: playerID, Message: "实体不存在"}
 	}
 
-	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	if ok && entity.Phase.SendsMoveRsp() {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	}
 	if logAccepted {
 		log.Printf("[world %s] player %d move state -> %s at (%.2f, %.2f, %.2f) layer=%d",
 			ss.ServerID, playerID, pb.MoveState_name[int32(to)], logX, logZ, logY, logLayer)
@@ -276,12 +288,8 @@ func (ss *worldServer) HandleStopStartReq(conn *common.ConnWrapper, req *common.
 	}
 }
 
-func (ss *worldServer) HandleMoveStopReq(conn *common.ConnWrapper, req *common.MoveStopReq) {
+func (ss *worldServer) HandleMoveHaltReq(conn *common.ConnWrapper, req *common.MoveHaltReq) {
 	entity, ok := ss.players[req.PlayerId]
-	if ok && entity.Transferring && !ss.TryFinishTransfer(entity, req.ServerTimeMs) {
-		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"})
-		return
-	}
 	var rsp *common.MoveRsp
 	if ok {
 		nowMs := time.Now().UnixMilli()
@@ -290,7 +298,7 @@ func (ss *worldServer) HandleMoveStopReq(conn *common.ConnWrapper, req *common.M
 
 			tick = ss.MsToTick(nowMs)
 		}
-		in := moveInput{Seq: entity.InputSeq, Tick: tick, Kind: moveInputStop}
+		in := moveInput{Seq: entity.InputSeq, Tick: tick, Kind: moveInputHalt}
 		accepted, msg, snap := ss.ProcessMoveInput(entity, in)
 		if !accepted {
 			rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
@@ -299,20 +307,19 @@ func (ss *worldServer) HandleMoveStopReq(conn *common.ConnWrapper, req *common.M
 			ackMs := ss.TickToMs(tick)
 			rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "停止", AckTimeMs: ackMs, AckTick: tick}
 			FillMoveRspState(rsp, snap)
+			ss.BroadcastEntityMove(entity, in)
 		}
 	} else {
 		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
 
-	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	if ok && entity.Phase.SendsMoveRsp() {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	}
 }
 
 func (ss *worldServer) HandleMoveDirChangeReq(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
 	entity, ok := ss.players[req.PlayerId]
-	if ok && entity.Transferring && !ss.TryFinishTransfer(entity, req.ServerTimeMs) {
-		common.SendMsg(conn, common.Wd2Cli_MoveRsp, &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"})
-		return
-	}
 	var rsp *common.MoveRsp
 	if ok {
 		nowMs := time.Now().UnixMilli()
@@ -329,6 +336,7 @@ func (ss *worldServer) HandleMoveDirChangeReq(conn *common.ConnWrapper, req *com
 			if accepted {
 				rsp = &common.MoveRsp{Success: true, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: "方向变更", AckTimeMs: ss.TickToMs(tick), AckTick: tick}
 				FillMoveRspState(rsp, snap)
+				ss.BroadcastEntityMove(entity, in)
 			} else {
 				rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, X: entity.X, Z: entity.Z, Y: entity.Y, Message: msg, AckTimeMs: entity.LastMoveTimeMs, AckTick: ss.MsToTick(entity.LastMoveTimeMs)}
 				FillMoveRspState(rsp, CaptureEntitySnapshot(entity))
@@ -341,12 +349,14 @@ func (ss *worldServer) HandleMoveDirChangeReq(conn *common.ConnWrapper, req *com
 		rsp = &common.MoveRsp{Success: false, PlayerId: req.PlayerId, Message: "实体不存在"}
 	}
 
-	common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	if ok && entity.Phase.SendsMoveRsp() {
+		common.SendMsg(conn, common.Wd2Cli_MoveRsp, rsp)
+	}
 }
 
 func (ss *worldServer) HandleSkillReq(conn *common.ConnWrapper, req *common.SkillReq) {
 	entity, ok := ss.players[req.PlayerId]
-	if ok && entity.Transferring {
+	if ok && !entity.Phase.AcceptsMoveInput() {
 		rsp := common.SkillRsp{Success: false, PlayerId: req.PlayerId, Message: "正在传送"}
 		common.SendMsg(conn, common.Wd2Cli_SkillRsp, &rsp)
 		return
@@ -395,10 +405,10 @@ func (ss *worldServer) ResumePlayerEntity(conn *common.ConnWrapper, req *common.
 	}
 	entity.GatewayConn = conn
 
-	sceneID := ""
+	var sceneID int64
 	var width, height float64
 	if entity.Scene != nil {
-		sceneID = entity.Scene.SceneID
+		sceneID = int64(entity.Scene.SceneID)
 		width = entity.Scene.Width
 		height = entity.Scene.Height
 	}
@@ -437,10 +447,10 @@ func (ss *worldServer) HandleResumeEntityReq(conn *common.ConnWrapper, req *comm
 	entity.SessionID = req.SessionId
 	entity.GatewayConn = conn
 
-	sceneID := ""
+	var sceneID int64
 	var width, height float64
 	if entity.Scene != nil {
-		sceneID = entity.Scene.SceneID
+		sceneID = int64(entity.Scene.SceneID)
 		width = entity.Scene.Width
 		height = entity.Scene.Height
 	}
@@ -505,8 +515,14 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		return
 	}
 
-	sc := ss.sceneMgr.GetOrCreate(rsp.SceneId)
-	resume := rsp.Found && rsp.SceneId == sc.SceneID
+	sceneLookup := config.SceneID(rsp.SceneId)
+	if !sceneLookup.Valid() && rsp.LegacyScene != "" {
+		if entry, ok := config.SceneConfig().GetByName(rsp.LegacyScene); ok {
+			sceneLookup = config.SceneIDFromMain(entry.MainID, config.MainInstance)
+		}
+	}
+	sc := ss.sceneMgr.GetOrCreate(sceneLookup)
+	resume := rsp.Found && sceneLookup == sc.SceneID
 	x, z, k := sc.SpawnPosition(resume, rsp.X, rsp.Z)
 	entity := &playerEntity{
 		PlayerID:    rsp.PlayerId,
@@ -535,7 +551,7 @@ func (ss *worldServer) HandleDbLoadPlayerRsp(_ *common.ConnWrapper, rsp *common.
 		Width:     width,
 		Height:    height,
 		Message:   "created",
-		SceneId:   sc.SceneID,
+		SceneId:   int64(sc.SceneID),
 		SessionId: pend.sessionID,
 	}
 	common.SendMsg(pend.conn, common.Wd2Gw_CreateEntityRsp, &createRsp)
@@ -576,7 +592,7 @@ func (ss *worldServer) CreateEntityLocal(conn *common.ConnWrapper, account, gate
 		Width:     width,
 		Height:    height,
 		Message:   "created local fallback",
-		SceneId:   sc.SceneID,
+		SceneId:   int64(sc.SceneID),
 		SessionId: sessionID,
 	}
 	common.SendMsg(conn, common.Wd2Gw_CreateEntityRsp, &rsp)
@@ -703,10 +719,10 @@ func (ss *worldServer) HandleShutdown(notify *common.ShutdownNotify) {
 
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
-		if e.Transferring || e.IncomingTransfer {
+		if !e.Phase.SavesToDb() {
 			continue
 		}
-		players = append(players, &common.PlayerData{PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneID(e)})
+		players = append(players, &common.PlayerData{PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: int64(entitySceneID(e))})
 	}
 	if len(players) == 0 {
 		ss.SendToCentralMsg(common.Srv2Ct_ShutdownAck, &common.ShutdownAck{ServerId: ss.ServerID})
@@ -851,9 +867,9 @@ func (ss *worldServer) DbReadLoop(cw *common.ConnWrapper) {
 		}
 	}
 }
-func entitySceneID(e *playerEntity) string {
+func entitySceneID(e *playerEntity) config.SceneID {
 	if e.Scene == nil {
-		return ""
+		return 0
 	}
 	return e.Scene.SceneID
 }
@@ -861,7 +877,7 @@ func entitySceneID(e *playerEntity) string {
 func (ss *worldServer) SavePlayer(e *playerEntity) {
 	req := &common.SavePlayerReq{
 		Players: []*common.PlayerData{
-			{PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneID(e)},
+			{PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: int64(entitySceneID(e))},
 		},
 	}
 	if err := ss.ForwardMsgToDb(common.Wd2Db_SavePlayerReq, req); err != nil {
@@ -872,11 +888,11 @@ func (ss *worldServer) SavePlayer(e *playerEntity) {
 func (ss *worldServer) AutosaveAll() {
 	players := make([]*common.PlayerData, 0, len(ss.players))
 	for _, e := range ss.players {
-		if e.Transferring || e.IncomingTransfer {
+		if !e.Phase.SavesToDb() {
 			continue
 		}
 		players = append(players, &common.PlayerData{
-			PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: entitySceneID(e),
+			PlayerId: e.PlayerID, Account: e.Account, X: e.X, Z: e.Z, SceneId: int64(entitySceneID(e)),
 		})
 	}
 	if len(players) == 0 {

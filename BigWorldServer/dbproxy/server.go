@@ -50,14 +50,14 @@ func (s *dbProxyServer) HandleValidateAccountReq(conn *common.ConnWrapper, req *
 
 	go func() {
 		rsp := common.ValidateAccountRsp{ReqId: req.ReqId}
-		valid, scene, err := s.db.ValidateAccount(req.Account, req.Password)
+		valid, sceneID, err := s.db.ValidateAccount(req.Account, req.Password)
 		if err != nil {
 			rsp.Message = "数据库错误"
 			log.Printf("[dbproxy %s] validate account=%s err: %v", s.ServerID, req.Account, err)
 		} else {
 			rsp.Valid = valid
 			if valid {
-				rsp.SceneId = scene
+				rsp.SceneId = sceneID
 				rsp.Message = "ok"
 			} else {
 				rsp.Message = "账号或密码错误"
@@ -72,7 +72,7 @@ func (s *dbProxyServer) HandleValidateAccountReq(conn *common.ConnWrapper, req *
 func (s *dbProxyServer) HandleLoadPlayerReq(conn *common.ConnWrapper, req *common.LoadPlayerReq) {
 	go func() {
 		rsp := common.LoadPlayerRsp{Account: req.Account}
-		found, pid, x, z, scene, err := s.db.LoadPlayer(req.Account)
+		found, pid, x, z, sceneID, legacyScene, err := s.db.LoadPlayer(req.Account)
 		if err != nil {
 			rsp.Message = "数据库错误"
 			log.Printf("[dbproxy %s] load player account=%s err: %v", s.ServerID, req.Account, err)
@@ -81,7 +81,8 @@ func (s *dbProxyServer) HandleLoadPlayerReq(conn *common.ConnWrapper, req *commo
 			rsp.PlayerId = pid
 			rsp.X = x
 			rsp.Z = z
-			rsp.SceneId = scene
+			rsp.SceneId = sceneID
+			rsp.LegacyScene = legacyScene
 		}
 		s.Loop.Defer(func() {
 			common.SendMsg(conn, common.Db2Wd_LoadPlayerRsp, &rsp)

@@ -19,6 +19,7 @@ namespace BigWorldClient
             { "bool", "bool" },
             { "string_array", "[string]" },
             { "recentering", "[CameraRecenteringEntry]" },
+            { "policy", "EventPolicy" },
         };
 
         [MenuItem("BigWorld/Config/生成配置协议代码")]
@@ -56,6 +57,7 @@ namespace BigWorldClient
             var player = ReadColumns(ConfigTableDefinitions.PlayerConfig);
             var state = ReadColumns(ConfigTableDefinitions.StateConfig);
             var trans = ReadColumns(ConfigTableDefinitions.StateTransitionTable);
+            var phase = ReadColumns(ConfigTableDefinitions.PhaseTable);
             var panel = ReadColumns(ConfigTableDefinitions.PanelConfig);
             var scene = ReadColumns(ConfigTableDefinitions.SceneConfig);
 
@@ -69,19 +71,14 @@ namespace BigWorldClient
             sb.Append("table StateConfigMsg {\n  entries: [StateConfigEntry];\n}\n");
             sb.Append("root_type StateConfigMsg;\n\n");
 
-            bool isMatrix = trans.Count > 0 && trans[0].name == "source" && trans.Skip(1).All(c => c.type == "bool");
-            if (isMatrix)
-            {
-                sb.Append("table TransitionEntry {\n  source: string (required);\n  allowed_targets: [string];\n}\n");
-                sb.Append("table TransitionTableMsg {\n  entries: [TransitionEntry];\n}\n");
-                sb.Append("root_type TransitionTableMsg;\n\n");
-            }
-            else
-            {
-                EmitTable(sb, "TransitionEntry", trans);
-                sb.Append("table TransitionTableMsg {\n  entries: [TransitionEntry];\n}\n");
-                sb.Append("root_type TransitionTableMsg;\n\n");
-            }
+            sb.Append("enum EventPolicy:ubyte { Keep = 0, Block = 1, Interrupt = 2 }\n\n");
+            EmitTable(sb, "TransitionEntry", trans);
+            sb.Append("table TransitionTableMsg {\n  entries: [TransitionEntry];\n}\n");
+            sb.Append("root_type TransitionTableMsg;\n\n");
+
+            EmitTable(sb, "PhaseEntry", phase);
+            sb.Append("table PhaseTableMsg {\n  entries: [PhaseEntry];\n}\n");
+            sb.Append("root_type PhaseTableMsg;\n\n");
 
             EmitTable(sb, "PanelConfigEntry", panel);
             sb.Append("table PanelConfigMsg {\n  entries: [PanelConfigEntry];\n}\n");

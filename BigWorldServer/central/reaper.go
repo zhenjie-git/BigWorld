@@ -27,7 +27,6 @@ func (cs *centralServer) CleanupServer(id string) {
 		delete(cs.connToID, rec.conn)
 		_ = rec.conn.Close()
 	}
-	cs.RebalanceScenes()
 	for _, tr := range cs.transfers {
 		if tr.FromWorldID == id || tr.ToWorldID == id {
 			cs.FinishTransfer(tr, false, "world offline")

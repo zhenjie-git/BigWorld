@@ -19,10 +19,8 @@ namespace BigWorldClient
             List<WorldTriangle> triangles = CollectTriangles(config, scene);
             if (triangles.Count == 0)
             {
-                {}
                 return null;
             }
-            {}
 
             Bounds worldBounds;
             if (config.autoComputeBounds)
@@ -39,7 +37,6 @@ namespace BigWorldClient
             int dimY = Mathf.Max(1, Mathf.CeilToInt(worldBounds.size.y / config.voxelSize.y - kDimEps));
             int dimZ = Mathf.Max(1, Mathf.CeilToInt(worldBounds.size.z / config.voxelSize.z - kDimEps));
 
-            {}
 
             bool[,,] occupied = new bool[dimX, dimY, dimZ];
             Vector3 voxelHalfExtents = config.voxelSize * 0.5f;
@@ -53,27 +50,14 @@ namespace BigWorldClient
             }
 
             int occupiedCount = CountOccupied(occupied, dimX, dimY, dimZ);
-            {}
 
-            if (config.fillInteriorCavities)
+            if (config.fillInteriorCavities && FillInteriorCavities(occupied, dimX, dimY, dimZ) > 0)
             {
-                int filledCount = FillInteriorCavities(occupied, dimX, dimY, dimZ);
-                if (filledCount > 0)
-                {
-                    {}
-                    int newOccupied = CountOccupied(occupied, dimX, dimY, dimZ);
-                    {}
-                    occupiedCount = newOccupied;
-                }
-                else
-                {
-                    {}
-                }
+                occupiedCount = CountOccupied(occupied, dimX, dimY, dimZ);
             }
 
             List<List<VoxelData>> columnVoxels = MergeVoxels(
                 occupied, config, gridOrigin, dimX, dimY, dimZ);
-            {}
 
             VoxelGridData gridData = BuildGridData(columnVoxels, config.voxelSize, gridOrigin, dimX, dimZ);
             gridData.originOffset.y -= FindCommonColumnTop(columnVoxels, gridOrigin.y);
@@ -469,9 +453,6 @@ namespace BigWorldClient
                 }
             }
 
-            {}
-            {}
-            {}
 
             return gridData;
         }
@@ -600,7 +581,6 @@ namespace BigWorldClient
                         blockedDirs++;
                 }
             }
-            {}
         }
 
         private static bool CanStepTo(VoxelData from, VoxelData to, float maxStepHeight)

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bigworld/world/Config"
 	"math"
 
 	pb "bigworld/common/pb"
@@ -73,9 +74,9 @@ func WorldDelta(e *playerEntity, localX, localZ float64) (float64, float64) {
 }
 
 func AllowedDelta(dtMs int64) float64 {
-	d := maxMoveDelta * float64(dtMs) / 20.0
-	if d < maxMoveDelta {
-		d = maxMoveDelta
+	d := config.MaxMoveDelta * float64(dtMs) / 20.0
+	if d < config.MaxMoveDelta {
+		d = config.MaxMoveDelta
 	}
 	return d
 }
@@ -130,12 +131,12 @@ func ApplyGroundedDelta(sc *scene, e *playerEntity, dx, dz, maxDelta float64) in
 		e.Z += dz
 		return moveApplied
 	}
-	if GroundDropAt(vg, e.X, e.Z, k, dx, dz, PlayerConfig().MaxStep()) {
+	if GroundDropAt(vg, e.X, e.Z, k, dx, dz, config.PlayerConfig().MaxStep()) {
 		e.X += dx
 		e.Z += dz
 		return moveLedged
 	}
-	walkable, newK, newY := vg.ValidateGroundMove(e.X, e.Z, k, dx, dz, PlayerConfig().MaxStep(), maxDelta)
+	walkable, newK, newY := vg.ValidateGroundMove(e.X, e.Z, k, dx, dz, e.Y, config.PlayerConfig().MaxStep(), maxDelta)
 	if !walkable || newK < 0 {
 		return moveBlocked
 	}
@@ -163,7 +164,7 @@ func ApplyJumpHorizontal(sc *scene, e *playerEntity, dx, dz, maxDelta float64) {
 		e.Z += dz
 		return
 	}
-	walkable, _, _ := vg.ValidateGroundMove(e.X, e.Z, k, dx, dz, PlayerConfig().MaxStep(), maxDelta)
+	walkable, _, _ := vg.ValidateGroundMove(e.X, e.Z, k, dx, dz, e.Y, config.PlayerConfig().MaxStep(), maxDelta)
 	if walkable {
 		e.X += dx
 		e.Z += dz
@@ -191,7 +192,7 @@ type cyclicState struct {
 }
 
 func (s cyclicState) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(s.state)
+	entry, ok := config.StateConfig().StateEntry(s.state)
 	if !ok {
 		return
 	}
@@ -205,8 +206,8 @@ func (s cyclicState) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 	if b < a {
 		b += 1
 	}
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, b)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, b)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, b)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, b)
 
 	e.CurveNorm = norm
 	if dx == 0 && dz == 0 {
@@ -222,7 +223,7 @@ func (s cyclicState) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 type sprintStateClass struct{}
 
 func (sprintStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(pb.MoveState_MOVE_SPRINT)
+	entry, ok := config.StateConfig().StateEntry(pb.MoveState_MOVE_SPRINT)
 	if !ok || entry.Duration <= 0 {
 		return
 	}
@@ -230,7 +231,7 @@ func (sprintStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 	if elapsed < 0 {
 		elapsed = 0
 	}
-	if elapsed >= PlayerConfig().SprintToRunTime() {
+	if elapsed >= config.PlayerConfig().SprintToRunTime() {
 		SetMoveState(e, pb.MoveState_MOVE_RUN, nowMs)
 		return
 	}
@@ -240,8 +241,8 @@ func (sprintStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 	if b < a {
 		b += 1
 	}
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, b)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, b)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, b)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, b)
 	e.CurveNorm = norm
 	if dx == 0 && dz == 0 {
 		return
@@ -258,15 +259,15 @@ type oneShotGroundedState struct {
 }
 
 func (s oneShotGroundedState) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(s.state)
+	entry, ok := config.StateConfig().StateEntry(s.state)
 	if !ok || len(entry.Curves) == 0 {
 		SetMoveState(e, pb.MoveState_MOVE_IDLE, nowMs)
 		return
 	}
 	norm := OneShotNorm(e, entry.Duration, nowMs)
 	a := e.CurveNorm
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, norm)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, norm)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, norm)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, norm)
 	e.CurveNorm = norm
 	if dx != 0 || dz != 0 {
 		wx, wz := WorldDelta(e, dx, dz)
@@ -284,15 +285,15 @@ func (s oneShotGroundedState) Update(e *playerEntity, sc *scene, dtMs, nowMs int
 type dashStateClass struct{}
 
 func (dashStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(pb.MoveState_MOVE_DASH)
+	entry, ok := config.StateConfig().StateEntry(pb.MoveState_MOVE_DASH)
 	if !ok {
 		SetMoveState(e, pb.MoveState_MOVE_IDLE, nowMs)
 		return
 	}
 	norm := OneShotNorm(e, entry.Duration, nowMs)
 	a := e.CurveNorm
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, norm)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, norm)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, norm)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, norm)
 	e.CurveNorm = norm
 	if dx != 0 || dz != 0 {
 		wx, wz := WorldDelta(e, dx, dz)
@@ -310,15 +311,15 @@ func (dashStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 type stopStateClass struct{}
 
 func (stopStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(e.State)
+	entry, ok := config.StateConfig().StateEntry(e.State)
 	if !ok || len(entry.Curves) == 0 {
 
 		return
 	}
 	norm := OneShotNorm(e, entry.Duration, nowMs)
 	a := e.CurveNorm
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, norm)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, norm)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, norm)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, norm)
 	e.CurveNorm = norm
 	if dx != 0 || dz != 0 {
 		wx, wz := WorldDelta(e, dx, dz)
@@ -359,16 +360,16 @@ func (jumpStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 }
 
 func JumpUpUpdate(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(pb.MoveState_MOVE_JUMP_UP)
+	entry, ok := config.StateConfig().StateEntry(pb.MoveState_MOVE_JUMP_UP)
 	if !ok {
 		SetMoveState(e, pb.MoveState_MOVE_FALL, nowMs)
 		return
 	}
 	norm := OneShotNorm(e, entry.Duration, nowMs)
 	a := e.CurveNorm
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, norm)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, norm)
-	dy := StateConfig().EvalCurve(entry.Curves["y"], norm) - StateConfig().EvalCurve(entry.Curves["y"], a)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, norm)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, norm)
+	dy := config.StateConfig().EvalCurve(entry.Curves["y"], norm) - config.StateConfig().EvalCurve(entry.Curves["y"], a)
 	e.CurveNorm = norm
 
 	if dx != 0 || dz != 0 {
@@ -377,11 +378,11 @@ func JumpUpUpdate(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 	}
 	newY := e.Y + dy
 	if sc.voxelGrid != nil {
-		half := PlayerConfig().PlayerHeight() / 2
-		headTop := newY + PlayerConfig().PlayerCenterY() + half
-		feet := newY + PlayerConfig().PlayerCenterY() - half
+		half := config.PlayerConfig().PlayerHeight() / 2
+		headTop := newY + config.PlayerConfig().PlayerCenterY() + half
+		feet := newY + config.PlayerConfig().PlayerCenterY() - half
 		if hit, ceilingY := sc.voxelGrid.CeilingHit(e.X, e.Z, feet, headTop); hit {
-			e.Y = ceilingY - PlayerConfig().PlayerCenterY() - half
+			e.Y = ceilingY - config.PlayerConfig().PlayerCenterY() - half
 			e.Airborne = true
 			SetMoveState(e, pb.MoveState_MOVE_JUMP_DOWN, nowMs)
 			return
@@ -395,7 +396,7 @@ func JumpUpUpdate(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 }
 
 func JumpDownUpdate(e *playerEntity, sc *scene, dtMs, nowMs int64) {
-	entry, ok := StateConfig().StateEntry(pb.MoveState_MOVE_JUMP_DOWN)
+	entry, ok := config.StateConfig().StateEntry(pb.MoveState_MOVE_JUMP_DOWN)
 	if !ok {
 		SetMoveState(e, pb.MoveState_MOVE_FALL, nowMs)
 		return
@@ -407,9 +408,9 @@ func JumpDownUpdate(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 		SetMoveState(e, pb.MoveState_MOVE_FALL, nowMs)
 		return
 	}
-	dx := StateConfig().AxisDelta(entry.Curves["x"], a, norm)
-	dz := StateConfig().AxisDelta(entry.Curves["z"], a, norm)
-	dy := StateConfig().EvalCurve(entry.Curves["y"], norm) - StateConfig().EvalCurve(entry.Curves["y"], a)
+	dx := config.StateConfig().AxisDelta(entry.Curves["x"], a, norm)
+	dz := config.StateConfig().AxisDelta(entry.Curves["z"], a, norm)
+	dy := config.StateConfig().EvalCurve(entry.Curves["y"], norm) - config.StateConfig().EvalCurve(entry.Curves["y"], a)
 	if dy > 0 {
 		dy = 0
 	}
@@ -438,9 +439,9 @@ func (fallStateClass) Update(e *playerEntity, sc *scene, dtMs, nowMs int64) {
 	if dt > 0.05 {
 		dt = 0.05
 	}
-	e.FallVelY -= PlayerConfig().FallGravityMps2() * dt
-	if e.FallVelY < -PlayerConfig().FallSpeedLimitMps() {
-		e.FallVelY = -PlayerConfig().FallSpeedLimitMps()
+	e.FallVelY -= config.PlayerConfig().FallGravityMps2() * dt
+	if e.FallVelY < -config.PlayerConfig().FallSpeedLimitMps() {
+		e.FallVelY = -config.PlayerConfig().FallSpeedLimitMps()
 	}
 	newY := e.Y + e.FallVelY*dt
 	if TryLandOnVoxel(sc, e, newY) {

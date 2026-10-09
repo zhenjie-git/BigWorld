@@ -23,14 +23,12 @@ namespace BigWorldClient.UI
             var font = Resources.Load<Font>("Fonts/SimHei");
             if (font == null)
             {
-                {}
                 return;
             }
 
             var cjkFontAsset = TMP_FontAsset.CreateFontAsset(font);
             if (cjkFontAsset == null)
             {
-                {}
                 return;
             }
 
@@ -38,7 +36,6 @@ namespace BigWorldClient.UI
             if (fallbacks == null || fallbacks.Contains(cjkFontAsset)) return;
 
             fallbacks.Add(cjkFontAsset);
-            {}
         }
     }
 }

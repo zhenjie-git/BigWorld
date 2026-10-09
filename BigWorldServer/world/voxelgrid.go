@@ -23,7 +23,6 @@ const (
 	voxelDirUpperRight = 6
 	voxelDirLowerRight = 7
 
-	maxMoveDelta   = 0.6
 	airborneMargin = 1.0
 	airborneCeilH  = 3.0
 
@@ -211,6 +210,22 @@ func (g *voxelGrid) TopLayerAt(x, z int) int {
 	return g.ColumnCount(x, z) - 1
 }
 
+func (g *voxelGrid) ColumnCountAtWorld(wx, wz float64) int {
+	x, z, ok := g.WorldToColumn(wx, wz)
+	if !ok {
+		return 0
+	}
+	return g.ColumnCount(x, z)
+}
+
+func (g *voxelGrid) TopLayerAtWorld(wx, wz float64) int {
+	x, z, ok := g.WorldToColumn(wx, wz)
+	if !ok {
+		return -1
+	}
+	return g.TopLayerAt(x, z)
+}
+
 func (g *voxelGrid) ValidateMove(fromX, fromZ float64, curK int, dx, dz, maxStep float64) (bool, int) {
 	curX, curZ, ok := g.WorldToColumn(fromX, fromZ)
 	if !ok {
@@ -268,7 +283,53 @@ func (g *voxelGrid) SurfaceHeight(x, z float64, k int) float64 {
 	return g.origin[1] + g.voxels[g.starts[idx]+k].maxY
 }
 
-func (g *voxelGrid) ValidateGroundMove(fromX, fromZ float64, curK int, dx, dz, maxStep, maxDelta float64) (bool, int, float64) {
+func (g *voxelGrid) SmoothGroundHeight(x, z, refY, maxStep float64) float64 {
+	fx := (x-g.origin[0])/g.voxelSize[0] - 0.5
+	fz := (z-g.origin[2])/g.voxelSize[2] - 0.5
+	x0 := int(math.Floor(fx))
+	z0 := int(math.Floor(fz))
+	tx := fx - float64(x0)
+	tz := fz - float64(z0)
+
+	h00 := g.CornerTop(x0, z0, refY, maxStep)
+	h10 := g.CornerTop(x0+1, z0, refY, maxStep)
+	h01 := g.CornerTop(x0, z0+1, refY, maxStep)
+	h11 := g.CornerTop(x0+1, z0+1, refY, maxStep)
+
+	wx0 := (1 - tx) * (1 - tz)
+	wx1 := tx * (1 - tz)
+	wz0 := (1 - tx) * tz
+	wz1 := tx * tz
+	return h00*wx0 + h10*wx1 + h01*wz0 + h11*wz1
+}
+
+func (g *voxelGrid) CornerTop(cx, cz int, refY, maxStep float64) float64 {
+	if cx < 0 || cx >= g.dimX || cz < 0 || cz >= g.dimZ {
+		return refY
+	}
+	idx := g.GridIndex(cx, cz)
+	cnt := g.ColumnCount(cx, cz)
+	if cnt == 0 {
+		return refY
+	}
+	start := g.starts[idx]
+	best := 0
+	bestDist := math.MaxFloat64
+	for i := 0; i < cnt; i++ {
+		d := math.Abs(g.origin[1] + g.voxels[start+i].maxY - refY)
+		if d < bestDist {
+			bestDist = d
+			best = i
+		}
+	}
+	top := g.origin[1] + g.voxels[start+best].maxY
+	if top > refY+maxStep || top < refY-maxStep {
+		return refY
+	}
+	return top
+}
+
+func (g *voxelGrid) ValidateGroundMove(fromX, fromZ float64, curK int, dx, dz, refY, maxStep, maxDelta float64) (bool, int, float64) {
 	if math.Hypot(dx, dz) > maxDelta {
 		return false, curK, g.origin[1]
 	}
@@ -287,7 +348,7 @@ func (g *voxelGrid) ValidateGroundMove(fromX, fromZ float64, curK int, dx, dz, m
 		}
 		px, pz, k = nx, nz, nk
 	}
-	return true, k, g.SurfaceHeight(px, pz, k)
+	return true, k, g.SmoothGroundHeight(px, pz, refY, maxStep)
 }
 
 func (g *voxelGrid) ResolveLayerNearY(x, z float64, refY float64) int {

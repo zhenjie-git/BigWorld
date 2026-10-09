@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace BigWorldClient
 {
-    public enum PredictedEventKind { StartState = 0, DirChange = 1, Stop = 2 }
+    public enum PredictedEventKind { StartState = 0, DirChange = 1, Halt = 2 }
 
     public struct PendingMoveEvent
     {
@@ -21,8 +21,9 @@ namespace BigWorldClient
     {
         public const long TickMs = ServerClock.TickMs;
         private const int MaxWindowTick = 15;
-        private const int MaxCatchUpPerFrame = 8;
+        private const int MaxCatchUpPerFrame = 2;
         private const long MaxSnapDeficit = 60;
+        private const long MaxReplayTicks = 16;
 
         public bool Ready { get; private set; }
         public MoveState CurrentState => _cur.State;
@@ -42,7 +43,8 @@ namespace BigWorldClient
         private readonly List<PendingMoveEvent> _pending = new();
 
         private Vector2 _currentMovement;
-        private Vector2 _lastReportedDir;
+        private Vector3 _latestWorldDir;
+        private Vector3 _lastReportedDir;
         private float _lastDirReportTime;
         private bool _dirReported;
         private bool _resumeSprintAfterAirborne;
@@ -77,7 +79,6 @@ namespace BigWorldClient
             _pending.Clear();
             _seq = 0;
             Ready = _simTick > 0;
-            {}
         }
 
         public void ActivateWhenSynced()
@@ -87,7 +88,6 @@ namespace BigWorldClient
             _cur.StateStartMs = MovementSim.TickToMs(_simTick);
             _prev = _cur;
             Ready = true;
-            {}
         }
 
         public void Update(List<PlayerInputCommand> commands, Vector2 movement, Vector3 worldDir, float realtime)
@@ -95,10 +95,11 @@ namespace BigWorldClient
             if (!Ready) return;
 
             _currentMovement = movement;
+            _latestWorldDir = worldDir;
             if (commands != null)
             {
                 foreach (PlayerInputCommand command in commands)
-                    ProcessInputCommand(command, worldDir);
+                    ProcessInputCommand(command);
             }
             UpdateDirectionReporting(worldDir, realtime);
 
@@ -108,8 +109,6 @@ namespace BigWorldClient
             long deficit = target - _simTick;
             if (deficit > MaxSnapDeficit)
             {
-
-                {}
                 _simTick = target - 1;
                 _prev = _cur;
                 AdvanceTo(target);
@@ -170,63 +169,50 @@ namespace BigWorldClient
 
         private static double DoubleLerp(double a, double b, double t) => a + (b - a) * t;
 
-        private void ProcessInputCommand(PlayerInputCommand command, Vector3 worldDir)
+        private void ProcessInputCommand(PlayerInputCommand command)
         {
             long tick = command.Tick > 0 ? ClampEventTick(command.Tick) : EventTick();
-            MoveState state = _cur.State;
+            MoveStateMachine fsm = StateMachine;
+            float dirX = _latestWorldDir.x;
+            float dirZ = _latestWorldDir.z;
 
             switch (command.Kind)
             {
                 case PlayerInputCommandKind.MovementStarted:
-                    if (state == MoveState.MoveIdle || state == MoveState.MoveStopLight
-                        || state == MoveState.MoveStopMed || state == MoveState.MoveRoll
-                        || state == MoveState.MoveLandLight)
-                    {
-                        EnqueueStartAt(MoveState.MoveWalk, worldDir.x, worldDir.z, tick);
-                    }
+                    if (fsm.CanTrigger(MoveEvent.Walk))
+                        EnqueueStartAt(MoveState.MoveWalk, dirX, dirZ, tick);
                     break;
 
                 case PlayerInputCommandKind.MovementCanceled:
-                    switch (state)
-                    {
-                        case MoveState.MoveSprint:
-                            EnqueueStartAt(MoveState.MoveStopHard, 0, 0, tick);
-                            break;
-                        case MoveState.MoveRun:
-                            EnqueueStartAt(MoveState.MoveStopMed, 0, 0, tick);
-                            break;
-                        case MoveState.MoveWalk:
-                            EnqueueStartAt(MoveState.MoveStopLight, 0, 0, tick);
-                            break;
-                    }
+                    if (fsm.CanTransitionTo(MoveState.MoveStopHard))
+                        EnqueueStartAt(MoveState.MoveStopHard, 0, 0, tick);
+                    else if (fsm.CanTransitionTo(MoveState.MoveStopMed))
+                        EnqueueStartAt(MoveState.MoveStopMed, 0, 0, tick);
+                    else if (fsm.CanTransitionTo(MoveState.MoveStopLight))
+                        EnqueueStartAt(MoveState.MoveStopLight, 0, 0, tick);
                     break;
 
                 case PlayerInputCommandKind.WalkToggle:
-                    if (state == MoveState.MoveWalk)
-                        EnqueueStartAt(MoveState.MoveRun, worldDir.x, worldDir.z, tick);
+                    if (fsm.CanTrigger(MoveEvent.Run))
+                        EnqueueStartAt(MoveState.MoveRun, dirX, dirZ, tick);
                     break;
 
                 case PlayerInputCommandKind.Sprint:
-                    if (state == MoveState.MoveWalk || state == MoveState.MoveRun)
-                        EnqueueStartAt(MoveState.MoveSprint, worldDir.x, worldDir.z, tick);
+                    if (fsm.CanTrigger(MoveEvent.Sprint))
+                        EnqueueStartAt(MoveState.MoveSprint, dirX, dirZ, tick);
                     break;
 
                 case PlayerInputCommandKind.Jump:
-                    if (state != MoveState.MoveDash && state != MoveState.MoveRoll
-                        && state != MoveState.MoveJumpUp && state != MoveState.MoveJumpDown
-                        && state != MoveState.MoveFall)
+                    if (fsm.CanTrigger(MoveEvent.Jump))
                     {
-                        _resumeSprintAfterAirborne = state == MoveState.MoveSprint;
-                        EnqueueStartAt(MoveState.MoveJumpUp, worldDir.x, worldDir.z, tick);
+                        _resumeSprintAfterAirborne = fsm.CurrentState == MoveState.MoveSprint;
+                        EnqueueStartAt(MoveState.MoveJumpUp, dirX, dirZ, tick);
                     }
                     break;
 
                 case PlayerInputCommandKind.Dash:
-                    if (state != MoveState.MoveDash)
-                        EnqueueStartAt(MoveState.MoveDash, worldDir.x, worldDir.z, tick);
-                    break;
-
-                case PlayerInputCommandKind.MovementPerformed:
+                    if (fsm.CanTrigger(MoveEvent.Dash))
+                        EnqueueStartAt(MoveState.MoveDash, dirX, dirZ, tick);
                     break;
             }
         }
@@ -242,10 +228,8 @@ namespace BigWorldClient
 
         private void UpdateDirectionReporting(Vector3 worldDir, float realtime)
         {
-            MoveState state = _cur.State;
-            bool moving = state == MoveState.MoveWalk || state == MoveState.MoveRun
-                          || state == MoveState.MoveSprint || state == MoveState.MoveRoll;
-            if (!moving || _currentMovement == Vector2.zero) return;
+            if (worldDir == Vector3.zero) return;
+            if (!StateMachine.IsLocomotion() || _currentMovement == Vector2.zero) return;
             if (realtime - _lastDirReportTime < 0.1f) return;
             if (_dirReported && Vector3.Angle(_lastReportedDir, worldDir) <= 5f) return;
 
@@ -264,17 +248,17 @@ namespace BigWorldClient
                 if (_currentMovement == Vector2.zero)
                     EnqueueStartAt(MoveState.MoveStopHard, 0, 0, tick);
                 else
-                    EnqueueStartAt(MoveState.MoveSprint, _lastReportedDir.x, _lastReportedDir.y, tick);
+                    EnqueueStartAt(MoveState.MoveSprint, _lastReportedDir.x, _lastReportedDir.z, tick);
             }
             else if (reason == MoveTransitionReason.AirborneLanded)
             {
                 if (_currentMovement != Vector2.zero)
                     EnqueueStartAt(_resumeSprintAfterAirborne ? MoveState.MoveSprint : MoveState.MoveWalk,
-                        _lastReportedDir.x, _lastReportedDir.y, tick);
+                        _lastReportedDir.x, _lastReportedDir.z, tick);
             }
             else if (reason == MoveTransitionReason.RollCompleted && _currentMovement != Vector2.zero)
             {
-                EnqueueStartAt(MoveState.MoveWalk, _lastReportedDir.x, _lastReportedDir.y, tick);
+                EnqueueStartAt(MoveState.MoveWalk, _lastReportedDir.x, _lastReportedDir.z, tick);
             }
             else if (reason == MoveTransitionReason.SprintTimeout && _currentMovement == Vector2.zero)
             {
@@ -300,12 +284,13 @@ namespace BigWorldClient
         public void EnqueueStartAt(MoveState to, float dirX, float dirZ, long tick)
         {
             if (!Ready || _net == null) return;
+            if (_cur.State != to && !StateMachine.CanTransitionTo(to)) return;
 
             if (_cur.State != to)
             {
                 if (dirX != 0f || dirZ != 0f)
                 {
-                    _lastReportedDir = new Vector2(dirX, dirZ);
+                    _lastReportedDir = new Vector3(dirX, 0f, dirZ);
                     _dirReported = true;
                 }
                 AddPending(tick, PredictedEventKind.StartState, to, dirX, dirZ);
@@ -332,18 +317,18 @@ namespace BigWorldClient
             _net.SendDirStart(MessageTypes.Cli2Wd_MoveDirChangeReq, dirX, dirZ, tick);
         }
 
-        public void EnqueueMoveStop()
+        public void EnqueueHalt()
         {
             if (!Ready || _net == null) return;
-            EnqueueMoveStopAt(EventTick());
+            EnqueueHaltAt(EventTick());
         }
 
-        public void EnqueueMoveStopAt(long tick)
+        public void EnqueueHaltAt(long tick)
         {
             if (!Ready || _net == null) return;
-            AddPending(tick, PredictedEventKind.Stop, default, 0, 0);
+            AddPending(tick, PredictedEventKind.Halt, default, 0, 0);
             if (tick == _simTick) ApplyEventsAtTick(tick);
-            _net.SendMoveStop(tick);
+            _net.SendHalt(tick);
         }
 
         private void AddPending(long tick, PredictedEventKind kind, MoveState state, double dirX, double dirZ)
@@ -397,17 +382,37 @@ namespace BigWorldClient
                 case PredictedEventKind.DirChange:
                     MovementSim.SetMoveDir(ref _cur, ev.DirX, ev.DirZ);
                     break;
-                case PredictedEventKind.Stop:
+                case PredictedEventKind.Halt:
                     StateMachine.ForceChangeState(ref _cur, MoveState.MoveIdle, ev.Tick);
                     break;
+            }
+        }
+
+        public void ResendPending()
+        {
+            if (!Ready || _net == null) return;
+            SortPending();
+            for (int i = 0; i < _pending.Count; i++)
+            {
+                PendingMoveEvent ev = _pending[i];
+                switch (ev.Kind)
+                {
+                    case PredictedEventKind.StartState:
+                        SendStart(ev.State, (float)ev.DirX, (float)ev.DirZ, ev.Tick);
+                        break;
+                    case PredictedEventKind.DirChange:
+                        _net.SendDirStart(MessageTypes.Cli2Wd_MoveDirChangeReq, (float)ev.DirX, (float)ev.DirZ, ev.Tick);
+                        break;
+                    case PredictedEventKind.Halt:
+                        _net.SendHalt(ev.Tick);
+                        break;
+                }
             }
         }
 
         public void OnAuthoritative(in MoveRspInfo info)
         {
             if (!Ready || !info.HasState) return;
-
-            _clock?.LearnServerTick(info.SimTick, ServerClock.LocalNowMs());
 
             if (!info.Success)
             {
@@ -421,15 +426,12 @@ namespace BigWorldClient
             _pending.RemoveAll(ev => ev.Tick <= ackTick);
 
             RestoreAuthoritative(in info);
-            long localNow = _clock.TickNow();
-            ReplayPending(localNow);
 
             _prev = _cur;
         }
 
         private void RestoreAuthoritative(in MoveRspInfo info)
         {
-            _simTick = info.SimTick;
             _cur = new MoveSimEntity
             {
                 X = info.X,
@@ -446,12 +448,21 @@ namespace BigWorldClient
             };
 
             StateMachine.ApplyAuthoritative(_cur.State, _cur.CurveNorm);
+
+            if (info.SimTick < _simTick && _simTick - info.SimTick <= MaxReplayTicks)
+            {
+                _simTick = info.SimTick;
+                ReplayPending(_clock.TickNow());
+                return;
+            }
+
+            _simTick = Math.Max(_simTick, info.SimTick);
         }
 
         private void ReplayPending(long localNow)
         {
             SortPending();
-            long limit = Math.Min(localNow, _simTick + MaxCatchUpPerFrame);
+            long limit = localNow;
             long cur = _simTick;
             for (int i = 0; i < _pending.Count; i++)
             {

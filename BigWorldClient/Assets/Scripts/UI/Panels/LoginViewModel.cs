@@ -101,7 +101,6 @@ namespace BigWorldClient.UI.Panels
                 Password = _password
             });
 
-            {}
         }
 
         public void SubscribeToEvents()

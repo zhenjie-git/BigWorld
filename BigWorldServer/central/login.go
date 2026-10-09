@@ -12,7 +12,7 @@ const loginGatewayTimeout = 10 * time.Second
 const loginFinishTimeout = 30 * time.Second
 const forceKickTimeout = 10 * time.Second
 
-func (cs *centralServer) AssignGateway(reqID uint64, account string, preferredWorldID, preferredSceneID string) common.GatewayAssignRsp {
+func (cs *centralServer) AssignGateway(reqID uint64, account, preferredWorldID string, preferredSceneID int64) common.GatewayAssignRsp {
 	var gatewayID, gatewayAddr string
 	for id, rec := range cs.servers {
 		if rec.info.ServerType == common.ServerGateway {

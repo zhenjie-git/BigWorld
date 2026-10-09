@@ -36,7 +36,7 @@ const (
 )
 
 type loginSnapshot struct {
-	SceneID string
+	SceneID int64
 	X, Z    float64
 	Width   float64
 	Height  float64
@@ -51,7 +51,7 @@ type clientSession struct {
 
 	WorldID   string
 	WorldAddr string
-	SceneID   string
+	SceneID   int64
 
 	Login *loginSnapshot
 
@@ -100,7 +100,7 @@ func NewGatewayServer(id string) *gatewayServer {
 	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_DashStartReq, gs.HandleClientDashStartReq)
 	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_RollStartReq, gs.HandleClientRollStartReq)
 	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_StopStartReq, gs.HandleClientStopStartReq)
-	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_MoveStopReq, gs.HandleClientMoveStopReq)
+	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_MoveHaltReq, gs.HandleClientMoveHaltReq)
 	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_MoveDirChangeReq, gs.HandleClientMoveDirChangeReq)
 	common.Register(gs.Router(common.SrcClient), common.Cli2Wd_SkillReq, gs.HandleClientSkillReq)
 	common.Register(gs.Router(common.SrcClient), common.Cli2Gw_LogoutReq, gs.HandleClientLogoutReq)
@@ -124,6 +124,10 @@ func NewGatewayServer(id string) *gatewayServer {
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Gw_DestroyEntityRsp, gs.HandleWorldDestroyEntityRsp)
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Gw_ResumeEntityRsp, gs.HandleWorldResumeEntityRsp)
 	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EnterSceneNotify, gs.HandleWorldEnterSceneNotify)
+	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EntityEnterNotify, gs.HandleWorldEntityEnterNotify)
+	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EntityLeaveNotify, gs.HandleWorldEntityLeaveNotify)
+	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EntityMoveEventNotify, gs.HandleWorldEntityMoveEventNotify)
+	common.Register(gs.Router(common.SrcWorld), common.Wd2Cli_EntitySnapshotNotify, gs.HandleWorldEntitySnapshotNotify)
 
 	gs.OnDisconnect = gs.HandleClientDisconnect
 	gs.Loop.OnTick = gs.OnTick
@@ -451,8 +455,8 @@ func (gs *gatewayServer) HandleClientStopStartReq(conn *common.ConnWrapper, req 
 	gs.ForwardClientMove(conn, common.Cli2Wd_StopStartReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
-func (gs *gatewayServer) HandleClientMoveStopReq(conn *common.ConnWrapper, req *common.MoveStopReq) {
-	gs.ForwardClientMove(conn, common.Cli2Wd_MoveStopReq, func(uid uint64) { req.PlayerId = uid }, req)
+func (gs *gatewayServer) HandleClientMoveHaltReq(conn *common.ConnWrapper, req *common.MoveHaltReq) {
+	gs.ForwardClientMove(conn, common.Cli2Wd_MoveHaltReq, func(uid uint64) { req.PlayerId = uid }, req)
 }
 
 func (gs *gatewayServer) HandleClientMoveDirChangeReq(conn *common.ConnWrapper, req *common.MoveDirChangeReq) {
@@ -549,6 +553,30 @@ func (gs *gatewayServer) HandleWorldSkillRsp(_ *common.ConnWrapper, rsp *common.
 	common.SendMsg(session.Conn, common.Wd2Cli_SkillRsp, rsp)
 }
 
+func (gs *gatewayServer) forwardEntityMsg(targetPlayerID uint64, msgType common.MessageType, m proto.Message) {
+	session := gs.GetByPlayer(targetPlayerID)
+	if session == nil || session.State != sessionActive || session.Conn == nil {
+		return
+	}
+	common.SendMsg(session.Conn, msgType, m)
+}
+
+func (gs *gatewayServer) HandleWorldEntityEnterNotify(_ *common.ConnWrapper, notify *common.EntityEnterNotify) {
+	gs.forwardEntityMsg(notify.TargetPlayerId, common.Wd2Cli_EntityEnterNotify, notify)
+}
+
+func (gs *gatewayServer) HandleWorldEntityLeaveNotify(_ *common.ConnWrapper, notify *common.EntityLeaveNotify) {
+	gs.forwardEntityMsg(notify.TargetPlayerId, common.Wd2Cli_EntityLeaveNotify, notify)
+}
+
+func (gs *gatewayServer) HandleWorldEntityMoveEventNotify(_ *common.ConnWrapper, notify *common.EntityMoveEventNotify) {
+	gs.forwardEntityMsg(notify.TargetPlayerId, common.Wd2Cli_EntityMoveEventNotify, notify)
+}
+
+func (gs *gatewayServer) HandleWorldEntitySnapshotNotify(_ *common.ConnWrapper, notify *common.EntitySnapshotNotify) {
+	gs.forwardEntityMsg(notify.TargetPlayerId, common.Wd2Cli_EntitySnapshotNotify, notify)
+}
+
 func (gs *gatewayServer) HandleWorldCreateEntityRsp(_ *common.ConnWrapper, rsp *common.CreateEntityRsp) {
 	session := gs.GetByAccount(rsp.Account)
 	if session == nil {
@@ -623,25 +651,6 @@ func (gs *gatewayServer) HandleWorldResumeEntityRsp(_ *common.ConnWrapper, rsp *
 		SceneId:   rsp.SceneId,
 	}
 	common.SendMsg(session.Conn, common.Gw2Cli_LoginRsp, &loginRsp)
-
-	conn := session.Conn
-	worldID, x, z := session.WorldID, rsp.X, rsp.Z
-	width, height, playerID := rsp.Width, rsp.Height, rsp.PlayerId
-	sceneID := rsp.SceneId
-	time.AfterFunc(100*time.Millisecond, func() {
-		gs.Loop.Defer(func() {
-			notify := common.EnterSceneNotify{
-				WorldId:  worldID,
-				PlayerId: playerID,
-				X:        x,
-				Z:        z,
-				Width:    width,
-				Height:   height,
-				SceneId:  sceneID,
-			}
-			common.SendMsg(conn, common.Wd2Cli_EnterSceneNotify, &notify)
-		})
-	})
 }
 func (gs *gatewayServer) HandleWorldEnterSceneNotify(_ *common.ConnWrapper, notify *common.EnterSceneNotify) {
 	session := gs.GetByPlayer(notify.PlayerId)
@@ -804,9 +813,32 @@ func (gs *gatewayServer) ScheduleWorldReconnect(worldID string, cw *common.ConnW
 				log.Printf("[gateway] world connection lost: %s", worldID)
 			}
 		}
+		gs.DropSessionsOnWorldLost(worldID)
 		gs.SetWorldConnecting(worldID, false)
 		gs.ConnectToWorld(worldID, "")
 	})
+}
+
+func (gs *gatewayServer) DropSessionsOnWorldLost(worldID string) {
+	var dropped []*clientSession
+	for _, session := range gs.byAccount {
+		if session.WorldID != worldID {
+			continue
+		}
+		switch session.State {
+		case sessionActive, sessionResuming, sessionResumingWorld, sessionCreating, sessionFinishing:
+			dropped = append(dropped, session)
+		}
+	}
+	for _, session := range dropped {
+		conn := session.Conn
+		log.Printf("[gateway] dropping session after world loss: account=%s player=%d world=%s",
+			session.Account, session.PlayerID, worldID)
+		gs.RemoveSession(session)
+		if conn != nil {
+			_ = conn.Close()
+		}
+	}
 }
 
 func (gs *gatewayServer) SetWorldConnecting(worldID string, value bool) {

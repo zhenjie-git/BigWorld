@@ -23,14 +23,15 @@ namespace BigWorldClient
         private string _entrySceneName = "Login";
 
         [Header("Player Spawning")]
-        [SerializeField, Tooltip("Player prefab path under Resources/ (used if no player in scene)")]
+        [SerializeField, Tooltip("Player prefab path under Resources/")]
         private string _playerPrefabPath = "Models/Robot";
-        [SerializeField, Tooltip("If non-empty, spawn the player at this named GameObject's position")]
-        private string _spawnPointName = "SpawnPoint";
 
-        private string _currentSceneId;
-        private string _currentTemplateId;
-        private const string DefaultTemplateId = "MainCity";
+        private GameScene _currentScene;
+        private string _currentWorldId;
+
+        public PlayerController ActiveController { get; private set; }
+
+        private bool SceneReady => _currentScene != null && _currentScene.Loaded;
 
         private void Awake()
         {
@@ -65,18 +66,12 @@ namespace BigWorldClient
         private void SubscribeEvents()
         {
             UIEventBus.Subscribe<LoginAttemptEvent>(OnLoginAttempt);
-            UIEventBus.Subscribe<LoginResultEvent>(OnLoginResult);
-            UIEventBus.Subscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
-            UIEventBus.Subscribe<SceneTransferEvent>(OnSceneTransfer);
             UIEventBus.Subscribe<SessionEndedEvent>(OnSessionEnded);
         }
 
         private void UnsubscribeEvents()
         {
             UIEventBus.Unsubscribe<LoginAttemptEvent>(OnLoginAttempt);
-            UIEventBus.Unsubscribe<LoginResultEvent>(OnLoginResult);
-            UIEventBus.Unsubscribe<SceneLoadCompleteEvent>(OnSceneLoadComplete);
-            UIEventBus.Unsubscribe<SceneTransferEvent>(OnSceneTransfer);
             UIEventBus.Unsubscribe<SessionEndedEvent>(OnSessionEnded);
         }
 
@@ -89,166 +84,107 @@ namespace BigWorldClient
         private void OnLoginAttempt(LoginAttemptEvent evt)
         {
 
-            if (_currentSceneId != null) return;
+            if (SceneReady) return;
 
             GameNetworkManager.EnsureInstance().StartLogin(
                 _loginServerHost, _loginServerPort, evt.Username, evt.Password);
         }
 
-        private void OnLoginResult(LoginResultEvent evt)
+        public void HandleLoginSucceeded(PlayerInfo player)
         {
+            if (!SceneReady)
+            {
+                UIManager.Instance.HidePanel(PanelIds.Login);
+                HandleSceneTransfer(player);
+                return;
+            }
 
-            if (!evt.Success) return;
-
-            if (_currentSceneId != null) return;
-
-            UIManager.Instance.HidePanel(PanelIds.Login);
-            CreateGameScene();
+            ApplyWorldId(player.WorldId);
+            if (new SceneID(player.SceneId).Template() != _currentScene.Template)
+                HandleSceneTransfer(player);
         }
 
-        private void CreateGameScene()
+        public void HandleSceneTransfer(PlayerInfo player)
         {
-            float maxStep = PlayerConfigTable.Instance.VoxelMaxStepHeight;
+            var sceneID = new SceneID(player.SceneId);
+            if (!sceneID.Valid())
+            {
+                Debug.LogError($"[Game] invalid server scene id {sceneID.Value}");
+                return;
+            }
 
-            string templateId = DefaultTemplateId;
-            if (GameNetworkManager.Instance != null
-                && GameNetworkManager.Instance.TryGetServerScene(out string serverScene))
-                templateId = serverScene;
+            bool worldChanged = !string.IsNullOrEmpty(_currentWorldId) && player.WorldId != _currentWorldId;
+            ApplyWorldId(player.WorldId);
 
-            _currentTemplateId = templateId;
-            var scene = SceneMgr.Instance.CreateScene(templateId, maxStep);
-            _currentSceneId = scene.SceneId;
+            if (_currentScene != null && sceneID.Template() == _currentScene.Template && player.Seamless)
+            {
+                if (worldChanged)
+                    RemotePlayerManager.Instance?.ClearAll();
+                _currentScene.UpdateCenterZone(sceneID);
+                ActiveController?.Predictor?.ResendPending();
+                return;
+            }
 
-            scene.LoadAsync();
+            if (ActiveController != null)
+                ActiveController.gameObject.SetActive(false);
+
+            if (_currentScene != null)
+            {
+                _currentScene.UnloadZones();
+                SceneMgr.Instance.RemoveScene(_currentScene.Template);
+                _currentScene = null;
+            }
+
+            Vector3 serverSpawn = new Vector3((float)player.X, 0f, (float)player.Z);
+            _currentScene = SceneMgr.Instance.CreateScene(sceneID, serverSpawn, PlayerConfigTable.Instance.VoxelMaxStepHeight);
+            RemotePlayerManager.Instance?.ClearAll();
+            _currentScene.PlayerPrefabPath = _playerPrefabPath;
+            _currentScene.SceneEntered = OnSceneEntered;
+            _currentScene.LoadAsync();
         }
 
-        private void OnSceneLoadComplete(SceneLoadCompleteEvent evt)
+        private void OnSceneEntered(GameScene scene, PlayerController controller)
         {
-            if (evt.SceneName != _currentTemplateId) return;
-            if (_currentSceneId == null) return;
+            if (controller == null) return;
 
-            WorldPortalVisuals.EnsureForScene(_currentTemplateId);
-            SpawnPlayer();
+            ActiveController = controller;
+            RemotePlayerManager.EnsureInstance();
+            WorldHud.EnsureInstance();
+            scene.ActivatePlayer(controller, _currentWorldId);
         }
 
-        private void OnSceneTransfer(SceneTransferEvent evt)
+        private void ApplyWorldId(string worldId)
         {
-            if (string.IsNullOrEmpty(evt.SceneId)) return;
-            if (evt.SceneId == _currentTemplateId) return;
-
-            if (!string.IsNullOrEmpty(_currentSceneId))
-                SceneMgr.Instance.RemoveScene(_currentSceneId);
-
-            _currentTemplateId = evt.SceneId;
-            var scene = SceneMgr.Instance.CreateScene(evt.SceneId, PlayerConfigTable.Instance.VoxelMaxStepHeight);
-            _currentSceneId = scene.SceneId;
-            scene.LoadAsync();
+            _currentWorldId = worldId;
+            if (ActiveController != null)
+                ActiveController.Player.WorldId = worldId;
         }
 
         private void OnSessionEnded(SessionEndedEvent evt)
         {
-            {}
             ReturnToEntry();
+        }
+
+        private void Update()
+        {
+            if (ActiveController == null) return;
+            _currentScene?.UpdateCenterFromPosition(
+                ActiveController.transform.position.x, ActiveController.transform.position.z);
         }
 
         private void ReturnToEntry()
         {
-            if (!string.IsNullOrEmpty(_currentSceneId))
+            if (_currentScene != null)
             {
-                SceneMgr.Instance.RemoveScene(_currentSceneId);
-                _currentSceneId = null;
-                _currentTemplateId = null;
+                _currentScene.UnloadZones();
+                SceneMgr.Instance.RemoveScene(_currentScene.Template);
+                _currentScene = null;
             }
+            _currentWorldId = null;
+            RemotePlayerManager.Instance?.ClearAll();
 
             SceneManager.LoadScene(_entrySceneName, LoadSceneMode.Single);
         }
 
-        private void SpawnPlayer()
-        {
-
-            var existing = FindObjectOfType<PlayerController>();
-            if (existing != null)
-            {
-                {}
-                OnPlayerReady(existing);
-                return;
-            }
-
-            var prefab = Resources.Load<GameObject>(_playerPrefabPath);
-            if (prefab == null)
-            {
-                {}
-                return;
-            }
-
-            Vector3 spawnPos = Vector3.zero;
-            Quaternion spawnRot = Quaternion.identity;
-
-            if (GameNetworkManager.Instance != null
-                && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
-            {
-                spawnPos = serverPos;
-                {}
-            }
-            else
-            {
-
-                var spawnPoint = GameObject.Find(_spawnPointName);
-                if (spawnPoint != null)
-                {
-                    spawnPos = spawnPoint.transform.position;
-                    spawnRot = spawnPoint.transform.rotation;
-                    {}
-                }
-            }
-
-            var playerGO = Instantiate(prefab, spawnPos, spawnRot);
-            playerGO.name = "Player";
-
-            var controller = playerGO.GetComponent<PlayerController>();
-            if (controller != null)
-            {
-                {}
-                OnPlayerReady(controller);
-            }
-            else
-            {
-                {}
-            }
-        }
-
-        private void OnPlayerReady(PlayerController controller)
-        {
-
-            controller.Player.SceneId = _currentSceneId;
-
-            if (GameNetworkManager.Instance != null
-                && GameNetworkManager.Instance.TryGetServerSpawn(out Vector3 serverPos))
-            {
-                controller.InitPrediction(serverPos.x, serverPos.z);
-            }
-            else
-            {
-                {}
-            }
-
-            var cameraController = FindObjectOfType<CameraController>();
-            if (cameraController != null)
-            {
-                var cameraLookPoint = controller.transform.Find("CameraLookPoint");
-                if (cameraLookPoint != null)
-                {
-                    cameraController.SetTarget(cameraLookPoint);
-                    {}
-                }
-                else
-                {
-                    {}
-                    cameraController.SetTarget(controller.transform);
-                }
-            }
-
-            {}
-        }
     }
 }

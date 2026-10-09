@@ -54,7 +54,7 @@ type (
 	DashStartReq           = pb.DashStartReq
 	RollStartReq           = pb.RollStartReq
 	StopStartReq           = pb.StopStartReq
-	MoveStopReq            = pb.MoveStopReq
+	MoveHaltReq            = pb.MoveHaltReq
 	MoveDirChangeReq       = pb.MoveDirChangeReq
 	SkillReq               = pb.SkillReq
 	SkillRsp               = pb.SkillRsp
@@ -84,4 +84,11 @@ type (
 	TransferCommitNotify   = pb.TransferCommitNotify
 	SceneAssignNotify      = pb.SceneAssignNotify
 	SceneAssignAck         = pb.SceneAssignAck
+	MoveInputPb            = pb.MoveInputPb
+	EntityStatePb          = pb.EntityStatePb
+	EntityEnterNotify      = pb.EntityEnterNotify
+	EntityLeaveNotify      = pb.EntityLeaveNotify
+	EntityMoveEventNotify  = pb.EntityMoveEventNotify
+	EntitySnapshotNotify   = pb.EntitySnapshotNotify
+	BorderInterestNotify   = pb.BorderInterestNotify
 )

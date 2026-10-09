@@ -8,9 +8,15 @@ import (
 
 type SceneConfigEntryT struct {
 	SceneId string `json:"scene_id"`
+	TemplateId int64 `json:"template_id"`
 	SpawnX float32 `json:"spawn_x"`
 	SpawnZ float32 `json:"spawn_z"`
 	IsDefault bool `json:"is_default"`
+	GridX int64 `json:"grid_x"`
+	GridZ int64 `json:"grid_z"`
+	OriginX float32 `json:"origin_x"`
+	OriginZ float32 `json:"origin_z"`
+	ZoneSize float32 `json:"zone_size"`
 }
 
 func (t *SceneConfigEntryT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
@@ -23,17 +29,29 @@ func (t *SceneConfigEntryT) Pack(builder *flatbuffers.Builder) flatbuffers.UOffs
 	}
 	SceneConfigEntryStart(builder)
 	SceneConfigEntryAddSceneId(builder, sceneIdOffset)
+	SceneConfigEntryAddTemplateId(builder, t.TemplateId)
 	SceneConfigEntryAddSpawnX(builder, t.SpawnX)
 	SceneConfigEntryAddSpawnZ(builder, t.SpawnZ)
 	SceneConfigEntryAddIsDefault(builder, t.IsDefault)
+	SceneConfigEntryAddGridX(builder, t.GridX)
+	SceneConfigEntryAddGridZ(builder, t.GridZ)
+	SceneConfigEntryAddOriginX(builder, t.OriginX)
+	SceneConfigEntryAddOriginZ(builder, t.OriginZ)
+	SceneConfigEntryAddZoneSize(builder, t.ZoneSize)
 	return SceneConfigEntryEnd(builder)
 }
 
 func (rcv *SceneConfigEntry) UnPackTo(t *SceneConfigEntryT) {
 	t.SceneId = string(rcv.SceneId())
+	t.TemplateId = rcv.TemplateId()
 	t.SpawnX = rcv.SpawnX()
 	t.SpawnZ = rcv.SpawnZ()
 	t.IsDefault = rcv.IsDefault()
+	t.GridX = rcv.GridX()
+	t.GridZ = rcv.GridZ()
+	t.OriginX = rcv.OriginX()
+	t.OriginZ = rcv.OriginZ()
+	t.ZoneSize = rcv.ZoneSize()
 }
 
 func (rcv *SceneConfigEntry) UnPack() *SceneConfigEntryT {
@@ -88,19 +106,19 @@ func (rcv *SceneConfigEntry) SceneId() []byte {
 	return nil
 }
 
-func (rcv *SceneConfigEntry) SpawnX() float32 {
+func (rcv *SceneConfigEntry) TemplateId() int64 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(6))
 	if o != 0 {
-		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+		return rcv._tab.GetInt64(o + rcv._tab.Pos)
 	}
-	return 0.0
+	return 0
 }
 
-func (rcv *SceneConfigEntry) MutateSpawnX(n float32) bool {
-	return rcv._tab.MutateFloat32Slot(6, n)
+func (rcv *SceneConfigEntry) MutateTemplateId(n int64) bool {
+	return rcv._tab.MutateInt64Slot(6, n)
 }
 
-func (rcv *SceneConfigEntry) SpawnZ() float32 {
+func (rcv *SceneConfigEntry) SpawnX() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(8))
 	if o != 0 {
 		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
@@ -108,12 +126,24 @@ func (rcv *SceneConfigEntry) SpawnZ() float32 {
 	return 0.0
 }
 
-func (rcv *SceneConfigEntry) MutateSpawnZ(n float32) bool {
+func (rcv *SceneConfigEntry) MutateSpawnX(n float32) bool {
 	return rcv._tab.MutateFloat32Slot(8, n)
 }
 
-func (rcv *SceneConfigEntry) IsDefault() bool {
+func (rcv *SceneConfigEntry) SpawnZ() float32 {
 	o := flatbuffers.UOffsetT(rcv._tab.Offset(10))
+	if o != 0 {
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *SceneConfigEntry) MutateSpawnZ(n float32) bool {
+	return rcv._tab.MutateFloat32Slot(10, n)
+}
+
+func (rcv *SceneConfigEntry) IsDefault() bool {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(12))
 	if o != 0 {
 		return rcv._tab.GetBool(o + rcv._tab.Pos)
 	}
@@ -121,23 +151,101 @@ func (rcv *SceneConfigEntry) IsDefault() bool {
 }
 
 func (rcv *SceneConfigEntry) MutateIsDefault(n bool) bool {
-	return rcv._tab.MutateBoolSlot(10, n)
+	return rcv._tab.MutateBoolSlot(12, n)
+}
+
+func (rcv *SceneConfigEntry) GridX() int64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(14))
+	if o != 0 {
+		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *SceneConfigEntry) MutateGridX(n int64) bool {
+	return rcv._tab.MutateInt64Slot(14, n)
+}
+
+func (rcv *SceneConfigEntry) GridZ() int64 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(16))
+	if o != 0 {
+		return rcv._tab.GetInt64(o + rcv._tab.Pos)
+	}
+	return 0
+}
+
+func (rcv *SceneConfigEntry) MutateGridZ(n int64) bool {
+	return rcv._tab.MutateInt64Slot(16, n)
+}
+
+func (rcv *SceneConfigEntry) OriginX() float32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(18))
+	if o != 0 {
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *SceneConfigEntry) MutateOriginX(n float32) bool {
+	return rcv._tab.MutateFloat32Slot(18, n)
+}
+
+func (rcv *SceneConfigEntry) OriginZ() float32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(20))
+	if o != 0 {
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *SceneConfigEntry) MutateOriginZ(n float32) bool {
+	return rcv._tab.MutateFloat32Slot(20, n)
+}
+
+func (rcv *SceneConfigEntry) ZoneSize() float32 {
+	o := flatbuffers.UOffsetT(rcv._tab.Offset(22))
+	if o != 0 {
+		return rcv._tab.GetFloat32(o + rcv._tab.Pos)
+	}
+	return 0.0
+}
+
+func (rcv *SceneConfigEntry) MutateZoneSize(n float32) bool {
+	return rcv._tab.MutateFloat32Slot(22, n)
 }
 
 func SceneConfigEntryStart(builder *flatbuffers.Builder) {
-	builder.StartObject(4)
+	builder.StartObject(10)
 }
-func SceneConfigEntryAddSceneId(builder *flatbuffers.Builder, sceneID flatbuffers.UOffsetT) {
-	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(sceneID), 0)
+func SceneConfigEntryAddSceneId(builder *flatbuffers.Builder, sceneId flatbuffers.UOffsetT) {
+	builder.PrependUOffsetTSlot(0, flatbuffers.UOffsetT(sceneId), 0)
+}
+func SceneConfigEntryAddTemplateId(builder *flatbuffers.Builder, templateId int64) {
+	builder.PrependInt64Slot(1, templateId, 0)
 }
 func SceneConfigEntryAddSpawnX(builder *flatbuffers.Builder, spawnX float32) {
-	builder.PrependFloat32Slot(1, spawnX, 0.0)
+	builder.PrependFloat32Slot(2, spawnX, 0.0)
 }
 func SceneConfigEntryAddSpawnZ(builder *flatbuffers.Builder, spawnZ float32) {
-	builder.PrependFloat32Slot(2, spawnZ, 0.0)
+	builder.PrependFloat32Slot(3, spawnZ, 0.0)
 }
 func SceneConfigEntryAddIsDefault(builder *flatbuffers.Builder, isDefault bool) {
-	builder.PrependBoolSlot(3, isDefault, false)
+	builder.PrependBoolSlot(4, isDefault, false)
+}
+func SceneConfigEntryAddGridX(builder *flatbuffers.Builder, gridX int64) {
+	builder.PrependInt64Slot(5, gridX, 0)
+}
+func SceneConfigEntryAddGridZ(builder *flatbuffers.Builder, gridZ int64) {
+	builder.PrependInt64Slot(6, gridZ, 0)
+}
+func SceneConfigEntryAddOriginX(builder *flatbuffers.Builder, originX float32) {
+	builder.PrependFloat32Slot(7, originX, 0.0)
+}
+func SceneConfigEntryAddOriginZ(builder *flatbuffers.Builder, originZ float32) {
+	builder.PrependFloat32Slot(8, originZ, 0.0)
+}
+func SceneConfigEntryAddZoneSize(builder *flatbuffers.Builder, zoneSize float32) {
+	builder.PrependFloat32Slot(9, zoneSize, 0.0)
 }
 func SceneConfigEntryEnd(builder *flatbuffers.Builder) flatbuffers.UOffsetT {
 	return builder.EndObject()
